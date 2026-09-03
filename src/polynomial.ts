@@ -8,6 +8,7 @@ import {nodeSymbols} from './analysis.js';
 import {SolverContext} from './budget.js';
 import {customFactory} from './custom-factory.js';
 import type {SymbolicKernel} from './kernel.js';
+import {NumericPolynomialEngine} from './numeric-polynomial.js';
 import {
   DEFAULT_SOLVE_TOLERANCE,
   unsupportedResult
@@ -212,10 +213,6 @@ export class PolynomialEngine {
     for (const [leftDegree, leftCoefficient] of left) {
       for (const [rightDegree, rightCoefficient] of right) {
         const degree = leftDegree + rightDegree;
-        this.#limit ??= this.#context.checkPolynomialDegree(degree);
-        if (this.#limit) {
-          return null;
-        }
         const term = this.#operator('*', 'multiply', [
           leftCoefficient,
           rightCoefficient
@@ -1405,6 +1402,109 @@ export class PolynomialEngine {
     return Object.freeze({kind: 'finite', target, solutions});
   }
 
+  #numericPolynomialSolutions(
+    equation: EqualityNode,
+    target: string,
+    residual: Polynomial,
+    degree: number,
+    domainConditions: readonly Condition[],
+    options?: SolveOptions
+  ): SolveResult {
+    const coefficients = Array.from({length: degree + 1}, (_, index) =>
+      this.#numericValue(residual.get(degree - index) ?? this.#constant(0))
+    );
+    if (coefficients.some((coefficient) => coefficient === null)) {
+      return unsupportedResult(target, 'no-rule');
+    }
+    const result = new NumericPolynomialEngine().solve(
+      coefficients as number[],
+      target,
+      options,
+      this.#context
+    );
+    if (result.kind === 'limit') {
+      return result;
+    }
+    const tolerance = options?.tolerance ?? DEFAULT_SOLVE_TOLERANCE;
+    const realRoots = result.roots.filter((root) =>
+      Math.abs(root.value.im) <= Math.max(1e-9, Math.sqrt(tolerance)) *
+        (1 + Math.abs(root.value.re)) &&
+      root.residual <= Math.sqrt(tolerance) * 10
+    );
+    if (realRoots.length === 0) {
+      return contradiction(target, domainConditions);
+    }
+    const solutions: Solution[] = [];
+    for (const root of realRoots) {
+      const candidate = this.#constant(root.value.re);
+      let solution = this.#solution(
+        equation,
+        target,
+        candidate,
+        domainConditions,
+        tolerance,
+        false
+      );
+      if (!solution) {
+        const lhs = this.#dependencies.symbolicKernel.substitute(
+          equation.lhs,
+          target,
+          candidate
+        );
+        const rhs = this.#dependencies.symbolicKernel.substitute(
+          equation.rhs,
+          target,
+          candidate
+        );
+        const normalized = this.#dependencies.symbolicKernel.normalizeConditions([
+          ...domainConditions.map((condition) =>
+            this.#dependencies.symbolicKernel.condition(
+              condition.kind,
+              this.#dependencies.symbolicKernel.substitute(
+                condition.expression,
+                target,
+                candidate
+              )
+            )
+          ),
+          ...this.#dependencies.symbolicKernel.conditionsForDefinedness(lhs),
+          ...this.#dependencies.symbolicKernel.conditionsForDefinedness(rhs)
+        ]);
+        if (!normalized.contradictory) {
+          solution = Object.freeze({
+            value: candidate,
+            conditions: normalized.conditions,
+            exact: false,
+            verification: Object.freeze({status: 'proven'})
+          });
+        }
+      }
+      if (solution) {
+        solutions.push(Object.freeze({
+          ...solution,
+          multiplicity: root.multiplicity,
+          verification: Object.freeze({
+            ...solution.verification,
+            evidence: Object.freeze({
+              method: 'residual',
+              residual: root.residual
+            })
+          })
+        }));
+      }
+    }
+    if (solutions.length === 0) {
+      return contradiction(target, domainConditions);
+    }
+    return Object.freeze({
+      kind: 'finite',
+      target,
+      solutions: Object.freeze(solutions.sort((left, right) =>
+        this.#numericValue(left.value)! - this.#numericValue(right.value)!
+      ))
+    });
+  }
+
   #quadraticSolutions(
     equation: EqualityNode,
     target: string,
@@ -1509,7 +1609,7 @@ export class PolynomialEngine {
     equation: EqualityNode,
     target: string,
     options?: SolveOptions,
-    maximumDegree = 4
+    maximumDegree?: number
   ): SolveResult {
     this.#context = new SolverContext(target, options);
     this.#limit = this.#context.preflight(equation);
@@ -1536,7 +1636,7 @@ export class PolynomialEngine {
       return unsupportedResult(target, 'no-rule');
     }
     const degree = Math.max(-1, ...residual.keys());
-    if (degree > maximumDegree) {
+    if (maximumDegree !== undefined && degree > maximumDegree) {
       return unsupportedResult(target, 'no-rule');
     }
     const domain = this.#dependencies.symbolicKernel.normalizeConditions([
@@ -1556,6 +1656,31 @@ export class PolynomialEngine {
         return contradiction(target, domain.conditions);
       }
       return unsupportedResult(target, 'no-rule');
+    }
+    const coefficientsAreNumeric = [...residual.values()].every((coefficient) =>
+      this.#numericValue(coefficient) !== null
+    );
+    if (degree > 4) {
+      if (!coefficientsAreNumeric) {
+        const degreeLimit = this.#context.checkPolynomialDegree(degree);
+        return degreeLimit ?? unsupportedResult(target, 'no-rule');
+      }
+      const degreeLimit = this.#context.checkNumericPolynomialDegree(degree);
+      if (degreeLimit) {
+        return degreeLimit;
+      }
+      return this.#numericPolynomialSolutions(
+        equation,
+        target,
+        residual,
+        degree,
+        domain.conditions,
+        options
+      );
+    }
+    const polynomialDegreeLimit = this.#context.checkPolynomialDegree(degree);
+    if (polynomialDegreeLimit) {
+      return polynomialDegreeLimit;
     }
     if (degree === 2) {
       return this.#quadraticSolutions(

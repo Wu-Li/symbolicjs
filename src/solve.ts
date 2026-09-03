@@ -136,9 +136,13 @@ export function solveEquation(
       rule: polynomial.kind === 'finite' && polynomial.solutions.some(
         (solution) => !solution.exact
       )
-        ? polynomial.solutions.some((solution) => solution.certificate?.kind === 'quartic')
-          ? 'numeric-quartic'
-          : 'numeric-cubic'
+        ? polynomial.solutions.some((solution) =>
+          solution.verification.evidence?.method === 'residual'
+        )
+          ? 'numeric-polynomial'
+          : polynomial.solutions.some((solution) => solution.certificate?.kind === 'quartic')
+            ? 'numeric-quartic'
+            : 'numeric-cubic'
         : 'rational-polynomial',
       outcome: polynomial.kind
     });

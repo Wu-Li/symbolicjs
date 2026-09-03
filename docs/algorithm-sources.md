@@ -18,6 +18,12 @@ Baseline:
 | Quartic formula | [Nerdamer `Solve.js`](https://github.com/jiggzson/nerdamer/blob/4c0ab018848b80fd7627de4eaa6be0a590019353/Solve.js) | `4c0ab018848b80fd7627de4eaa6be0a590019353` | Formula comparison | Not adapted | None unless implementation expression is translated |
 | Jenkins–Traub roots | [Nerdamer `Algebra.js`](https://github.com/jiggzson/nerdamer/blob/4c0ab018848b80fd7627de4eaa6be0a590019353/Algebra.js) | `4c0ab018848b80fd7627de4eaa6be0a590019353` | Candidate implementation source | Blocked pending nested provenance review | Confirm David Binner port licensing before translation |
 
+Chapter 7 instead uses an independent implementation of the simultaneous method
+described by Oliver Aberth, “Iteration methods for finding all zeros of a
+polynomial simultaneously,” *Mathematics of Computation* 27 (1973), 339–344,
+[doi:10.1090/S0025-5718-1973-0329236-7](https://doi.org/10.1090/S0025-5718-1973-0329236-7).
+No implementation source was copied or translated.
+
 Nerdamer is distributed under the MIT License with the notice “Copyright (c) 2015
 Martin Donk.” If substantial implementation expression is adapted, the source file
 must contain an `@adapted-from` header and the repository must add
@@ -33,4 +39,3 @@ must contain an `@adapted-from` header and the repository must add
 4. Nested third-party provenance must be resolved before translation.
 5. Tests derived from an external result remain non-authoritative until verified by
    substitution, domain checks, and independent invariants.
-

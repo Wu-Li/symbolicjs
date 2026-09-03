@@ -116,6 +116,10 @@ interval subdivisions, numeric iterations, and total work.
   including repeated-root and three-real-root discriminant branches.
 - Complete numeric real roots and conditional exact symbolic real roots for
   quartics, with compact biquadratic reduction before Ferrari construction.
+- Verified real roots of numeric-coefficient polynomials above degree four via a
+  bounded simultaneous complex-root iteration. The default numeric degree limit is
+  32; callers may raise `limits.numericPolynomialDegree` and `limits.candidates`
+  for tested workloads through degree 100.
 - Complete real parametric families for isolated `sin`, `cos`, `tan`, `sec`,
   `csc`, and `cot` with affine inner arguments.
 - Principal-range inversion of `asin`, `acos`, and `atan`.

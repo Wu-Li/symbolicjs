@@ -22,3 +22,25 @@ for (let iteration = 0; iteration < 50; iteration += 1) {
 
 const elapsed = performance.now() - started;
 assert.ok(elapsed < 10_000, 'Solver benchmark exceeded 10 seconds: ' + elapsed + 'ms');
+
+const highDegreeStarted = performance.now();
+for (const [source, degree] of [
+  ['(x^19 - 1)*(x + 2) =:= 0', 20],
+  ['(x^49 - 1)*(x + 2) =:= 0', 50],
+  ['(x^99 - 1)*(x + 2) =:= 0', 100]
+]) {
+  const result = math.solveEquation(source, 'x', {
+    limits: {
+      numericPolynomialDegree: degree,
+      candidates: degree,
+      numericIterations: 1_000,
+      totalWork: 200_000
+    }
+  });
+  assert.equal(result.kind, 'finite');
+}
+const highDegreeElapsed = performance.now() - highDegreeStarted;
+assert.ok(
+  highDegreeElapsed < 5_000,
+  'High-degree benchmark exceeded 5 seconds: ' + highDegreeElapsed + 'ms'
+);
