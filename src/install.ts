@@ -4,6 +4,7 @@ import {createParseEquation} from './parse-equation.js';
 import {createEquationSymbols} from './analysis.js';
 import {createSolveEquation} from './solve.js';
 import {createSymbolicKernel} from './kernel.js';
+import {createIsolateEquation} from './isolate.js';
 import type {symbolicjsInstance} from './types.js';
 
 export const symbolicjsFactories = [
@@ -11,6 +12,7 @@ export const symbolicjsFactories = [
   createParseEquation,
   createEquationSymbols,
   createSymbolicKernel,
+  createIsolateEquation,
   createSolveEquation
 ] as const;
 

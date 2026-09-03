@@ -7,6 +7,11 @@ import type {EqualityNode} from './types.js';
 interface SolveDependencies {
   equationSymbols(equation: EqualityNode): readonly string[];
   parseEquation(source: string): EqualityNode;
+  isolateEquation(
+    equation: EqualityNode,
+    target: string,
+    options?: SolveOptions
+  ): SolveResult;
 }
 
 export function solveEquation(
@@ -32,12 +37,12 @@ export function solveEquation(
 
   const context = new SolverContext(target, options);
   const limit = context.preflight(equation);
-  return limit ?? unsupportedResult(target, 'no-rule');
+  return limit ?? dependencies.isolateEquation(equation, target, options);
 }
 
 export const createSolveEquation = customFactory(
   'solveEquation',
-  ['equationSymbols', 'parseEquation'],
+  ['equationSymbols', 'parseEquation', 'isolateEquation'],
   (rawDependencies) => {
     const dependencies = rawDependencies as unknown as SolveDependencies;
     return (

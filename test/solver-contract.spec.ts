@@ -96,13 +96,13 @@ describe('solver budgets', () => {
 });
 
 describe('solveEquation contract shell', () => {
-  it('accepts strings and nodes and returns a typed unsupported result', () => {
+  it('accepts strings and nodes through the solver contract', () => {
     const math = createMath();
     const fromString = math.solveEquation('x + 1 =:= 3', 'x');
     const fromNode = math.solveEquation(math.parseEquation('x =:= y'), 'y');
 
-    expect(fromString).toEqual({kind: 'unsupported', target: 'x', reason: 'no-rule'});
-    expect(fromNode).toEqual({kind: 'unsupported', target: 'y', reason: 'no-rule'});
+    expect(fromString.kind).toBe('finite');
+    expect(fromNode.kind).toBe('finite');
     expect(Object.isFrozen(fromString)).toBe(true);
   });
 
