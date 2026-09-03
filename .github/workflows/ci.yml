@@ -13,6 +13,7 @@ jobs:
     strategy:
       matrix:
         node-version: [22, 24, 26]
+        mathjs-version: ["15.2.0", "^15.2.0"]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -21,4 +22,5 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: npm
       - run: npm ci
+      - run: npm install --no-save "mathjs@${{ matrix.mathjs-version }}"
       - run: npm run check
