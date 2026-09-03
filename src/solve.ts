@@ -12,6 +12,12 @@ interface SolveDependencies {
     target: string,
     options?: SolveOptions
   ): SolveResult;
+  polynomialSolve(
+    equation: EqualityNode,
+    target: string,
+    options?: SolveOptions,
+    maximumDegree?: number
+  ): SolveResult;
 }
 
 export function solveEquation(
@@ -37,12 +43,18 @@ export function solveEquation(
 
   const context = new SolverContext(target, options);
   const limit = context.preflight(equation);
-  return limit ?? dependencies.isolateEquation(equation, target, options);
+  if (limit) {
+    return limit;
+  }
+  const isolated = dependencies.isolateEquation(equation, target, options);
+  return isolated.kind === 'unsupported' && isolated.reason === 'no-rule'
+    ? dependencies.polynomialSolve(equation, target, options)
+    : isolated;
 }
 
 export const createSolveEquation = customFactory(
   'solveEquation',
-  ['equationSymbols', 'parseEquation', 'isolateEquation'],
+  ['equationSymbols', 'parseEquation', 'isolateEquation', 'polynomialSolve'],
   (rawDependencies) => {
     const dependencies = rawDependencies as unknown as SolveDependencies;
     return (

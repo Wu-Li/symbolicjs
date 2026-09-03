@@ -17,6 +17,7 @@ export {
 } from './analysis.js';
 export {createSymbolicKernel, SymbolicKernel} from './kernel.js';
 export {createIsolateEquation, IsolationEngine} from './isolate.js';
+export {createPolynomialSolve, PolynomialEngine} from './polynomial.js';
 export {createSolveEquation, solveEquation} from './solve.js';
 export {
   DEFAULT_SOLVER_LIMITS,

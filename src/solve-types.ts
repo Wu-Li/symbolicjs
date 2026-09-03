@@ -70,6 +70,7 @@ export interface UnsupportedResult {
 
 export type LimitKind =
   | 'input-nodes'
+  | 'polynomial-degree'
   | 'rewrite-steps'
   | 'recursion-depth'
   | 'branches'
@@ -93,6 +94,7 @@ export type SolveResult =
 
 export interface SolverLimits {
   readonly inputNodes: number;
+  readonly polynomialDegree: number;
   readonly rewriteSteps: number;
   readonly recursionDepth: number;
   readonly branches: number;
@@ -108,6 +110,7 @@ export interface SolveOptions {
 
 export const DEFAULT_SOLVER_LIMITS: SolverLimits = Object.freeze({
   inputNodes: 1000,
+  polynomialDegree: 3,
   rewriteSteps: 500,
   recursionDepth: 100,
   branches: 32,

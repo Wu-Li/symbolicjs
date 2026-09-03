@@ -71,7 +71,7 @@ describe('solver budgets', () => {
   });
 
   it.each<[
-    Exclude<LimitKind, 'input-nodes'>,
+    Exclude<LimitKind, 'input-nodes' | 'polynomial-degree'>,
     keyof SolverLimits
   ]>([
     ['rewrite-steps', 'rewriteSteps'],
@@ -92,6 +92,17 @@ describe('solver budgets', () => {
     const context = new SolverContext('x');
 
     expect(() => context.consume('branches', -1)).toThrow(RangeError);
+  });
+
+  it('enforces the polynomial degree without consuming work', () => {
+    const context = new SolverContext('x', {limits: {polynomialDegree: 1}});
+
+    expect(context.checkPolynomialDegree(1)).toBeNull();
+    expect(context.checkPolynomialDegree(2)).toEqual({
+      kind: 'limit',
+      target: 'x',
+      limit: 'polynomial-degree'
+    });
   });
 });
 

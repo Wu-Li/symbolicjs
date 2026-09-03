@@ -10,7 +10,7 @@ import type {
   SolverLimits
 } from './solve-types.js';
 
-type ConsumableLimit = Exclude<LimitKind, 'input-nodes'>;
+type ConsumableLimit = Exclude<LimitKind, 'input-nodes' | 'polynomial-degree'>;
 
 const LIMIT_PROPERTY: Readonly<Record<ConsumableLimit, keyof SolverLimits>> = {
   'rewrite-steps': 'rewriteSteps',
@@ -63,6 +63,12 @@ export class SolverContext {
     });
     return count > this.limits.inputNodes
       ? limitResult(this.target, 'input-nodes')
+      : null;
+  }
+
+  checkPolynomialDegree(degree: number): LimitResult | null {
+    return degree > this.limits.polynomialDegree
+      ? limitResult(this.target, 'polynomial-degree')
       : null;
   }
 

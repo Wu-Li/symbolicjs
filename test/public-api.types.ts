@@ -5,6 +5,7 @@ import {
   createEqualityNode,
   createEquationSymbols,
   createIsolateEquation,
+  createPolynomialSolve,
   createParseEquation,
   createSolveEquation,
   createSymbolicKernel,
@@ -34,6 +35,7 @@ void EQUALITY_OPERATOR;
 void createEqualityNode;
 void createEquationSymbols;
 void createIsolateEquation;
+void createPolynomialSolve;
 void createParseEquation;
 void createSolveEquation;
 void createSymbolicKernel;
