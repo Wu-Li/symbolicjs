@@ -71,7 +71,7 @@ describe('solver budgets', () => {
   });
 
   it.each<[
-    Exclude<LimitKind, 'input-nodes' | 'polynomial-degree'>,
+    Exclude<LimitKind, 'input-nodes' | 'polynomial-degree' | 'numeric-polynomial-degree'>,
     keyof SolverLimits
   ]>([
     ['rewrite-steps', 'rewriteSteps'],
@@ -79,6 +79,10 @@ describe('solver budgets', () => {
     ['branches', 'branches'],
     ['candidates', 'candidates'],
     ['numeric-iterations', 'numericIterations'],
+    ['function-evaluations', 'functionEvaluations'],
+    ['interval-subdivisions', 'intervalSubdivisions'],
+    ['parametric-families', 'parametricFamilies'],
+    ['symbolic-expression-nodes', 'symbolicExpressionNodes'],
     ['total-work', 'totalWork']
   ])('enforces the %s budget', (kind, property) => {
     const context = new SolverContext('x', {limits: {[property]: 1}});
@@ -102,6 +106,17 @@ describe('solver budgets', () => {
       kind: 'limit',
       target: 'x',
       limit: 'polynomial-degree'
+    });
+  });
+
+  it('enforces the numeric polynomial degree without consuming work', () => {
+    const context = new SolverContext('x', {limits: {numericPolynomialDegree: 4}});
+
+    expect(context.checkNumericPolynomialDegree(4)).toBeNull();
+    expect(context.checkNumericPolynomialDegree(5)).toEqual({
+      kind: 'limit',
+      target: 'x',
+      limit: 'numeric-polynomial-degree'
     });
   });
 });

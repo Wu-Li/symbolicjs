@@ -19,6 +19,40 @@ export type VerificationStatus = 'proven' | 'rejected' | 'inconclusive';
 export interface VerificationResult {
   readonly status: VerificationStatus;
   readonly reason?: string;
+  readonly evidence?: VerificationEvidence;
+}
+
+export type VerificationMethod =
+  | 'symbolic'
+  | 'construction'
+  | 'bracket'
+  | 'residual'
+  | 'sample';
+
+export interface VerificationEvidence {
+  readonly method: VerificationMethod;
+  readonly residual?: number;
+  readonly bracket?: readonly [number, number];
+}
+
+export type ScalarDomain = 'real' | 'complex';
+
+export interface RealInterval {
+  readonly lower: number;
+  readonly upper: number;
+  readonly includeLower?: boolean;
+  readonly includeUpper?: boolean;
+}
+
+export type SearchCompleteness =
+  | 'complete'
+  | 'complete-in-interval'
+  | 'partial';
+
+export interface SearchScope {
+  readonly domain: ScalarDomain;
+  readonly interval?: RealInterval;
+  readonly completeness: SearchCompleteness;
 }
 
 export type SolveTraceStage =
@@ -41,6 +75,7 @@ export interface SolveDiagnostics {
 
 interface DiagnosableResult {
   readonly diagnostics?: SolveDiagnostics;
+  readonly scope?: SearchScope;
 }
 
 export interface Solution {
@@ -48,6 +83,28 @@ export interface Solution {
   readonly conditions: readonly Condition[];
   readonly exact: boolean;
   readonly verification: VerificationResult;
+  readonly multiplicity?: number;
+}
+
+export interface IntegerParameter {
+  readonly name: string;
+  readonly domain: 'integer';
+}
+
+export interface ParametricFamily {
+  readonly value: MathNode;
+  readonly parameters: readonly IntegerParameter[];
+  readonly conditions: readonly Condition[];
+  readonly exact: true;
+  readonly verification: VerificationResult;
+}
+
+export interface ParametricSolutions extends DiagnosableResult {
+  readonly kind: 'parametric';
+  readonly target: string;
+  readonly domain: 'real';
+  readonly families: readonly ParametricFamily[];
+  readonly completeness: 'complete';
 }
 
 export interface FiniteSolutions extends DiagnosableResult {
@@ -74,12 +131,18 @@ export type UnsupportedReason =
   | 'unsupported-structure'
   | 'unsupported-function'
   | 'symbolic-cubic'
-  | 'verification-inconclusive';
+  | 'verification-inconclusive'
+  | 'interval-required'
+  | 'unsupported-domain'
+  | 'unsupported-trig-form'
+  | 'numeric-search-incomplete'
+  | 'symbolic-expression-limit';
 
 export interface PartialResult extends DiagnosableResult {
   readonly kind: 'partial';
   readonly target: string;
   readonly solutions: readonly Solution[];
+  readonly families?: readonly ParametricFamily[];
   readonly remainder: import('./types.js').EqualityNode;
   readonly reason: UnsupportedReason;
 }
@@ -93,11 +156,16 @@ export interface UnsupportedResult extends DiagnosableResult {
 export type LimitKind =
   | 'input-nodes'
   | 'polynomial-degree'
+  | 'numeric-polynomial-degree'
   | 'rewrite-steps'
   | 'recursion-depth'
   | 'branches'
   | 'candidates'
   | 'numeric-iterations'
+  | 'function-evaluations'
+  | 'interval-subdivisions'
+  | 'parametric-families'
+  | 'symbolic-expression-nodes'
   | 'total-work';
 
 export interface LimitResult extends DiagnosableResult {
@@ -108,6 +176,7 @@ export interface LimitResult extends DiagnosableResult {
 
 export type SolveResult =
   | FiniteSolutions
+  | ParametricSolutions
   | IdentityResult
   | ContradictionResult
   | PartialResult
@@ -117,15 +186,23 @@ export type SolveResult =
 export interface SolverLimits {
   readonly inputNodes: number;
   readonly polynomialDegree: number;
+  readonly numericPolynomialDegree: number;
   readonly rewriteSteps: number;
   readonly recursionDepth: number;
   readonly branches: number;
   readonly candidates: number;
   readonly numericIterations: number;
+  readonly functionEvaluations: number;
+  readonly intervalSubdivisions: number;
+  readonly parametricFamilies: number;
+  readonly symbolicExpressionNodes: number;
   readonly totalWork: number;
 }
 
 export interface SolveOptions {
+  readonly domain?: ScalarDomain;
+  readonly interval?: RealInterval;
+  readonly numericFallback?: boolean;
   readonly limits?: Partial<SolverLimits>;
   readonly tolerance?: number;
   readonly diagnostics?: boolean;
@@ -134,15 +211,145 @@ export interface SolveOptions {
 export const DEFAULT_SOLVER_LIMITS: SolverLimits = Object.freeze({
   inputNodes: 1000,
   polynomialDegree: 3,
+  numericPolynomialDegree: 32,
   rewriteSteps: 500,
   recursionDepth: 100,
   branches: 32,
   candidates: 64,
   numericIterations: 200,
+  functionEvaluations: 5000,
+  intervalSubdivisions: 2048,
+  parametricFamilies: 64,
+  symbolicExpressionNodes: 10000,
   totalWork: 5000
 });
 
 export const DEFAULT_SOLVE_TOLERANCE = 1e-12;
+
+function optionalBoolean(value: unknown, name: string): void {
+  if (value !== undefined && typeof value !== 'boolean') {
+    throw new TypeError(`Solve option "${name}" must be boolean`);
+  }
+}
+
+export function normalizeRealInterval(interval: RealInterval): RealInterval {
+  if (!interval || typeof interval !== 'object' || Array.isArray(interval)) {
+    throw new TypeError('Solve interval must be an object');
+  }
+  const {lower, upper, includeLower = true, includeUpper = true} = interval;
+  if (!Number.isFinite(lower) || !Number.isFinite(upper)) {
+    throw new RangeError('Solve interval bounds must be finite');
+  }
+  if (lower > upper) {
+    throw new RangeError('Solve interval lower bound must not exceed upper bound');
+  }
+  if (typeof includeLower !== 'boolean' || typeof includeUpper !== 'boolean') {
+    throw new TypeError('Solve interval endpoint flags must be boolean');
+  }
+  if (lower === upper && (!includeLower || !includeUpper)) {
+    throw new RangeError('Solve interval must not be empty');
+  }
+  return Object.freeze({
+    lower: Object.is(lower, -0) ? 0 : lower,
+    upper: Object.is(upper, -0) ? 0 : upper,
+    includeLower,
+    includeUpper
+  });
+}
+
+export function validateSolveOptions(options?: SolveOptions): void {
+  if (options === undefined) {
+    return;
+  }
+  if (!options || typeof options !== 'object' || Array.isArray(options)) {
+    throw new TypeError('Solve options must be an object');
+  }
+  const domain = options.domain ?? 'real';
+  if (domain !== 'real' && domain !== 'complex') {
+    throw new TypeError('Solve option "domain" must be "real" or "complex"');
+  }
+  optionalBoolean(options.numericFallback, 'numericFallback');
+  optionalBoolean(options.diagnostics, 'diagnostics');
+  if (
+    options.limits !== undefined &&
+    (!options.limits || typeof options.limits !== 'object' || Array.isArray(options.limits))
+  ) {
+    throw new TypeError('Solve option "limits" must be an object');
+  }
+  if (
+    options.tolerance !== undefined &&
+    (!Number.isFinite(options.tolerance) || options.tolerance <= 0)
+  ) {
+    throw new RangeError('Solve tolerance must be positive and finite');
+  }
+  if (options.interval !== undefined) {
+    if (domain !== 'real') {
+      throw new RangeError('Solve intervals are available only in the real domain');
+    }
+    normalizeRealInterval(options.interval);
+  }
+}
+
+export function createSearchScope(
+  domain: ScalarDomain,
+  completeness: SearchCompleteness,
+  interval?: RealInterval
+): SearchScope {
+  if (domain !== 'real' && domain !== 'complex') {
+    throw new TypeError('Search scope domain must be "real" or "complex"');
+  }
+  if (
+    completeness !== 'complete' &&
+    completeness !== 'complete-in-interval' &&
+    completeness !== 'partial'
+  ) {
+    throw new TypeError('Search scope completeness is unknown');
+  }
+  if (interval !== undefined && domain !== 'real') {
+    throw new RangeError('Search scope intervals require the real domain');
+  }
+  if (completeness === 'complete-in-interval' && interval === undefined) {
+    throw new RangeError('Interval-complete scope requires an interval');
+  }
+  return Object.freeze({
+    domain,
+    completeness,
+    ...(interval === undefined ? {} : {interval: normalizeRealInterval(interval)})
+  });
+}
+
+export function parametricResult(
+  target: string,
+  families: readonly ParametricFamily[]
+): ParametricSolutions {
+  const frozenFamilies = Object.freeze(families.map((family) => {
+    const evidence = family.verification.evidence;
+    const verification = Object.freeze({
+      ...family.verification,
+      ...(evidence === undefined ? {} : {evidence: Object.freeze({
+        ...evidence,
+        ...(evidence.bracket === undefined
+          ? {}
+          : {bracket: Object.freeze([...evidence.bracket]) as readonly [number, number]})
+      })})
+    });
+    return Object.freeze({
+      ...family,
+      parameters: Object.freeze(family.parameters.map((parameter) => Object.freeze({
+        ...parameter
+      }))),
+      conditions: Object.freeze([...family.conditions]),
+      verification
+    });
+  }));
+  return Object.freeze({
+    kind: 'parametric',
+    target,
+    domain: 'real',
+    families: frozenFamilies,
+    completeness: 'complete'
+  });
+}
 
 export function unsupportedResult(
   target: string,

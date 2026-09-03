@@ -2,6 +2,7 @@ import {all, create} from 'mathjs';
 import {
   EQUALITY_NODE_NAME,
   EQUALITY_OPERATOR,
+  createSearchScope,
   createEqualityNode,
   createEquationSymbols,
   createIsolateEquation,
@@ -13,6 +14,7 @@ import {
   equationSymbols,
   importsymbolicjs,
   isEqualityNode,
+  normalizeRealInterval,
   splitEquation,
   symbolicjsFactories
 } from '../src/index.js';
@@ -20,6 +22,8 @@ import type {
   EqualityNode,
   EqualityNodeConstructor,
   EqualityNodeJSON,
+  ParametricSolutions,
+  RealInterval,
   SolveResult,
   symbolicjsInstance
 } from '../src/index.js';
@@ -31,6 +35,27 @@ const json: EqualityNodeJSON = equation.toJSON();
 const result: SolveResult = math.solveEquation(equation, 'x');
 const allResults: ReadonlyMap<string, SolveResult> = math.solveEquationForAll(equation);
 const verification = math.symbolicKernel.verify(equation, 'x', math.parse('1'));
+const interval: RealInterval = normalizeRealInterval({lower: -1, upper: 1});
+const scope = createSearchScope('real', 'complete-in-interval', interval);
+
+function resultKind(value: SolveResult): string {
+  switch (value.kind) {
+    case 'finite':
+    case 'parametric':
+    case 'identity':
+    case 'contradiction':
+    case 'partial':
+    case 'unsupported':
+    case 'limit':
+      return value.kind;
+    default: {
+      const exhaustive: never = value;
+      return exhaustive;
+    }
+  }
+}
+
+declare const parametric: ParametricSolutions;
 
 void EQUALITY_NODE_NAME;
 void EQUALITY_OPERATOR;
@@ -48,5 +73,9 @@ void equationSymbols(equation);
 void result;
 void allResults;
 void verification;
+void interval;
+void scope;
+void resultKind(result);
+void parametric;
 void splitEquation('x =:= 1');
 void symbolicjsFactories;

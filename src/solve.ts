@@ -1,6 +1,6 @@
 import {customFactory} from './custom-factory.js';
 import {SolverContext} from './budget.js';
-import {unsupportedResult} from './solve-types.js';
+import {unsupportedResult, validateSolveOptions} from './solve-types.js';
 import type {
   SolveDiagnostics,
   SolveOptions,
@@ -31,6 +31,7 @@ export function solveEquation(
   target: string,
   options?: SolveOptions
 ): SolveResult {
+  validateSolveOptions(options);
   const steps: SolveTraceStep[] | null = options?.diagnostics ? [] : null;
   const trace = (step: SolveTraceStep): void => {
     steps?.push(Object.freeze(step));

@@ -26,7 +26,9 @@ export {
 } from './solve-all.js';
 export {
   DEFAULT_SOLVER_LIMITS,
-  DEFAULT_SOLVE_TOLERANCE
+  DEFAULT_SOLVE_TOLERANCE,
+  createSearchScope,
+  normalizeRealInterval
 } from './solve-types.js';
 export {
   symbolicjsFactories,
@@ -44,9 +46,16 @@ export type {
   ContradictionResult,
   FiniteSolutions,
   IdentityResult,
+  IntegerParameter,
   LimitKind,
   LimitResult,
+  ParametricFamily,
+  ParametricSolutions,
   PartialResult,
+  RealInterval,
+  ScalarDomain,
+  SearchCompleteness,
+  SearchScope,
   Solution,
   SolveDiagnostics,
   SolveOptions,
@@ -56,6 +65,8 @@ export type {
   SolverLimits,
   UnsupportedReason,
   UnsupportedResult,
+  VerificationEvidence,
+  VerificationMethod,
   VerificationResult,
   VerificationStatus
 } from './solve-types.js';

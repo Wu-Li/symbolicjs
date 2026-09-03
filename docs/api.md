@@ -38,9 +38,11 @@ if (result.kind === 'finite') {
 ```
 
 `solveEquation` accepts an `EqualityNode` or equation string. It solves over
-the real scalar domain and returns a discriminated union:
+the real scalar domain by default and returns a discriminated union:
 
 - `finite`: a complete finite set within the supported solver family.
+- `parametric`: a complete set of infinite integer-parameter families. The result
+  contract is available in 0.2 development; trig chapters begin emitting it.
 - `identity`: every target value satisfying the returned conditions works.
 - `contradiction`: no real target value satisfying the returned conditions works.
 - `partial`: useful conditional candidates exist, but a parameter degeneration
@@ -51,6 +53,12 @@ the real scalar domain and returns a discriminated union:
 Every solution contains a MathJS `value`, domain `conditions`, an `exact` flag,
 and a verification result. Numeric cubic roots are approximate; symbolic linear
 and quadratic expressions are exact.
+
+The options contract accepts `domain: 'real' | 'complex'`, a finite real
+`interval`, and `numericFallback`. Unsupported domain-specific behavior remains a
+typed result when its implementation chapter lands. Intervals use closed endpoints
+by default; endpoint inclusion may be controlled with `includeLower` and
+`includeUpper`.
 
 ## Solving every member symbol
 
@@ -75,8 +83,9 @@ console.log(result.diagnostics?.steps);
 ```
 
 Diagnostics are immutable and disabled by default. Limits cover input nodes,
-polynomial degree, rewrite steps, traversal depth, branches, candidates,
-numeric iterations, and total work.
+symbolic and numeric polynomial degree, rewrite steps, traversal depth, branches,
+candidates, parametric families, symbolic expression size, function evaluations,
+interval subdivisions, numeric iterations, and total work.
 
 ## Initial supported families
 

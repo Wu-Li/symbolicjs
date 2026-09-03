@@ -1,4 +1,5 @@
 import {customFactory} from './custom-factory.js';
+import {validateSolveOptions} from './solve-types.js';
 import type {SolveOptions, SolveResult} from './solve-types.js';
 import type {EqualityNode} from './types.js';
 
@@ -67,6 +68,7 @@ export function solveEquationForAll(
   equationInput: EqualityNode | string,
   options?: SolveOptions
 ): ReadonlyMap<string, SolveResult> {
+  validateSolveOptions(options);
   const equation = typeof equationInput === 'string'
     ? dependencies.parseEquation(equationInput)
     : equationInput;
