@@ -1,8 +1,7 @@
 # Algorithm sources and provenance
 
-This register records external implementations consulted or adapted while building
-SymbolicJS. Mathematical references and independently implemented algorithms may
-also be recorded here when they materially inform behavior.
+This register records mathematical references and any external implementation
+expression adapted while building SymbolicJS.
 
 Baseline:
 
@@ -12,22 +11,15 @@ Baseline:
 
 ## Source register
 
-| Capability | Source | Revision | Intended use | Adaptation status | License action |
-|---|---|---|---|---|---|
-| Cubic formula | [Nerdamer `Solve.js`](https://github.com/jiggzson/nerdamer/blob/4c0ab018848b80fd7627de4eaa6be0a590019353/Solve.js) | `4c0ab018848b80fd7627de4eaa6be0a590019353` | Formula comparison | Not adapted | None unless implementation expression is translated |
-| Quartic formula | [Nerdamer `Solve.js`](https://github.com/jiggzson/nerdamer/blob/4c0ab018848b80fd7627de4eaa6be0a590019353/Solve.js) | `4c0ab018848b80fd7627de4eaa6be0a590019353` | Formula comparison | Not adapted | None unless implementation expression is translated |
-| Jenkins–Traub roots | [Nerdamer `Algebra.js`](https://github.com/jiggzson/nerdamer/blob/4c0ab018848b80fd7627de4eaa6be0a590019353/Algebra.js) | `4c0ab018848b80fd7627de4eaa6be0a590019353` | Candidate implementation source | Blocked pending nested provenance review | Confirm David Binner port licensing before translation |
+| Capability | Reference | Use | Implementation status | License action |
+|---|---|---|---|---|
+| Cubic roots | Classical depressed-cubic/Cardano and trigonometric identities | Mathematical derivation | Independently implemented with MathJS nodes | None |
+| Quartic roots | Classical biquadratic and Ferrari constructions | Mathematical derivation | Independently implemented with MathJS nodes | None |
+| Simultaneous polynomial roots | Oliver Aberth, “Iteration methods for finding all zeros of a polynomial simultaneously,” *Mathematics of Computation* 27 (1973), 339–344, [doi:10.1090/S0025-5718-1973-0329236-7](https://doi.org/10.1090/S0025-5718-1973-0329236-7) | Algorithm description | Independently implemented; no implementation source copied or translated | None |
+| Bounded real roots | Bisection and local residual minimization | Standard numerical methods | Independently implemented with explicit budgets | None |
 
-Chapter 7 instead uses an independent implementation of the simultaneous method
-described by Oliver Aberth, “Iteration methods for finding all zeros of a
-polynomial simultaneously,” *Mathematics of Computation* 27 (1973), 339–344,
-[doi:10.1090/S0025-5718-1973-0329236-7](https://doi.org/10.1090/S0025-5718-1973-0329236-7).
-No implementation source was copied or translated.
-
-Nerdamer is distributed under the MIT License with the notice “Copyright (c) 2015
-Martin Donk.” If substantial implementation expression is adapted, the source file
-must contain an `@adapted-from` header and the repository must add
-`THIRD_PARTY_NOTICES.md` with the applicable copyright and permission notices.
+No third-party implementation expression is currently copied or translated, so a
+`THIRD_PARTY_NOTICES.md` file is not required for the current source tree.
 
 ## Rules
 

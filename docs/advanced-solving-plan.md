@@ -1,6 +1,6 @@
 # Advanced equation-solving implementation plan
 
-Status: proposed  
+Status: implemented; release validation pending
 Baseline: `symbolicjs@0.1.0`, repository commit `cfa54e196e070a80060ab0821c87a04400e3d9ba`  
 Target runtime: MathJS `>=15.2.0 <16`, Node.js `>=22`  
 
@@ -183,22 +183,11 @@ Partial results advance only when the next stage is designed to merge them.
 
 ## 6. Algorithm sources and attribution
 
-The following Nerdamer implementations are potential sources for adapted
-algorithms and are attributed here for that purpose only:
-
-- cubic and quartic formula construction in
-  [`Solve.js`](https://github.com/jiggzson/nerdamer/blob/4c0ab018848b80fd7627de4eaa6be0a590019353/Solve.js);
-- high-degree numeric polynomial roots in
-  [`Algebra.js`](https://github.com/jiggzson/nerdamer/blob/4c0ab018848b80fd7627de4eaa6be0a590019353/Algebra.js), including a Jenkins–Traub port.
-
-Nerdamer is MIT-licensed with the notice “Copyright (c) 2015 Martin Donk.” Any
-substantial translation must preserve that notice and the MIT permission text in
-the adapted source file and `THIRD_PARTY_NOTICES.md`.
-
 The implementation policy is:
 
-1. Pin every adapted source revision in `docs/algorithm-sources.md`.
-2. Prefer mathematical reimplementation against MathJS nodes when an upstream
+1. Pin every adapted implementation source revision in
+   `docs/algorithm-sources.md`.
+2. Prefer mathematical reimplementation against MathJS nodes when a reference
    routine depends on a different parser, symbol representation, or algebra engine.
 3. If code structure or substantial code is translated, add a source-file header
    and `THIRD_PARTY_NOTICES.md` containing the required copyright and permission

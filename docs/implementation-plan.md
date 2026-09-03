@@ -1,13 +1,14 @@
 # symbolicjs implementation plan
 
-Status: proposed  
+Status: completed historical 0.1 milestone; superseded by
+`advanced-solving-plan.md` and the current API guide
 Baseline: `symbolicjs@0.0.1`  
 Primary domain: real scalar equations represented by MathJS expression trees  
 Canonical equation syntax: `lhs =:= rhs`
 
 ## 1. Purpose
 
-symbolicjs extends a caller-owned MathJS instance with first-class symbolic equations and a bounded computer algebra solver. It must remain an independent package: no Spoke types, persistence formats, services, or graph behavior belong in this repository.
+symbolicjs extends a caller-owned MathJS instance with first-class symbolic equations and a bounded computer algebra solver. It remains independent of any consuming application's types, persistence formats, services, or presentation behavior.
 
 The first solver milestone must:
 
@@ -47,7 +48,7 @@ The first solver milestone must:
 - General complex branch analysis.
 - A complete theorem prover or general expression-equivalence engine.
 - Mutation or replacement of MathJS's ordinary `parse`.
-- Spoke integration or removal of Nerdamer from Spoke.
+- Application-specific integration or replacement of another package's dependencies.
 
 These exclusions must be represented by typed unsupported outcomes, not accidental exceptions or incomplete roots.
 

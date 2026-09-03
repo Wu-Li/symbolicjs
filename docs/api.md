@@ -1,5 +1,9 @@
 # API guide
 
+For recognition order and mathematical guarantees, see the
+[algorithm guide](algorithms.md). Numeric accuracy and work budgets are detailed in
+[performance.md](performance.md).
+
 ## Installation
 
 ```ts

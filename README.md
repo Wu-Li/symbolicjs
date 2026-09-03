@@ -26,6 +26,20 @@ first-class equations.
     const result = math.solveEquation('x*x - 5*x + 6 =:= 0', 'x');
     // result.kind === 'finite'; roots are 2 and 3
 
+    const periodic = math.solveEquation('sin(x) =:= 0', 'x');
+    // periodic.kind === 'parametric'; one complete integer-parameter family
+
+    const bounded = math.solveEquation('sin(x) =:= x/2', 'x', {
+      numericFallback: true,
+      interval: {lower: -2, upper: 2}
+    });
+    // bounded.kind === 'partial'; three verified roots in this interval
+
+    const complex = math.solveEquation('x^2 + 1 =:= 0', 'x', {
+      domain: 'complex'
+    });
+    // complex.kind === 'finite'; roots are -i and i
+
 The lower-level factory array can be imported directly when an application
 manages its own MathJS instance typing:
 
@@ -69,14 +83,20 @@ Assignments and function assignments are rejected inside equation sides.
 - **solveEquation(equation, target, options?)** solves for one target.
 - **solveEquationForAll(equation, options?)** independently attempts every
   member symbol and returns an immutable result map.
+- **instantiateFamily**, **materializeSolutions**, and
+  **verifyParametricFamily** consume parametric results without unbounded
+  enumeration.
+- **numericSolve** is the lower-level, explicitly bounded real search function.
 
 **EqualityNode** supports MathJS traversal, transformation, cloning,
 compilation, equality evaluation, string output, LaTeX output, HTML output, and
 its own JSON codec.
 
-See the [API guide](docs/api.md), [implementation plan](docs/implementation-plan.md),
-and [security guidance](docs/security.md) for result types, supported families,
-limits, and integration details.
+See the [API guide](docs/api.md), [conformance report](docs/conformance.md),
+[algorithm guide](docs/algorithms.md),
+[performance and limits guide](docs/performance.md),
+[testing guide](docs/testing.md), and [security guidance](docs/security.md) for
+result types, supported families, limits, and integration details.
 
 ## Implemented solver scope
 
@@ -85,14 +105,25 @@ limits, and integration details.
   domain conditions, candidate verification, and deterministic limits.
 - Single-occurrence isolation for arithmetic, powers, roots, exponential,
   logarithm, and absolute value.
-- Target-relative rational normalization and symbolic affine/quadratic solving.
-- Numeric cubic fallback when every coefficient is numeric.
-- Typed finite, identity, contradiction, partial, unsupported, and limit results.
+- Target-relative rational normalization and symbolic affine, quadratic, cubic,
+  and quartic solving over the real domain.
+- Complete real periodic families for isolated and selected compound
+  trigonometric equations.
+- Verified real roots of numeric polynomials through the configurable degree
+  limit, tested through degree 100.
+- Explicitly bounded adaptive numeric fallback for otherwise unsupported real
+  expressions.
+- Opt-in complete finite complex roots for numeric real-coefficient polynomials;
+  conditional exact symbolic quadratic branches.
+- Typed finite, parametric, identity, contradiction, partial, unsupported, and
+  limit results with explicit conditions, verification, and completeness scope.
 - Independent solve-for-all orchestration and opt-in diagnostics.
 
-The solver domain is real scalar equations. Periodic
-trigonometric families, simultaneous systems, matrices, units, and a general
-equivalence prover are not part of the first solver release.
+The default domain is real scalar equations. Simultaneous systems, inequalities,
+matrices, units, mixed-frequency trigonometric identities, unrestricted numeric
+search, complex transcendental families, and a general equivalence prover remain
+unsupported. See the [0.1 migration guide](docs/migration-0.5.md) for the expanded
+result union and domain options.
 
 ## Development
 
@@ -100,7 +131,6 @@ Requires Node 22 or newer.
 
     npm install
     npm run check
-    npm run test:benchmark
     npm run pack:dry
 
 The package is tested independently of any consuming application. MathJS is a
@@ -112,17 +142,10 @@ The stable-release requirements are tracked in the
 
 ## Publishing
 
-The repository includes a tag-triggered GitHub Actions publishing workflow.
-After the package has been created on npm, configure npm trusted publishing for:
-
-- GitHub owner: **Wu-Li**
-- Repository: **symbolicjs**
-- Workflow: **publish.yml**
-- Allowed action: **npm publish**
-
-Then create a version tag such as **v0.0.2**. npm trusted publishing requires no
-long-lived publish token and automatically records provenance for a public
-repository and package.
+The repository includes a tag-triggered GitHub Actions publishing workflow. A tag
+must exactly match the package version, for example `v0.5.0` for package version
+`0.5.0`. The workflow reruns the complete gate and asks npm to record provenance;
+registry authentication is configured outside the repository.
 
 ## License
 

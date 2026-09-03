@@ -16,6 +16,25 @@ try {
   ));
   const tarball = join(temporary, pack[0].filename);
   const consumer = join(temporary, 'consumer');
+  const packedPaths = pack[0].files.map((entry) => entry.path);
+
+  for (const required of [
+    'README.md',
+    'LICENSE',
+    'CHANGELOG.md',
+    'dist/index.js',
+    'dist/index.d.ts',
+    'docs/algorithms.md',
+    'docs/api.md',
+    'docs/conformance.md',
+    'docs/migration-0.5.md',
+    'docs/performance.md',
+    'docs/security.md',
+    'docs/testing.md'
+  ]) {
+    assert.ok(packedPaths.includes(required), `Packed artifact omitted ${required}`);
+  }
+  assert.equal(packedPaths.some((path) => /^(src|test|scripts|\.github)\//.test(path)), false);
 
   execFileSync('mkdir', ['-p', consumer]);
   writeFileSync(join(consumer, 'package.json'), JSON.stringify({
@@ -32,8 +51,9 @@ try {
     join(consumer, 'node_modules/symbolicjs/package.json'),
     'utf8'
   ));
-  assert.deepEqual(packageJson.files, ['dist', 'docs']);
+  assert.deepEqual(packageJson.files, ['CHANGELOG.md', 'dist', 'docs']);
   assert.deepEqual(packageJson.dependencies ?? {}, {});
+  assert.equal(packageJson.peerDependencies.mathjs, '>=15.2.0 <16');
 
   const {all, create} = await import(
     pathToFileURL(join(consumer, 'node_modules/mathjs/lib/esm/index.js')).href
@@ -50,6 +70,28 @@ try {
   const solved = math.solveEquation('x*x - 1 =:= 0', 'x');
   assert.equal(solved.kind, 'finite');
   assert.equal(solved.solutions.length, 2);
+  const periodic = math.solveEquation('sin(x) =:= 0', 'x');
+  assert.equal(periodic.kind, 'parametric');
+  assert.equal(periodic.families.length, 1);
+  const bounded = math.solveEquation('sin(x) =:= x/2', 'x', {
+    numericFallback: true,
+    interval: {lower: -2, upper: 2}
+  });
+  assert.equal(bounded.kind, 'partial');
+  assert.equal(bounded.solutions.length, 3);
+  const complex = math.solveEquation('x^2 + 1 =:= 0', 'x', {domain: 'complex'});
+  assert.equal(complex.kind, 'finite');
+  assert.equal(complex.solutions.length, 2);
+  assert.deepEqual(
+    complex.solutions.map((solution) => {
+      const value = solution.value.compile().evaluate();
+      return [value.re, value.im];
+    }),
+    [[0, -1], [0, 1]]
+  );
+  const restored = JSON.parse(JSON.stringify(equation), math.reviver);
+  assert.equal(restored.isEqualityNode, true);
+  assert.equal(math.solveEquation(restored, 'x').kind, 'finite');
   assert.deepEqual([...math.solveEquationForAll('x + y =:= 1').keys()], ['x', 'y']);
 } finally {
   rmSync(temporary, {recursive: true, force: true});

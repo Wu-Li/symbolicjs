@@ -12,15 +12,18 @@ function filesBelow(directory: string): string[] {
 }
 
 describe('algorithm provenance', () => {
-  it('pins every registered source to an immutable revision', () => {
+  it('uses immutable identifiers for linked algorithm references', () => {
     const register = readFileSync(join(root, 'docs/algorithm-sources.md'), 'utf8');
     const sourceRows = register.split('\n').filter((line) => line.startsWith('| ') &&
       !line.startsWith('|---') && !line.startsWith('| Capability'));
     expect(sourceRows.length).toBeGreaterThan(0);
     for (const row of sourceRows) {
-      expect(row).toMatch(/[0-9a-f]{40}/);
-      expect(row).not.toContain('/blob/master/');
-      expect(row).not.toContain('/blob/main/');
+      const links = [...row.matchAll(/\]\((https?:\/\/[^)]+)\)/g)]
+        .map((match) => match[1]!);
+      for (const link of links) {
+        expect(link.includes('doi.org/') || /[0-9a-f]{40}/.test(link)).toBe(true);
+        expect(link).not.toMatch(/\/blob\/(?:master|main)\//);
+      }
     }
   });
 
@@ -37,4 +40,3 @@ describe('algorithm provenance', () => {
     );
   });
 });
-

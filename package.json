@@ -1,7 +1,7 @@
 {
   "name": "symbolicjs",
-  "version": "0.1.0",
-  "description": "Computer algebra extensions for MathJS, beginning with first-class equations.",
+  "version": "0.5.0",
+  "description": "MathJS-native symbolic equations with bounded real and finite complex solving.",
   "type": "module",
   "license": "MIT",
   "author": "John Lott",
@@ -24,6 +24,7 @@
     "node": ">=22"
   },
   "files": [
+    "CHANGELOG.md",
     "dist",
     "docs"
   ],
@@ -43,7 +44,8 @@
     "test:watch": "vitest",
     "test:pack": "node scripts/verify-pack.mjs",
     "test:benchmark": "node scripts/benchmark.mjs",
-    "check": "npm run typecheck && npm run test:coverage && npm run build && npm run test:benchmark && npm run test:pack",
+    "test:release": "node scripts/verify-release.mjs",
+    "check": "npm run typecheck && npm run test:coverage && npm run build && npm run test:benchmark && npm run test:pack && npm run test:release",
     "pack:dry": "npm pack --dry-run"
   },
   "peerDependencies": {

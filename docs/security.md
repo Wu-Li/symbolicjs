@@ -17,7 +17,10 @@ Applications processing untrusted equations should:
   retrying them without bounds.
 - Never interpret numeric sampling as a general symbolic proof.
 
-symbolicjs bounds input-node count, polynomial degree, rewrite steps, traversal
-depth, branches, candidates, numeric iterations, and total work. These controls
-limit symbolic expansion but are not a substitute for process-level CPU and
-memory isolation in a hostile multi-tenant service.
+symbolicjs bounds input-node count, symbolic and numeric polynomial degree,
+rewrite steps, traversal depth, branches, candidates, generated expression nodes,
+parametric families, numeric iterations, function evaluations, interval
+subdivisions, brackets, and total work. These controls limit symbolic expansion
+and search, but are not a substitute for process-level CPU and memory isolation in
+a hostile multi-tenant service. Default values and tuning guidance are documented
+in [performance.md](performance.md).
