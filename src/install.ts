@@ -3,12 +3,14 @@ import {createEqualityNode} from './equality-node.js';
 import {createParseEquation} from './parse-equation.js';
 import {createEquationSymbols} from './analysis.js';
 import {createSolveEquation} from './solve.js';
+import {createSymbolicKernel} from './kernel.js';
 import type {symbolicjsInstance} from './types.js';
 
 export const symbolicjsFactories = [
   createEqualityNode,
   createParseEquation,
   createEquationSymbols,
+  createSymbolicKernel,
   createSolveEquation
 ] as const;
 

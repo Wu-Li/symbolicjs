@@ -12,8 +12,10 @@ export {
 } from './parse-equation.js';
 export {
   createEquationSymbols,
-  equationSymbols
+  equationSymbols,
+  nodeSymbols
 } from './analysis.js';
+export {createSymbolicKernel, SymbolicKernel} from './kernel.js';
 export {createSolveEquation, solveEquation} from './solve.js';
 export {
   DEFAULT_SOLVER_LIMITS,

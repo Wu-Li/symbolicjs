@@ -20,7 +20,8 @@ const BUILTIN_CONSTANTS = new Set([
   'version'
 ]);
 
-function collectSymbols(node: MathNode, symbols: Set<string>): void {
+export function nodeSymbols(node: MathNode): readonly string[] {
+  const symbols = new Set<string>();
   node.traverse((candidate, path, parent) => {
     if (!isSymbolNode(candidate)) {
       return;
@@ -32,16 +33,16 @@ function collectSymbols(node: MathNode, symbols: Set<string>): void {
       symbols.add(candidate.name);
     }
   });
+  return Object.freeze([...symbols].sort());
 }
 
 export function equationSymbols(equation: EqualityNode): readonly string[] {
   if (!equation?.isEqualityNode) {
     throw new TypeError('EqualityNode expected');
   }
-  const symbols = new Set<string>();
-  collectSymbols(equation.lhs, symbols);
-  collectSymbols(equation.rhs, symbols);
-  return Object.freeze([...symbols].sort());
+  return Object.freeze([
+    ...new Set([...nodeSymbols(equation.lhs), ...nodeSymbols(equation.rhs)])
+  ].sort());
 }
 
 export const createEquationSymbols = customFactory(
