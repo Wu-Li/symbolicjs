@@ -174,7 +174,13 @@ export class SymbolicKernel {
         }
       }
     });
-    return this.normalizeConditions(conditions).conditions;
+    const normalized = this.normalizeConditions(conditions);
+    // Keep an impossible requirement observable so callers that combine
+    // definedness conditions can recover the contradictory-domain result.
+    // Returning the normalized empty list here would erase that distinction.
+    return normalized.contradictory
+      ? Object.freeze(conditions)
+      : normalized.conditions;
   }
 
   normalizeConditions(conditions: readonly Condition[]): NormalizedConditions {

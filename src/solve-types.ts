@@ -212,6 +212,7 @@ export type LimitKind =
   | 'numeric-iterations'
   | 'function-evaluations'
   | 'interval-subdivisions'
+  | 'brackets'
   | 'parametric-families'
   | 'symbolic-expression-nodes'
   | 'total-work';
@@ -242,6 +243,7 @@ export interface SolverLimits {
   readonly numericIterations: number;
   readonly functionEvaluations: number;
   readonly intervalSubdivisions: number;
+  readonly brackets: number;
   readonly parametricFamilies: number;
   readonly symbolicExpressionNodes: number;
   readonly totalWork: number;
@@ -264,9 +266,10 @@ export const DEFAULT_SOLVER_LIMITS: SolverLimits = Object.freeze({
   recursionDepth: 100,
   branches: 64,
   candidates: 64,
-  numericIterations: 200,
+  numericIterations: 1000,
   functionEvaluations: 5000,
   intervalSubdivisions: 2048,
+  brackets: 256,
   parametricFamilies: 64,
   symbolicExpressionNodes: 100000,
   totalWork: 100000

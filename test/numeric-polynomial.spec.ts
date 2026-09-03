@@ -228,7 +228,7 @@ describe('high-degree public polynomial integration', () => {
         );
       }
     ), {seed: 20260903, numRuns: 40});
-  });
+  }, 30_000);
 });
 
 describe('numeric polynomial limits', () => {

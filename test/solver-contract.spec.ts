@@ -81,6 +81,7 @@ describe('solver budgets', () => {
     ['numeric-iterations', 'numericIterations'],
     ['function-evaluations', 'functionEvaluations'],
     ['interval-subdivisions', 'intervalSubdivisions'],
+    ['brackets', 'brackets'],
     ['parametric-families', 'parametricFamilies'],
     ['symbolic-expression-nodes', 'symbolicExpressionNodes'],
     ['total-work', 'totalWork']

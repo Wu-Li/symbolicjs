@@ -33,6 +33,11 @@ interface SolveDependencies {
     target: string,
     options?: SolveOptions
   ): SolveResult;
+  numericSolve(
+    equation: EqualityNode,
+    target: string,
+    options?: SolveOptions
+  ): SolveResult;
 }
 
 export function solveEquation(
@@ -49,6 +54,9 @@ export function solveEquation(
   const finish = (result: SolveResult): SolveResult => {
     if (!steps) {
       return result;
+    }
+    if (result.diagnostics) {
+      steps.push(...result.diagnostics.steps);
     }
     const verified = result.kind === 'finite' || result.kind === 'partial'
       ? result.solutions
@@ -105,7 +113,9 @@ export function solveEquation(
     outcome: isolated.kind
   });
   if (isolated.kind === 'unsupported' && (
-    isolated.reason === 'no-rule' || isolated.reason === 'unsupported-function'
+    isolated.reason === 'no-rule' ||
+    isolated.reason === 'unsupported-function' ||
+    options?.numericFallback
   )) {
     const trigonometric = dependencies.trigonometricSolve(equation, target, options);
     trace({
@@ -146,6 +156,11 @@ export function solveEquation(
         : 'rational-polynomial',
       outcome: polynomial.kind
     });
+    if (polynomial.kind === 'unsupported' && options?.numericFallback) {
+      const numeric = dependencies.numericSolve(equation, target, options);
+      trace({stage: 'dispatch', rule: 'bounded-numeric-search', outcome: numeric.kind});
+      return finish(numeric);
+    }
     return finish(
       polynomial.kind === 'unsupported' && polynomial.reason === 'no-rule' &&
       (compound.reason === 'unsupported-trig-form' ||
@@ -165,7 +180,8 @@ export const createSolveEquation = customFactory(
     'isolateEquation',
     'trigonometricSolve',
     'compoundTrigonometricSolve',
-    'polynomialSolve'
+    'polynomialSolve',
+    'numericSolve'
   ],
   (rawDependencies) => {
     const dependencies = rawDependencies as unknown as SolveDependencies;

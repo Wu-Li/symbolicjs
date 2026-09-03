@@ -4,10 +4,12 @@ import {
   EQUALITY_OPERATOR,
   CIRCULAR_FUNCTIONS,
   CompoundTrigonometricEngine,
+  NumericSolveEngine,
   allocateIntegerParameter,
   createCanonicalizeParametricFamilies,
   createInstantiateFamily,
   createMaterializeSolutions,
+  createNumericSolve,
   createVerifyParametricFamily,
   createSearchScope,
   createEqualityNode,
@@ -76,10 +78,12 @@ void EQUALITY_NODE_NAME;
 void EQUALITY_OPERATOR;
 void CIRCULAR_FUNCTIONS.sin;
 void CompoundTrigonometricEngine;
+void NumericSolveEngine;
 void allocateIntegerParameter([]);
 void createCanonicalizeParametricFamilies;
 void createInstantiateFamily;
 void createMaterializeSolutions;
+void createNumericSolve;
 void createVerifyParametricFamily;
 void createEqualityNode;
 void createEquationSymbols;
@@ -108,5 +112,9 @@ void math.canonicalizeParametricFamilies(parametric.families);
 void math.instantiateFamily(parametric.families[0]!, {_k0: 0});
 void math.materializeSolutions(parametric, {lower: -1, upper: 1});
 void math.verifyParametricFamily(equation, 'x', parametric.families[0]!);
+void math.numericSolve(equation, 'x', {
+  numericFallback: true,
+  interval: {lower: -1, upper: 1}
+});
 void splitEquation('x =:= 1');
 void symbolicjsFactories;

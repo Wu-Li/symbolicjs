@@ -42,6 +42,7 @@ export {
   CompoundTrigonometricEngine,
   createCompoundTrigonometricSolve
 } from './compound-trigonometric.js';
+export {createNumericSolve, NumericSolveEngine} from './numeric-solve.js';
 export {
   DEFAULT_SOLVER_LIMITS,
   DEFAULT_SOLVE_TOLERANCE,

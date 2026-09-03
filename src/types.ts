@@ -44,6 +44,11 @@ export interface symbolicjsInstance extends MathJsInstance {
     equation: EqualityNode | string,
     options?: SolveOptions
   ): ReadonlyMap<string, SolveResult>;
+  numericSolve(
+    equation: EqualityNode,
+    target: string,
+    options?: SolveOptions
+  ): SolveResult;
   canonicalizeParametricFamilies(
     families: readonly ParametricFamily[],
     usedSymbols?: readonly string[]

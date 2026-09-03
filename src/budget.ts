@@ -24,6 +24,7 @@ const LIMIT_PROPERTY: Readonly<Record<ConsumableLimit, keyof SolverLimits>> = {
   'numeric-iterations': 'numericIterations',
   'function-evaluations': 'functionEvaluations',
   'interval-subdivisions': 'intervalSubdivisions',
+  brackets: 'brackets',
   'parametric-families': 'parametricFamilies',
   'symbolic-expression-nodes': 'symbolicExpressionNodes',
   'total-work': 'totalWork'
@@ -59,6 +60,7 @@ export class SolverContext {
     'numeric-iterations': 0,
     'function-evaluations': 0,
     'interval-subdivisions': 0,
+    brackets: 0,
     'parametric-families': 0,
     'symbolic-expression-nodes': 0,
     'total-work': 0

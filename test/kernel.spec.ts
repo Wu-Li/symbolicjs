@@ -81,6 +81,19 @@ describe('domain conditions', () => {
     )).toEqual([]);
   });
 
+  it('preserves an impossible real-domain requirement for callers to normalize', () => {
+    const math = createMath();
+    const conditions = math.symbolicKernel.conditionsForDefinedness(
+      math.parse('sqrt(-1)')
+    );
+
+    expect(conditions.map((condition) =>
+      condition.kind + ':' + condition.expression.toString()
+    )).toEqual(['nonnegative:-1']);
+    expect(math.symbolicKernel.normalizeConditions(conditions).contradictory)
+      .toBe(true);
+  });
+
   it('rejects non-node conditions', () => {
     const math = createMath();
 

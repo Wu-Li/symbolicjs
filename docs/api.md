@@ -101,8 +101,18 @@ console.log(result.diagnostics?.steps);
 
 Diagnostics are immutable and disabled by default. Limits cover input nodes,
 symbolic and numeric polynomial degree, rewrite steps, traversal depth, branches,
-candidates, parametric families, symbolic expression size, function evaluations,
-interval subdivisions, numeric iterations, and total work.
+candidates, brackets, parametric families, symbolic expression size, function
+evaluations, interval subdivisions, numeric iterations, and total work.
+
+## Bounded numeric fallback
+
+General real-valued expressions can opt into a bounded search by supplying both
+`numericFallback: true` and a finite real `interval`. The adaptive search partitions
+invalid domains, refines sign-changing brackets, probes local residual minima for
+even-multiplicity roots, and verifies every candidate against the original
+equation. It returns `partial` with a `scope.completeness` value of `partial`; it
+does not claim that a generic interval search found every root. Omitting the
+interval returns `interval-required` without beginning a search.
 
 ## Initial supported families
 
