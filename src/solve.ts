@@ -23,6 +23,11 @@ interface SolveDependencies {
     options?: SolveOptions,
     maximumDegree?: number
   ): SolveResult;
+  trigonometricSolve(
+    equation: EqualityNode,
+    target: string,
+    options?: SolveOptions
+  ): SolveResult;
 }
 
 export function solveEquation(
@@ -40,9 +45,12 @@ export function solveEquation(
     if (!steps) {
       return result;
     }
-    for (const solution of result.kind === 'finite' || result.kind === 'partial'
+    const verified = result.kind === 'finite' || result.kind === 'partial'
       ? result.solutions
-      : []) {
+      : result.kind === 'parametric'
+        ? result.families
+        : [];
+    for (const solution of verified) {
       trace({
         stage: 'verification',
         rule: 'candidate-verification',
@@ -91,7 +99,21 @@ export function solveEquation(
     rule: 'single-occurrence-isolation',
     outcome: isolated.kind
   });
-  if (isolated.kind === 'unsupported' && isolated.reason === 'no-rule') {
+  if (isolated.kind === 'unsupported' && (
+    isolated.reason === 'no-rule' || isolated.reason === 'unsupported-function'
+  )) {
+    const trigonometric = dependencies.trigonometricSolve(equation, target, options);
+    trace({
+      stage: 'dispatch',
+      rule: 'trigonometric',
+      outcome: trigonometric.kind
+    });
+    if (trigonometric.kind !== 'unsupported' || (
+      trigonometric.reason !== 'no-rule' &&
+      trigonometric.reason !== 'unsupported-trig-form'
+    )) {
+      return finish(trigonometric);
+    }
     const polynomial = dependencies.polynomialSolve(equation, target, options);
     trace({
       stage: 'dispatch',
@@ -100,14 +122,25 @@ export function solveEquation(
       ) ? 'numeric-cubic' : 'rational-polynomial',
       outcome: polynomial.kind
     });
-    return finish(polynomial);
+    return finish(
+      polynomial.kind === 'unsupported' && polynomial.reason === 'no-rule' &&
+      trigonometric.reason === 'unsupported-trig-form'
+        ? trigonometric
+        : polynomial
+    );
   }
   return finish(isolated);
 }
 
 export const createSolveEquation = customFactory(
   'solveEquation',
-  ['equationSymbols', 'parseEquation', 'isolateEquation', 'polynomialSolve'],
+  [
+    'equationSymbols',
+    'parseEquation',
+    'isolateEquation',
+    'trigonometricSolve',
+    'polynomialSolve'
+  ],
   (rawDependencies) => {
     const dependencies = rawDependencies as unknown as SolveDependencies;
     return (

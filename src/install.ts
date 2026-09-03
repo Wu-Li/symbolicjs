@@ -13,6 +13,7 @@ import {
   createMaterializeSolutions,
   createVerifyParametricFamily
 } from './parametric.js';
+import {createTrigonometricSolve} from './trigonometric.js';
 import type {symbolicjsInstance} from './types.js';
 
 export const symbolicjsFactories = [
@@ -27,7 +28,8 @@ export const symbolicjsFactories = [
   createCanonicalizeParametricFamilies,
   createInstantiateFamily,
   createMaterializeSolutions,
-  createVerifyParametricFamily
+  createVerifyParametricFamily,
+  createTrigonometricSolve
 ] as const;
 
 export function importsymbolicjs(math: MathJsInstance): symbolicjsInstance {

@@ -2,6 +2,7 @@ import {all, create} from 'mathjs';
 import {
   EQUALITY_NODE_NAME,
   EQUALITY_OPERATOR,
+  CIRCULAR_FUNCTIONS,
   allocateIntegerParameter,
   createCanonicalizeParametricFamilies,
   createInstantiateFamily,
@@ -15,6 +16,7 @@ import {
   createParseEquation,
   createSolveEquation,
   createSolveEquationForAll,
+  createTrigonometricSolve,
   createSymbolicKernel,
   equationSymbols,
   importsymbolicjs,
@@ -64,6 +66,7 @@ declare const parametric: ParametricSolutions;
 
 void EQUALITY_NODE_NAME;
 void EQUALITY_OPERATOR;
+void CIRCULAR_FUNCTIONS.sin;
 void allocateIntegerParameter([]);
 void createCanonicalizeParametricFamilies;
 void createInstantiateFamily;
@@ -76,6 +79,7 @@ void createPolynomialSolve;
 void createParseEquation;
 void createSolveEquation;
 void createSolveEquationForAll;
+void createTrigonometricSolve;
 void createSymbolicKernel;
 void constructor;
 void isEqualityNode(json);

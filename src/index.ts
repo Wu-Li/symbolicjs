@@ -33,6 +33,12 @@ export {
   ParametricEngine
 } from './parametric.js';
 export {
+  CIRCULAR_FUNCTIONS,
+  createTrigonometricSolve,
+  TrigonometricEngine
+} from './trigonometric.js';
+export type {CircularFunctionDefinition} from './trigonometric.js';
+export {
   DEFAULT_SOLVER_LIMITS,
   DEFAULT_SOLVE_TOLERANCE,
   createSearchScope,

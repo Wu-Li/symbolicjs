@@ -30,12 +30,12 @@ describe('solveEquationForAll', () => {
     expect(['finite', 'partial']).toContain(results.get('y')?.kind);
   });
 
-  it('returns mixed supported and unsupported results', () => {
+  it('returns finite and parametric conditional results by target', () => {
     const math = createMath();
     const results = math.solveEquationForAll('x*x + sin(y) =:= 0');
 
     expect(results.get('x')?.kind).toBe('partial');
-    expect(results.get('y')?.kind).toBe('unsupported');
+    expect(results.get('y')?.kind).toBe('parametric');
   });
 
   it('returns an immutable empty map for a constant equation', () => {
@@ -96,12 +96,14 @@ describe('solver diagnostics', () => {
       'analysis',
       'dispatch',
       'dispatch',
+      'dispatch',
       'verification',
       'verification',
       'result'
     ]);
-    expect(diagnostics.steps[2]?.rule).toBe('rational-polynomial');
-    expect(diagnostics.steps[3]?.expression).toContain('x = ');
+    expect(diagnostics.steps[2]?.rule).toBe('trigonometric');
+    expect(diagnostics.steps[3]?.rule).toBe('rational-polynomial');
+    expect(diagnostics.steps[4]?.expression).toContain('x = ');
     expect(diagnostics.steps.at(-1)?.outcome).toBe('finite');
     expect(Object.isFrozen(diagnostics)).toBe(true);
     expect(Object.isFrozen(diagnostics.steps)).toBe(true);

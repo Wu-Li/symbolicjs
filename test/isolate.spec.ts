@@ -118,7 +118,6 @@ describe('powers and inverse functions', () => {
   });
 
   it.each([
-    'sin(x) =:= 0',
     'x^a =:= b',
     'x mod 2 =:= 0',
     'f(x, y) =:= 1'
@@ -126,6 +125,12 @@ describe('powers and inverse functions', () => {
     const math = createMath();
 
     expect(math.solveEquation(source, 'x').kind).toBe('unsupported');
+  });
+
+  it('dispatches isolated sine to the trigonometric solver', () => {
+    const math = createMath();
+
+    expect(math.solveEquation('sin(x) =:= 0', 'x').kind).toBe('parametric');
   });
 
   it('classifies a zero power simplified by MathJS', () => {

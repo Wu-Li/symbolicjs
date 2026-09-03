@@ -109,6 +109,9 @@ interval subdivisions, numeric iterations, and total work.
 - Rational normalization with denominator exclusions.
 - Symbolic affine and quadratic equations.
 - Numeric-coefficient cubics with real roots.
+- Complete real parametric families for isolated `sin`, `cos`, `tan`, `sec`,
+  `csc`, and `cot` with affine inner arguments.
+- Principal-range inversion of `asin`, `acos`, and `atan`.
 
-Periodic trigonometric families, simultaneous systems, inequalities, symbolic
+Compound trigonometric identities, simultaneous systems, inequalities, symbolic
 cubics, matrices, units, and general complex branch analysis are unsupported.
