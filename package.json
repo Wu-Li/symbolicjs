@@ -1,13 +1,56 @@
 {
   "name": "casjs",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "version": "0.0.1",
+  "description": "Computer algebra extensions for MathJS, beginning with first-class equations.",
+  "type": "module",
+  "license": "MIT",
+  "author": "John Lott",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Wu-Li/casjs.git"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs"
+  "bugs": {
+    "url": "https://github.com/Wu-Li/casjs/issues"
+  },
+  "homepage": "https://github.com/Wu-Li/casjs#readme",
+  "keywords": [
+    "algebra",
+    "cas",
+    "equation",
+    "mathjs",
+    "symbolic-math"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "npm run typecheck && npm test && npm run build",
+    "pack:dry": "npm pack --dry-run"
+  },
+  "peerDependencies": {
+    "mathjs": ">=15.2.0 <16"
+  },
+  "devDependencies": {
+    "mathjs": "15.2.0",
+    "typescript": "7.0.2",
+    "vitest": "4.1.11"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
 }
