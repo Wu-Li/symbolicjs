@@ -1,14 +1,14 @@
 import type {MathJsInstance} from 'mathjs';
 import {createEqualityNode} from './equality-node.js';
 import {createParseEquation} from './parse-equation.js';
-import type {CasJsInstance} from './types.js';
+import type {symbolicjsInstance} from './types.js';
 
-export const casjsFactories = [
+export const symbolicjsFactories = [
   createEqualityNode,
   createParseEquation
 ] as const;
 
-export function importCasjs(math: MathJsInstance): CasJsInstance {
-  math.import([...casjsFactories]);
-  return math as CasJsInstance;
+export function importsymbolicjs(math: MathJsInstance): symbolicjsInstance {
+  math.import([...symbolicjsFactories]);
+  return math as symbolicjsInstance;
 }

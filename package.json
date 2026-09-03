@@ -1,5 +1,5 @@
 {
-  "name": "casjs",
+  "name": "symbolicjs",
   "version": "0.0.1",
   "description": "Computer algebra extensions for MathJS, beginning with first-class equations.",
   "type": "module",
@@ -7,12 +7,12 @@
   "author": "John Lott",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Wu-Li/casjs.git"
+    "url": "git+https://github.com/Wu-Li/symbolicjs.git"
   },
   "bugs": {
-    "url": "https://github.com/Wu-Li/casjs/issues"
+    "url": "https://github.com/Wu-Li/symbolicjs/issues"
   },
-  "homepage": "https://github.com/Wu-Li/casjs#readme",
+  "homepage": "https://github.com/Wu-Li/symbolicjs#readme",
   "keywords": [
     "algebra",
     "cas",

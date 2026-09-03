@@ -20,7 +20,7 @@ export interface EqualityNodeJSON {
   rhs: MathNode;
 }
 
-export interface CasJsInstance extends MathJsInstance {
+export interface symbolicjsInstance extends MathJsInstance {
   EqualityNode: EqualityNodeConstructor;
   parseEquation(expression: string): EqualityNode;
 }

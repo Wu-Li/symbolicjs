@@ -11,11 +11,11 @@ export {
   splitEquation
 } from './parse-equation.js';
 export {
-  casjsFactories,
-  importCasjs
+  symbolicjsFactories,
+  importsymbolicjs
 } from './install.js';
 export type {
-  CasJsInstance,
+  symbolicjsInstance,
   EqualityNode,
   EqualityNodeConstructor,
   EqualityNodeJSON

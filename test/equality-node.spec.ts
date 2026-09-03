@@ -3,13 +3,13 @@ import type {MathNode} from 'mathjs';
 import {describe, expect, it} from 'vitest';
 import {
   EQUALITY_OPERATOR,
-  importCasjs,
+  importsymbolicjs,
   isEqualityNode,
   splitEquation
 } from '../src/index.js';
 
 function createMath() {
-  return importCasjs(create(all!));
+  return importsymbolicjs(create(all!));
 }
 
 function renameX(node: MathNode, math: ReturnType<typeof createMath>): MathNode {

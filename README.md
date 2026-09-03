@@ -1,4 +1,4 @@
-# casjs
+# symbolicjs
 
 Computer algebra extensions for [MathJS](https://mathjs.org/), beginning with
 first-class equations.
@@ -8,14 +8,14 @@ first-class equations.
 
 ## Install
 
-    npm install casjs mathjs
+    npm install symbolicjs mathjs
 
 ## Quick start
 
     import {all, create} from 'mathjs';
-    import {importCasjs} from 'casjs';
+    import {importsymbolicjs} from 'symbolicjs';
 
-    const math = importCasjs(create(all));
+    const math = importsymbolicjs(create(all));
     const equation = math.parseEquation('x + 1 =:= y / 2');
 
     equation.type;           // 'EqualityNode'
@@ -28,20 +28,20 @@ The lower-level factory array can be imported directly when an application
 manages its own MathJS instance typing:
 
     import {all, create} from 'mathjs';
-    import {casjsFactories} from 'casjs';
+    import {symbolicjsFactories} from 'symbolicjs';
 
     const math = create(all);
-    math.import([...casjsFactories]);
+    math.import([...symbolicjsFactories]);
 
 ## Equality syntax
 
-casjs uses **=:=** as its canonical equation operator. This keeps mathematical
+symbolicjs uses **=:=** as its canonical equation operator. This keeps mathematical
 equality distinct from MathJS assignment (**=**) and boolean comparison
 (**==**).
 
 MathJS documents extension through **math.import** and factory functions, but
 it does not expose a supported API for adding an infix grammar token. For that
-reason, casjs imports **EqualityNode** and **parseEquation** into a MathJS
+reason, symbolicjs imports **EqualityNode** and **parseEquation** into a MathJS
 instance. **parseEquation** recognizes one top-level **=:=**, delegates each
 side to that instance's original MathJS parser, and returns:
 
@@ -56,9 +56,9 @@ Assignments and function assignments are rejected inside equation sides.
 
 ## Initial API
 
-- **importCasjs(math)** imports the casjs factories and returns the same
+- **importsymbolicjs(math)** imports the symbolicjs factories and returns the same
   instance with typed **EqualityNode** and **parseEquation** members.
-- **casjsFactories** is the factory array for direct **math.import**.
+- **symbolicjsFactories** is the factory array for direct **math.import**.
 - **EqualityNode** is a MathJS node with **lhs** and **rhs** children.
 - **splitEquation(expression)** validates and splits one top-level **=:=**.
 - **isEqualityNode(value)** is the runtime type guard.
@@ -103,7 +103,7 @@ The repository includes a tag-triggered GitHub Actions publishing workflow.
 After the package has been created on npm, configure npm trusted publishing for:
 
 - GitHub owner: **Wu-Li**
-- Repository: **casjs**
+- Repository: **symbolicjs**
 - Workflow: **publish.yml**
 - Allowed action: **npm publish**
 
