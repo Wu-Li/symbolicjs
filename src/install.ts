@@ -1,11 +1,15 @@
 import type {MathJsInstance} from 'mathjs';
 import {createEqualityNode} from './equality-node.js';
 import {createParseEquation} from './parse-equation.js';
+import {createEquationSymbols} from './analysis.js';
+import {createSolveEquation} from './solve.js';
 import type {symbolicjsInstance} from './types.js';
 
 export const symbolicjsFactories = [
   createEqualityNode,
-  createParseEquation
+  createParseEquation,
+  createEquationSymbols,
+  createSolveEquation
 ] as const;
 
 export function importsymbolicjs(math: MathJsInstance): symbolicjsInstance {

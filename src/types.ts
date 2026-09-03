@@ -1,4 +1,5 @@
 import type {MathJsInstance, MathNode, NodeCtor} from 'mathjs';
+import type {SolveOptions, SolveResult} from './solve-types.js';
 
 export interface EqualityNode extends MathNode {
   readonly type: 'EqualityNode';
@@ -23,6 +24,12 @@ export interface EqualityNodeJSON {
 export interface symbolicjsInstance extends MathJsInstance {
   EqualityNode: EqualityNodeConstructor;
   parseEquation(expression: string): EqualityNode;
+  equationSymbols(equation: EqualityNode): readonly string[];
+  solveEquation(
+    equation: EqualityNode | string,
+    target: string,
+    options?: SolveOptions
+  ): SolveResult;
 }
 
 export interface EqualityNodeDependencies {

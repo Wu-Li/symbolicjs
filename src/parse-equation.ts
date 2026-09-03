@@ -1,19 +1,10 @@
-import {factory} from 'mathjs';
 import type {MathNode} from 'mathjs';
 import {EQUALITY_OPERATOR} from './constants.js';
+import {customFactory} from './custom-factory.js';
 import type {
   EqualityNode,
   ParseEquationDependencies
 } from './types.js';
-
-type CustomFactory = (
-  name: string,
-  dependencies: string[],
-  create: (dependencies: Record<string, unknown>) => unknown,
-  meta?: Record<string, unknown>
-) => ReturnType<typeof factory>;
-
-const customFactory = factory as unknown as CustomFactory;
 
 interface SplitEquation {
   lhs: string;
