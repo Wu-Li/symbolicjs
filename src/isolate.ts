@@ -256,6 +256,24 @@ export class IsolationEngine {
               conditions: [...conditions, this.#condition('nonnegative', other)]
             }];
           }
+          const reciprocal = 1 / exponent;
+          const reciprocalDegree = Math.round(reciprocal);
+          if (
+            exponent > 0 &&
+            Math.abs(reciprocal - reciprocalDegree) < 1e-12 &&
+            reciprocalDegree > 1
+          ) {
+            return [{
+              expression: left,
+              other: this.#operator('^', 'pow', [
+                other,
+                new this.#dependencies.ConstantNode(reciprocalDegree)
+              ]),
+              conditions: reciprocalDegree % 2 === 0
+                ? [...conditions, this.#condition('nonnegative', other)]
+                : conditions
+            }];
+          }
           if (!Number.isInteger(exponent)) {
             return null;
           }

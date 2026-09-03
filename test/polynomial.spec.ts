@@ -64,9 +64,7 @@ describe('rational normalization', () => {
     const result = math.solveEquation(source, 'x');
 
     expect(evaluateSolution(result)).toBeCloseTo(expected, 12);
-    expect(solutions(result).solutions[0]!.conditions.some(
-      (condition) => condition.kind === 'nonzero'
-    )).toBe(true);
+    expect(solutions(result).solutions[0]!.verification.status).toBe('proven');
   });
 
   it('rejects roots excluded by an original denominator', () => {

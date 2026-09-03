@@ -40,6 +40,22 @@ interface PolynomialDependencies {
   symbolicKernel: SymbolicKernel;
 }
 
+export function approximateConditionViolated(
+  kind: Condition['kind'],
+  value: number,
+  tolerance: number
+): boolean {
+  switch (kind) {
+    case 'zero': return Math.abs(value) > tolerance;
+    case 'nonzero': return Math.abs(value) <= tolerance;
+    case 'positive': return value <= tolerance;
+    case 'nonnegative': return value < -tolerance;
+    case 'negative': return value >= -tolerance;
+    case 'nonpositive': return value > tolerance;
+    case 'defined': return false;
+  }
+}
+
 function occurrences(node: MathNode, target: string): number {
   let count = 0;
   node.traverse((candidate) => {
@@ -291,10 +307,18 @@ export class PolynomialEngine {
     target: string,
     candidate: MathNode,
     conditions: readonly Condition[],
-    tolerance: number
+    tolerance: number,
+    exact = true
   ): Solution | null {
-    const normalized = this.#dependencies.symbolicKernel.normalizeConditions([
-      ...conditions,
+    const rawConditions = [
+      ...conditions.map((condition) => this.#dependencies.symbolicKernel.condition(
+        condition.kind,
+        this.#dependencies.symbolicKernel.substitute(
+          condition.expression,
+          target,
+          candidate
+        )
+      )),
       ...this.#dependencies.symbolicKernel.conditionsForDefinedness(
         this.#dependencies.symbolicKernel.substitute(
           equation.lhs,
@@ -309,7 +333,17 @@ export class PolynomialEngine {
           candidate
         )
       )
-    ]);
+    ];
+    if (!exact && rawConditions.some((condition) => {
+      const value = this.#numericValue(condition.expression);
+      if (value === null) {
+        return false;
+      }
+      return approximateConditionViolated(condition.kind, value, tolerance);
+    })) {
+      return null;
+    }
+    const normalized = this.#dependencies.symbolicKernel.normalizeConditions(rawConditions);
     if (normalized.contradictory) {
       return null;
     }
@@ -323,8 +357,135 @@ export class PolynomialEngine {
     return verification.status === 'rejected' ? null : Object.freeze({
       value: this.#dependencies.symbolicKernel.simplify(candidate),
       conditions: normalized.conditions,
-      exact: true,
+      exact,
       verification
+    });
+  }
+
+  #cubicSolutions(
+    equation: EqualityNode,
+    target: string,
+    residual: Polynomial,
+    domainConditions: readonly Condition[],
+    options?: SolveOptions
+  ): SolveResult {
+    const coefficients = [3, 2, 1, 0].map((degree) =>
+      this.#numericValue(residual.get(degree) ?? this.#constant(0))
+    );
+    if (coefficients.some((coefficient) => coefficient === null)) {
+      return unsupportedResult(target, 'symbolic-cubic');
+    }
+    const [a, b, c, d] = coefficients as [number, number, number, number];
+    const tolerance = options?.tolerance ?? DEFAULT_SOLVE_TOLERANCE;
+    if (!Number.isFinite(tolerance) || tolerance <= 0) {
+      throw new RangeError('Solve tolerance must be positive and finite');
+    }
+    const normalizedB = b / a;
+    const normalizedC = c / a;
+    const normalizedD = d / a;
+    const p = normalizedC - normalizedB ** 2 / 3;
+    const q = 2 * normalizedB ** 3 / 27 - normalizedB * normalizedC / 3 + normalizedD;
+    const discriminant = (q / 2) ** 2 + (p / 3) ** 3;
+    const scale = Math.max(1, Math.abs(q / 2) ** 2, Math.abs(p / 3) ** 3);
+    const discriminantTolerance = tolerance * scale;
+    let roots: number[];
+
+    if (discriminant > discriminantTolerance) {
+      const sqrtDiscriminant = Math.sqrt(discriminant);
+      roots = [
+        Math.cbrt(-q / 2 + sqrtDiscriminant) +
+        Math.cbrt(-q / 2 - sqrtDiscriminant) -
+        normalizedB / 3
+      ];
+    } else if (discriminant < -discriminantTolerance) {
+      const radius = 2 * Math.sqrt(-p / 3);
+      const cosine = Math.max(-1, Math.min(
+        1,
+        (3 * q / (2 * p)) * Math.sqrt(-3 / p)
+      ));
+      const theta = Math.acos(cosine) / 3;
+      roots = [0, 1, 2].map((index) =>
+        radius * Math.cos(theta - 2 * Math.PI * index / 3) - normalizedB / 3
+      );
+    } else if (Math.abs(q) <= tolerance) {
+      roots = [-normalizedB / 3];
+    } else {
+      const repeated = Math.cbrt(-q / 2);
+      roots = [2 * repeated - normalizedB / 3, -repeated - normalizedB / 3];
+    }
+
+    const evaluate = (value: number) =>
+      ((a * value + b) * value + c) * value + d;
+    const derivative = (value: number) => (3 * a * value + 2 * b) * value + c;
+    const polished: number[] = [];
+    for (const root of roots) {
+      let value = root;
+      for (let iteration = 0; iteration < 8; iteration += 1) {
+        this.#limit ??= this.#context.consume('numeric-iterations');
+        if (this.#limit) {
+          return this.#limit;
+        }
+        const residualValue = evaluate(value);
+        const residualScale = Math.max(
+          1,
+          Math.abs(a * value ** 3),
+          Math.abs(b * value ** 2),
+          Math.abs(c * value),
+          Math.abs(d)
+        );
+        if (Math.abs(residualValue) <= tolerance * residualScale) {
+          break;
+        }
+        const slope = derivative(value);
+        if (!Number.isFinite(slope) || Math.abs(slope) <= tolerance) {
+          break;
+        }
+        value -= residualValue / slope;
+      }
+      if (Number.isFinite(value)) {
+        polished.push(Object.is(value, -0) ? 0 : value);
+      }
+    }
+    polished.sort((left, right) => left - right);
+    const uniqueRoots = polished.filter((value, index) => {
+      if (index === 0) {
+        return true;
+      }
+      const prior = polished[index - 1]!;
+      return Math.abs(value - prior) > tolerance * Math.max(1, Math.abs(value), Math.abs(prior));
+    });
+    if (uniqueRoots.length > 1) {
+      this.#limit ??= this.#context.consume('branches', uniqueRoots.length);
+      if (this.#limit) {
+        return this.#limit;
+      }
+    }
+
+    const solutions: Solution[] = [];
+    for (const root of uniqueRoots) {
+      this.#limit ??= this.#context.consume('candidates');
+      if (this.#limit) {
+        return this.#limit;
+      }
+      const solution = this.#solution(
+        equation,
+        target,
+        this.#constant(root),
+        domainConditions,
+        tolerance,
+        false
+      );
+      if (solution) {
+        solutions.push(solution);
+      }
+    }
+    if (solutions.length === 0) {
+      return contradiction(target, domainConditions);
+    }
+    return Object.freeze({
+      kind: 'finite',
+      target,
+      solutions: Object.freeze(solutions)
     });
   }
 
@@ -432,7 +593,7 @@ export class PolynomialEngine {
     equation: EqualityNode,
     target: string,
     options?: SolveOptions,
-    maximumDegree = 2
+    maximumDegree = 3
   ): SolveResult {
     this.#context = new SolverContext(target, options);
     this.#limit = this.#context.preflight(equation);
@@ -482,6 +643,15 @@ export class PolynomialEngine {
     }
     if (degree === 2) {
       return this.#quadraticSolutions(
+        equation,
+        target,
+        residual,
+        domain.conditions,
+        options
+      );
+    }
+    if (degree === 3) {
+      return this.#cubicSolutions(
         equation,
         target,
         residual,
