@@ -32,6 +32,8 @@ import type {
   EqualityNodeConstructor,
   EqualityNodeJSON,
   CubicConstructionCertificate,
+  PolynomialConstructionCertificate,
+  QuarticConstructionCertificate,
   ParametricSolutions,
   RealInterval,
   SolveResult,
@@ -67,6 +69,8 @@ function resultKind(value: SolveResult): string {
 
 declare const parametric: ParametricSolutions;
 declare const cubicCertificate: CubicConstructionCertificate;
+declare const quarticCertificate: QuarticConstructionCertificate;
+declare const polynomialCertificate: PolynomialConstructionCertificate;
 
 void EQUALITY_NODE_NAME;
 void EQUALITY_OPERATOR;
@@ -98,6 +102,8 @@ void scope;
 void resultKind(result);
 void parametric;
 void cubicCertificate;
+void quarticCertificate;
+void polynomialCertificate;
 void math.canonicalizeParametricFamilies(parametric.families);
 void math.instantiateFamily(parametric.families[0]!, {_k0: 0});
 void math.materializeSolutions(parametric, {lower: -1, upper: 1});

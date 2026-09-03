@@ -51,10 +51,11 @@ the real scalar domain by default and returns a discriminated union:
 - `limit`: a deterministic safety budget stopped the operation.
 
 Every solution contains a MathJS `value`, domain `conditions`, an `exact` flag,
-and a verification result. Numeric cubic roots are approximate; symbolic linear,
-quadratic, and cubic expressions are exact. Symbolic cubic solutions also expose
-a frozen construction certificate containing the original coefficients, depressed
-cubic coefficients, discriminant, and selected real branch.
+and a verification result. Numeric cubic and quartic roots are approximate;
+symbolic linear, quadratic, cubic, and quartic expressions are exact. Symbolic
+cubic and quartic solutions expose frozen construction certificates containing
+their original coefficients, depressed-polynomial coefficients, and selected
+construction branch.
 
 The options contract accepts `domain: 'real' | 'complex'`, a finite real
 `interval`, and `numericFallback`. Unsupported domain-specific behavior remains a
@@ -113,6 +114,8 @@ interval subdivisions, numeric iterations, and total work.
 - Numeric-coefficient cubics with real roots.
 - Conditional exact real roots for target-free symbolic-coefficient cubics,
   including repeated-root and three-real-root discriminant branches.
+- Complete numeric real roots and conditional exact symbolic real roots for
+  quartics, with compact biquadratic reduction before Ferrari construction.
 - Complete real parametric families for isolated `sin`, `cos`, `tan`, `sec`,
   `csc`, and `cot` with affine inner arguments.
 - Principal-range inversion of `asin`, `acos`, and `atan`.

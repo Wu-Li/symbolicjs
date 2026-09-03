@@ -50,6 +50,28 @@ export interface CubicConstructionCertificate {
   readonly discriminant: MathNode;
 }
 
+export type QuarticConstructionBranch = 'biquadratic' | 'ferrari';
+
+export interface QuarticConstructionCertificate {
+  readonly kind: 'quartic';
+  readonly branch: QuarticConstructionBranch;
+  readonly coefficients: readonly [
+    MathNode,
+    MathNode,
+    MathNode,
+    MathNode,
+    MathNode
+  ];
+  readonly depressedQuadraticCoefficient: MathNode;
+  readonly depressedLinearCoefficient: MathNode;
+  readonly depressedConstant: MathNode;
+  readonly resolventRoot?: MathNode;
+}
+
+export type PolynomialConstructionCertificate =
+  | CubicConstructionCertificate
+  | QuarticConstructionCertificate;
+
 export type ScalarDomain = 'real' | 'complex';
 
 export interface RealInterval {
@@ -99,7 +121,7 @@ export interface Solution {
   readonly exact: boolean;
   readonly verification: VerificationResult;
   readonly multiplicity?: number;
-  readonly certificate?: CubicConstructionCertificate;
+  readonly certificate?: PolynomialConstructionCertificate;
 }
 
 export interface IntegerParameter {
@@ -236,18 +258,18 @@ export interface SolveOptions {
 
 export const DEFAULT_SOLVER_LIMITS: SolverLimits = Object.freeze({
   inputNodes: 1000,
-  polynomialDegree: 3,
+  polynomialDegree: 4,
   numericPolynomialDegree: 32,
   rewriteSteps: 500,
   recursionDepth: 100,
-  branches: 32,
+  branches: 64,
   candidates: 64,
   numericIterations: 200,
   functionEvaluations: 5000,
   intervalSubdivisions: 2048,
   parametricFamilies: 64,
-  symbolicExpressionNodes: 10000,
-  totalWork: 5000
+  symbolicExpressionNodes: 100000,
+  totalWork: 100000
 });
 
 export const DEFAULT_SOLVE_TOLERANCE = 1e-12;

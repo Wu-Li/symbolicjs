@@ -135,7 +135,11 @@ export function solveEquation(
       stage: 'dispatch',
       rule: polynomial.kind === 'finite' && polynomial.solutions.some(
         (solution) => !solution.exact
-      ) ? 'numeric-cubic' : 'rational-polynomial',
+      )
+        ? polynomial.solutions.some((solution) => solution.certificate?.kind === 'quartic')
+          ? 'numeric-quartic'
+          : 'numeric-cubic'
+        : 'rational-polynomial',
       outcome: polynomial.kind
     });
     return finish(
