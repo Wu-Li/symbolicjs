@@ -34,6 +34,8 @@ describe('SymbolicKernel substitution and simplification', () => {
       .toBe('x');
     expect(math.symbolicKernel.simplify(math.parse('x / x')).toString())
       .toBe('x / x');
+    expect(math.symbolicKernel.simplify(math.parse('sqrt(-1)')).toString())
+      .toBe('sqrt(-1)');
   });
 
   it('produces stable canonical keys', () => {
@@ -128,6 +130,29 @@ describe('domain conditions', () => {
     expect(math.symbolicKernel.normalizeConditions([
       math.symbolicKernel.condition('negative', math.parse('2'))
     ]).contradictory).toBe(true);
+  });
+
+  it('normalizes complex zero and definedness conditions', () => {
+    const math = createMath();
+    const nonzero = new math.ConstantNode(math.complex(0, 2) as never);
+    const zero = new math.ConstantNode(math.complex(0, 0) as never);
+
+    expect(math.symbolicKernel.normalizeConditions([
+      math.symbolicKernel.condition('nonzero', nonzero),
+      math.symbolicKernel.condition('defined', nonzero)
+    ])).toEqual({conditions: [], contradictory: false});
+    expect(math.symbolicKernel.normalizeConditions([
+      math.symbolicKernel.condition('nonzero', zero)
+    ]).contradictory).toBe(true);
+  });
+
+  it('verifies a complex candidate with a scaled residual comparison', () => {
+    const math = createMath();
+    const equation = math.parseEquation('x^2 + 1 =:= 0');
+    const candidate = new math.ConstantNode(math.complex(0, 1) as never);
+
+    expect(math.symbolicKernel.verify(equation, 'x', candidate))
+      .toEqual({status: 'proven'});
   });
 
   it.each<[ConditionKind, string, boolean]>([

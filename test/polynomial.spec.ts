@@ -124,6 +124,7 @@ describe('polynomial boundaries and limits', () => {
     const math = createMath();
     const engine = new PolynomialEngine({
       ConstantNode: math.ConstantNode,
+      complex: math.complex,
       EqualityNode: math.EqualityNode,
       FunctionNode: math.FunctionNode,
       OperatorNode: math.OperatorNode,

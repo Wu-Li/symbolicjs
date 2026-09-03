@@ -31,13 +31,21 @@ describe('solve domains and intervals', () => {
     [{interval: {lower: Number.NEGATIVE_INFINITY, upper: 1}}, 'finite'],
     [{interval: {lower: 2, upper: 1}}, 'lower'],
     [{interval: {lower: 1, upper: 1, includeLower: false}}, 'empty'],
-    [{interval: {lower: 0, upper: 1, includeUpper: 1}}, 'boolean'],
-    [{domain: 'complex', interval: {lower: 0, upper: 1}}, 'real domain']
+    [{interval: {lower: 0, upper: 1, includeUpper: 1}}, 'boolean']
   ] as const)('rejects invalid options %#', (options, message) => {
     const math = createMath();
 
     expect(() => math.solveEquation('x =:= 1', 'x', options as never))
       .toThrow(message);
+  });
+
+  it('classifies a complex interval as an unsupported search domain', () => {
+    const math = createMath();
+
+    expect(math.solveEquation('x^2 + 1 =:= 0', 'x', {
+      domain: 'complex',
+      interval: {lower: 0, upper: 1}
+    })).toEqual({kind: 'unsupported', target: 'x', reason: 'unsupported-domain'});
   });
 
   it('validates options even when solve-for-all has no targets', () => {

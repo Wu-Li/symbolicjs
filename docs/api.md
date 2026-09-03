@@ -58,10 +58,10 @@ their original coefficients, depressed-polynomial coefficients, and selected
 construction branch.
 
 The options contract accepts `domain: 'real' | 'complex'`, a finite real
-`interval`, and `numericFallback`. Unsupported domain-specific behavior remains a
-typed result when its implementation chapter lands. Intervals use closed endpoints
-by default; endpoint inclusion may be controlled with `includeLower` and
-`includeUpper`.
+`interval`, and `numericFallback`. Intervals use closed endpoints by default;
+endpoint inclusion may be controlled with `includeLower` and `includeUpper`.
+An interval supplied with the complex domain returns the typed
+`unsupported-domain` result.
 
 ## Parametric families
 
@@ -114,6 +114,28 @@ equation. It returns `partial` with a `scope.completeness` value of `partial`; i
 does not claim that a generic interval search found every root. Omitting the
 interval returns `interval-required` without beginning a search.
 
+## Complex polynomial roots
+
+```ts
+const result = math.solveEquation('x^4 + 1 =:= 0', 'x', {
+  domain: 'complex'
+});
+```
+
+Complex solving is opt-in and currently applies only to finite polynomial root
+sets. Numeric real-coefficient polynomials from degree two through
+`limits.numericPolynomialDegree` use the simultaneous root engine and return
+every distinct complex value with multiplicity. Results use configured MathJS
+complex values, canonical real-then-imaginary ordering, normalized zero
+components, residual verification, and `scope: {domain: 'complex',
+completeness: 'complete'}`.
+
+Symbolic-coefficient quadratics return both exact formula branches with a
+nonzero leading-coefficient condition and partial scope, since coefficient
+degenerations are not expanded into separate cases. Sign and range predicates
+are real-domain concepts and are not attached in complex mode. Complex
+transcendental families and interval searches return `unsupported-domain`.
+
 ## Initial supported families
 
 - Single-occurrence arithmetic isolation.
@@ -130,6 +152,9 @@ interval returns `interval-required` without beginning a search.
   bounded simultaneous complex-root iteration. The default numeric degree limit is
   32; callers may raise `limits.numericPolynomialDegree` and `limits.candidates`
   for tested workloads through degree 100.
+- Complete finite complex roots of numeric real-coefficient polynomials, including
+  multiplicity, when `domain: 'complex'` is explicit; symbolic quadratics expose
+  conditional exact formula branches.
 - Complete real parametric families for isolated `sin`, `cos`, `tan`, `sec`,
   `csc`, and `cot` with affine inner arguments.
 - Principal-range inversion of `asin`, `acos`, and `atan`.
@@ -138,5 +163,5 @@ interval returns `interval-required` without beginning a search.
   `A*sin(u)+B*cos(u)=C` equations.
 
 Mixed-frequency trigonometric identities, simultaneous systems, inequalities,
-matrices, units, and general complex branch analysis are
-unsupported.
+matrices, units, complex transcendental families, and general symbolic complex
+branch analysis above degree two are unsupported.

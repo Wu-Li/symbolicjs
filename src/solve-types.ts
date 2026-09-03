@@ -334,9 +334,6 @@ export function validateSolveOptions(options?: SolveOptions): void {
     throw new RangeError('Solve tolerance must be positive and finite');
   }
   if (options.interval !== undefined) {
-    if (domain !== 'real') {
-      throw new RangeError('Solve intervals are available only in the real domain');
-    }
     normalizeRealInterval(options.interval);
   }
 }

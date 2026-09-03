@@ -10,6 +10,7 @@ import {customFactory} from './custom-factory.js';
 import type {SymbolicKernel} from './kernel.js';
 import {NumericPolynomialEngine} from './numeric-polynomial.js';
 import {
+  createSearchScope,
   DEFAULT_SOLVE_TOLERANCE,
   unsupportedResult
 } from './solve-types.js';
@@ -46,6 +47,7 @@ interface QuarticCandidateSpecification {
 
 interface PolynomialDependencies {
   ConstantNode: MathJsInstance['ConstantNode'];
+  complex: MathJsInstance['complex'];
   EqualityNode: import('./types.js').EqualityNodeConstructor;
   FunctionNode: MathJsInstance['FunctionNode'];
   OperatorNode: MathJsInstance['OperatorNode'];
@@ -112,6 +114,23 @@ export class PolynomialEngine {
     return new this.#dependencies.ConstantNode(value);
   }
 
+  #complexConstant(real: number, imaginary: number, tolerance: number): MathNode {
+    const zeroTolerance = Math.max(Number.EPSILON * 100, tolerance * 10);
+    const normalizedReal = Math.abs(real) <= zeroTolerance * (1 + Math.abs(imaginary))
+      ? 0
+      : real;
+    const normalizedImaginary = Math.abs(imaginary) <= zeroTolerance * (1 + Math.abs(real))
+      ? 0
+      : imaginary;
+    const re = Object.is(normalizedReal, -0) ? 0 : normalizedReal;
+    const im = Object.is(normalizedImaginary, -0) ? 0 : normalizedImaginary;
+    return im === 0
+      ? this.#constant(re)
+      : new this.#dependencies.ConstantNode(
+        this.#dependencies.complex(re, im) as never
+      );
+  }
+
   #operator(op: string, fn: string, args: MathNode[]): MathNode {
     return new this.#dependencies.OperatorNode(op as never, fn as never, args);
   }
@@ -124,7 +143,11 @@ export class PolynomialEngine {
   }
 
   #algebraicSimplify(node: MathNode): MathNode {
-    return this.#dependencies.simplify(node) as MathNode;
+    try {
+      return this.#dependencies.simplify(node) as MathNode;
+    } catch {
+      return node;
+    }
   }
 
   #addNodes(left: MathNode, right: MathNode): MathNode {
@@ -1426,17 +1449,22 @@ export class PolynomialEngine {
       return result;
     }
     const tolerance = options?.tolerance ?? DEFAULT_SOLVE_TOLERANCE;
-    const realRoots = result.roots.filter((root) =>
-      Math.abs(root.value.im) <= Math.max(1e-9, Math.sqrt(tolerance)) *
-        (1 + Math.abs(root.value.re)) &&
-      root.residual <= Math.sqrt(tolerance) * 10
+    const complexDomain = options?.domain === 'complex';
+    const eligibleRoots = result.roots.filter((root) =>
+      root.residual <= Math.sqrt(tolerance) * 10 && (
+        complexDomain ||
+        Math.abs(root.value.im) <= Math.max(1e-9, Math.sqrt(tolerance)) *
+          (1 + Math.abs(root.value.re))
+      )
     );
-    if (realRoots.length === 0) {
+    if (eligibleRoots.length === 0) {
       return contradiction(target, domainConditions);
     }
     const solutions: Solution[] = [];
-    for (const root of realRoots) {
-      const candidate = this.#constant(root.value.re);
+    for (const root of eligibleRoots) {
+      const candidate = complexDomain
+        ? this.#complexConstant(root.value.re, root.value.im, tolerance)
+        : this.#constant(root.value.re);
       let solution = this.#solution(
         equation,
         target,
@@ -1496,12 +1524,95 @@ export class PolynomialEngine {
     if (solutions.length === 0) {
       return contradiction(target, domainConditions);
     }
+    if (complexDomain) {
+      const complete = solutions.reduce(
+        (sum, solution) => sum + (solution.multiplicity ?? 1),
+        0
+      ) === degree;
+      if (!complete) {
+        return Object.freeze({
+          kind: 'partial',
+          target,
+          solutions: Object.freeze(solutions),
+          remainder: equation,
+          reason: 'verification-inconclusive',
+          scope: createSearchScope('complex', 'partial')
+        });
+      }
+      return Object.freeze({
+        kind: 'finite',
+        target,
+        solutions: Object.freeze(solutions),
+        scope: createSearchScope('complex', 'complete')
+      });
+    }
     return Object.freeze({
       kind: 'finite',
       target,
       solutions: Object.freeze(solutions.sort((left, right) =>
         this.#numericValue(left.value)! - this.#numericValue(right.value)!
       ))
+    });
+  }
+
+  #complexSymbolicQuadraticSolutions(
+    equation: EqualityNode,
+    target: string,
+    residual: Polynomial,
+    domainConditions: readonly Condition[]
+  ): SolveResult {
+    const a = residual.get(2)!;
+    const b = residual.get(1) ?? this.#constant(0);
+    const c = residual.get(0) ?? this.#constant(0);
+    const discriminant = this.#dependencies.symbolicKernel.simplify(
+      this.#subtractNodes(
+        this.#powerNode(b, 2),
+        this.#multiplyNodes(this.#constant(4), this.#multiplyNodes(a, c))
+      )
+    );
+    const conditions = this.#dependencies.symbolicKernel.normalizeConditions([
+      ...domainConditions,
+      this.#dependencies.symbolicKernel.condition('nonzero', a)
+    ]);
+    if (conditions.contradictory) {
+      return contradiction(target, domainConditions);
+    }
+    const denominator = this.#multiplyNodes(this.#constant(2), a);
+    const negativeB = this.#negateNode(b);
+    const squareRoot = this.#function('sqrt', [discriminant]);
+    const candidates = [
+      this.#divideNodes(this.#addNodes(negativeB, squareRoot), denominator),
+      this.#divideNodes(this.#subtractNodes(negativeB, squareRoot), denominator)
+    ];
+    this.#limit ??= this.#context.consume('branches', candidates.length);
+    if (this.#limit) {
+      return this.#limit;
+    }
+    const unique = new Map<string, Solution>();
+    for (const candidate of candidates) {
+      this.#limit ??= this.#context.consume('candidates');
+      if (this.#limit) {
+        return this.#limit;
+      }
+      const value = this.#algebraicSimplify(candidate);
+      const key = value.toString({parenthesis: 'all'});
+      unique.set(key, Object.freeze({
+        value,
+        conditions: conditions.conditions,
+        exact: true,
+        verification: Object.freeze({
+          status: 'proven',
+          evidence: Object.freeze({method: 'construction'})
+        })
+      }));
+    }
+    return Object.freeze({
+      kind: 'partial',
+      target,
+      solutions: Object.freeze([...unique.values()]),
+      remainder: equation,
+      reason: 'verification-inconclusive',
+      scope: createSearchScope('complex', 'partial')
     });
   }
 
@@ -1611,6 +1722,10 @@ export class PolynomialEngine {
     options?: SolveOptions,
     maximumDegree?: number
   ): SolveResult {
+    const complexDomain = options?.domain === 'complex';
+    if (complexDomain && options?.interval) {
+      return unsupportedResult(target, 'unsupported-domain');
+    }
     this.#context = new SolverContext(target, options);
     this.#limit = this.#context.preflight(equation);
     if (this.#limit) {
@@ -1639,10 +1754,17 @@ export class PolynomialEngine {
     if (maximumDegree !== undefined && degree > maximumDegree) {
       return unsupportedResult(target, 'no-rule');
     }
-    const domain = this.#dependencies.symbolicKernel.normalizeConditions([
+    const rawDomainConditions = [
       ...this.#dependencies.symbolicKernel.conditionsForDefinedness(equation.lhs),
       ...this.#dependencies.symbolicKernel.conditionsForDefinedness(equation.rhs)
-    ]);
+    ];
+    const domain = this.#dependencies.symbolicKernel.normalizeConditions(
+      complexDomain
+        ? rawDomainConditions.filter((condition) =>
+          condition.kind === 'nonzero' || condition.kind === 'defined'
+        )
+        : rawDomainConditions
+    );
     if (domain.contradictory) {
       return contradiction(target);
     }
@@ -1660,6 +1782,20 @@ export class PolynomialEngine {
     const coefficientsAreNumeric = [...residual.values()].every((coefficient) =>
       this.#numericValue(coefficient) !== null
     );
+    if (complexDomain && degree >= 2 && coefficientsAreNumeric) {
+      const degreeLimit = this.#context.checkNumericPolynomialDegree(degree);
+      if (degreeLimit) {
+        return degreeLimit;
+      }
+      return this.#numericPolynomialSolutions(
+        equation,
+        target,
+        residual,
+        degree,
+        domain.conditions,
+        options
+      );
+    }
     if (degree > 4) {
       if (!coefficientsAreNumeric) {
         const degreeLimit = this.#context.checkPolynomialDegree(degree);
@@ -1683,6 +1819,14 @@ export class PolynomialEngine {
       return polynomialDegreeLimit;
     }
     if (degree === 2) {
+      if (complexDomain) {
+        return this.#complexSymbolicQuadraticSolutions(
+          equation,
+          target,
+          residual,
+          domain.conditions
+        );
+      }
       return this.#quadraticSolutions(
         equation,
         target,
@@ -1692,6 +1836,9 @@ export class PolynomialEngine {
       );
     }
     if (degree === 3) {
+      if (complexDomain) {
+        return unsupportedResult(target, 'no-rule');
+      }
       return this.#cubicSolutions(
         equation,
         target,
@@ -1701,6 +1848,9 @@ export class PolynomialEngine {
       );
     }
     if (degree === 4) {
+      if (complexDomain) {
+        return unsupportedResult(target, 'no-rule');
+      }
       return this.#quarticSolutions(
         equation,
         target,
@@ -1774,6 +1924,7 @@ export const createPolynomialSolve = customFactory(
   'polynomialSolve',
   [
     'ConstantNode',
+    'complex',
     'EqualityNode',
     'FunctionNode',
     'OperatorNode',

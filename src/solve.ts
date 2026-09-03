@@ -106,6 +106,19 @@ export function solveEquation(
   if (limit) {
     return finish(limit);
   }
+  if (options?.domain === 'complex') {
+    const polynomial = dependencies.polynomialSolve(equation, target, options);
+    trace({
+      stage: 'dispatch',
+      rule: 'complex-polynomial',
+      outcome: polynomial.kind
+    });
+    return finish(
+      polynomial.kind === 'unsupported' && polynomial.reason === 'no-rule'
+        ? unsupportedResult(target, 'unsupported-domain')
+        : polynomial
+    );
+  }
   const isolated = dependencies.isolateEquation(equation, target, options);
   trace({
     stage: 'dispatch',

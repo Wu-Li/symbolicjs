@@ -61,6 +61,31 @@ function asFiniteNumber(value: unknown): number | null {
   return null;
 }
 
+interface FiniteScalar {
+  readonly re: number;
+  readonly im: number;
+}
+
+function asFiniteScalar(value: unknown): FiniteScalar | null {
+  const real = asFiniteNumber(value);
+  if (real !== null) {
+    return {re: real, im: 0};
+  }
+  if (
+    value &&
+    typeof value === 'object' &&
+    're' in value &&
+    'im' in value &&
+    typeof value.re === 'number' &&
+    typeof value.im === 'number' &&
+    Number.isFinite(value.re) &&
+    Number.isFinite(value.im)
+  ) {
+    return {re: value.re, im: value.im};
+  }
+  return null;
+}
+
 function constantNodeValue(node: MathNode): number | null {
   if (nodeSymbols(node).length > 0) {
     return null;
@@ -76,14 +101,15 @@ function conditionHolds(condition: Condition, scope: Record<string, number>): bo
   try {
     const value = condition.expression.compile().evaluate(scope);
     const numeric = asFiniteNumber(value);
+    const scalar = asFiniteScalar(value);
     switch (condition.kind) {
-      case 'zero': return numeric === 0;
-      case 'nonzero': return numeric !== null && numeric !== 0;
+      case 'zero': return scalar !== null && scalar.re === 0 && scalar.im === 0;
+      case 'nonzero': return scalar !== null && (scalar.re !== 0 || scalar.im !== 0);
       case 'positive': return numeric !== null && numeric > 0;
       case 'nonnegative': return numeric !== null && numeric >= 0;
       case 'negative': return numeric !== null && numeric < 0;
       case 'nonpositive': return numeric !== null && numeric <= 0;
-      case 'defined': return numeric !== null || typeof value === 'boolean';
+      case 'defined': return scalar !== null || typeof value === 'boolean';
     }
   } catch {
     return false;
@@ -98,14 +124,19 @@ function constantConditionHolds(condition: Condition): boolean | null {
 }
 
 function isClose(lhs: unknown, rhs: unknown, tolerance: number): boolean | null {
-  const left = asFiniteNumber(lhs);
-  const right = asFiniteNumber(rhs);
+  const left = asFiniteScalar(lhs);
+  const right = asFiniteScalar(rhs);
   if (left === null || right === null) {
     return typeof lhs === 'boolean' && typeof rhs === 'boolean'
       ? lhs === rhs
       : null;
   }
-  return Math.abs(left - right) <= tolerance * Math.max(1, Math.abs(left), Math.abs(right));
+  const distance = Math.hypot(left.re - right.re, left.im - right.im);
+  return distance <= tolerance * Math.max(
+    1,
+    Math.hypot(left.re, left.im),
+    Math.hypot(right.re, right.im)
+  );
 }
 
 export class SymbolicKernel {
@@ -129,7 +160,14 @@ export class SymbolicKernel {
   }
 
   simplify(node: MathNode): MathNode {
-    return this.#simplifyCore(node) as MathNode;
+    try {
+      return this.#simplifyCore(node) as MathNode;
+    } catch {
+      // MathJS 15 cannot always convert an evaluated Complex value back into
+      // a node (for example, simplifyCore(sqrt(-1))). Keeping the original
+      // immutable tree is the conservative symbolic result.
+      return node;
+    }
   }
 
   condition(kind: ConditionKind, expression: MathNode): Condition {
@@ -269,8 +307,8 @@ export class SymbolicKernel {
       [lhs, rhs]
     ));
     if (isConstantNode(residual)) {
-      const value = asFiniteNumber(residual.value);
-      return value === 0
+      const value = asFiniteScalar(residual.value);
+      return value !== null && value.re === 0 && value.im === 0
         ? frozenVerification('proven')
         : frozenVerification('rejected', 'nonzero-residual');
     }
