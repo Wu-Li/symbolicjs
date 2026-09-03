@@ -6,6 +6,7 @@ import {createSolveEquation} from './solve.js';
 import {createSymbolicKernel} from './kernel.js';
 import {createIsolateEquation} from './isolate.js';
 import {createPolynomialSolve} from './polynomial.js';
+import {createSolveEquationForAll} from './solve-all.js';
 import type {symbolicjsInstance} from './types.js';
 
 export const symbolicjsFactories = [
@@ -15,7 +16,8 @@ export const symbolicjsFactories = [
   createSymbolicKernel,
   createIsolateEquation,
   createPolynomialSolve,
-  createSolveEquation
+  createSolveEquation,
+  createSolveEquationForAll
 ] as const;
 
 export function importsymbolicjs(math: MathJsInstance): symbolicjsInstance {

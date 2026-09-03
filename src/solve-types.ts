@@ -21,6 +21,28 @@ export interface VerificationResult {
   readonly reason?: string;
 }
 
+export type SolveTraceStage =
+  | 'analysis'
+  | 'dispatch'
+  | 'verification'
+  | 'result';
+
+export interface SolveTraceStep {
+  readonly stage: SolveTraceStage;
+  readonly rule: string;
+  readonly expression?: string;
+  readonly conditions?: readonly string[];
+  readonly outcome?: string;
+}
+
+export interface SolveDiagnostics {
+  readonly steps: readonly SolveTraceStep[];
+}
+
+interface DiagnosableResult {
+  readonly diagnostics?: SolveDiagnostics;
+}
+
 export interface Solution {
   readonly value: MathNode;
   readonly conditions: readonly Condition[];
@@ -28,19 +50,19 @@ export interface Solution {
   readonly verification: VerificationResult;
 }
 
-export interface FiniteSolutions {
+export interface FiniteSolutions extends DiagnosableResult {
   readonly kind: 'finite';
   readonly target: string;
   readonly solutions: readonly Solution[];
 }
 
-export interface IdentityResult {
+export interface IdentityResult extends DiagnosableResult {
   readonly kind: 'identity';
   readonly target: string;
   readonly conditions: readonly Condition[];
 }
 
-export interface ContradictionResult {
+export interface ContradictionResult extends DiagnosableResult {
   readonly kind: 'contradiction';
   readonly target: string;
   readonly conditions: readonly Condition[];
@@ -54,7 +76,7 @@ export type UnsupportedReason =
   | 'symbolic-cubic'
   | 'verification-inconclusive';
 
-export interface PartialResult {
+export interface PartialResult extends DiagnosableResult {
   readonly kind: 'partial';
   readonly target: string;
   readonly solutions: readonly Solution[];
@@ -62,7 +84,7 @@ export interface PartialResult {
   readonly reason: UnsupportedReason;
 }
 
-export interface UnsupportedResult {
+export interface UnsupportedResult extends DiagnosableResult {
   readonly kind: 'unsupported';
   readonly target: string;
   readonly reason: UnsupportedReason;
@@ -78,7 +100,7 @@ export type LimitKind =
   | 'numeric-iterations'
   | 'total-work';
 
-export interface LimitResult {
+export interface LimitResult extends DiagnosableResult {
   readonly kind: 'limit';
   readonly target: string;
   readonly limit: LimitKind;
@@ -106,6 +128,7 @@ export interface SolverLimits {
 export interface SolveOptions {
   readonly limits?: Partial<SolverLimits>;
   readonly tolerance?: number;
+  readonly diagnostics?: boolean;
 }
 
 export const DEFAULT_SOLVER_LIMITS: SolverLimits = Object.freeze({

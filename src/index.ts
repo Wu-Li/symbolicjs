@@ -20,6 +20,11 @@ export {createIsolateEquation, IsolationEngine} from './isolate.js';
 export {createPolynomialSolve, PolynomialEngine} from './polynomial.js';
 export {createSolveEquation, solveEquation} from './solve.js';
 export {
+  createSolveEquationForAll,
+  ReadonlyResultMap,
+  solveEquationForAll
+} from './solve-all.js';
+export {
   DEFAULT_SOLVER_LIMITS,
   DEFAULT_SOLVE_TOLERANCE
 } from './solve-types.js';
@@ -43,8 +48,11 @@ export type {
   LimitResult,
   PartialResult,
   Solution,
+  SolveDiagnostics,
   SolveOptions,
   SolveResult,
+  SolveTraceStage,
+  SolveTraceStep,
   SolverLimits,
   UnsupportedReason,
   UnsupportedResult,

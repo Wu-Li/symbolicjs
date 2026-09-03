@@ -32,6 +32,10 @@ export interface symbolicjsInstance extends MathJsInstance {
     target: string,
     options?: SolveOptions
   ): SolveResult;
+  solveEquationForAll(
+    equation: EqualityNode | string,
+    options?: SolveOptions
+  ): ReadonlyMap<string, SolveResult>;
 }
 
 export interface EqualityNodeDependencies {
