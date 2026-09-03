@@ -98,7 +98,6 @@ describe('rational normalization', () => {
 
 describe('polynomial boundaries and limits', () => {
   it.each([
-    'x^2 + x =:= 1',
     'sin(x) + x =:= 0',
     'x^a + x =:= 0',
     'x^1.5 + x =:= 0',
@@ -127,6 +126,7 @@ describe('polynomial boundaries and limits', () => {
     const math = createMath();
     const engine = new PolynomialEngine({
       ConstantNode: math.ConstantNode,
+      FunctionNode: math.FunctionNode,
       OperatorNode: math.OperatorNode,
       SymbolNode: math.SymbolNode,
       symbolicKernel: math.symbolicKernel
@@ -135,5 +135,16 @@ describe('polynomial boundaries and limits', () => {
     expect(engine.debugPolynomial(math.parse('2*x + 3'), 'x'))
       .toContain('x');
     expect(engine.debugPolynomial(math.parse('sin(x)'), 'x')).toBeNull();
+    const equation = math.parseEquation('x*x + x =:= 0');
+    expect(engine.solve(equation, 'x', {limits: {inputNodes: 0}})).toEqual({
+      kind: 'limit',
+      target: 'x',
+      limit: 'input-nodes'
+    });
+    expect(engine.solve(equation, 'x', undefined, 1)).toEqual({
+      kind: 'unsupported',
+      target: 'x',
+      reason: 'no-rule'
+    });
   });
 });

@@ -34,6 +34,7 @@ interface RationalPolynomial {
 
 interface PolynomialDependencies {
   ConstantNode: MathJsInstance['ConstantNode'];
+  FunctionNode: MathJsInstance['FunctionNode'];
   OperatorNode: MathJsInstance['OperatorNode'];
   SymbolNode: MathJsInstance['SymbolNode'];
   symbolicKernel: SymbolicKernel;
@@ -83,6 +84,13 @@ export class PolynomialEngine {
 
   #operator(op: string, fn: string, args: MathNode[]): MathNode {
     return new this.#dependencies.OperatorNode(op as never, fn as never, args);
+  }
+
+  #function(name: string, args: MathNode[]): MathNode {
+    return new this.#dependencies.FunctionNode(
+      new this.#dependencies.SymbolNode(name),
+      args
+    );
   }
 
   #numericValue(node: MathNode): number | null {
@@ -320,11 +328,111 @@ export class PolynomialEngine {
     });
   }
 
+  #quadraticSolutions(
+    equation: EqualityNode,
+    target: string,
+    residual: Polynomial,
+    domainConditions: readonly Condition[],
+    options?: SolveOptions
+  ): SolveResult {
+    const a = residual.get(2)!;
+    const b = residual.get(1) ?? this.#constant(0);
+    const c = residual.get(0) ?? this.#constant(0);
+    const aValue = this.#numericValue(a);
+    const discriminant = this.#dependencies.symbolicKernel.simplify(
+      this.#operator('-', 'subtract', [
+        this.#operator('^', 'pow', [b, this.#constant(2)]),
+        this.#operator('*', 'multiply', [
+          this.#constant(4),
+          this.#operator('*', 'multiply', [a, c])
+        ])
+      ])
+    );
+    const discriminantValue = this.#numericValue(discriminant);
+    if (discriminantValue !== null && discriminantValue < 0) {
+      return contradiction(target, domainConditions);
+    }
+
+    const commonConditions = [...domainConditions];
+    if (aValue === null) {
+      commonConditions.push(this.#dependencies.symbolicKernel.condition('nonzero', a));
+    }
+    if (discriminantValue === null) {
+      commonConditions.push(this.#dependencies.symbolicKernel.condition(
+        'nonnegative',
+        discriminant
+      ));
+    }
+    const denominator = this.#operator('*', 'multiply', [this.#constant(2), a]);
+    const negativeB = this.#operator('-', 'unaryMinus', [b]);
+    const root = this.#function('sqrt', [discriminant]);
+    const candidates = discriminantValue === 0
+      ? [this.#operator('/', 'divide', [negativeB, denominator])]
+      : [
+        this.#operator('/', 'divide', [
+          this.#operator('+', 'add', [negativeB, root]),
+          denominator
+        ]),
+        this.#operator('/', 'divide', [
+          this.#operator('-', 'subtract', [negativeB, root]),
+          denominator
+        ])
+      ];
+    if (candidates.length > 1) {
+      this.#limit ??= this.#context.consume('branches', candidates.length);
+      if (this.#limit) {
+        return this.#limit;
+      }
+    }
+
+    const unique = new Map<string, Solution>();
+    for (const candidate of candidates) {
+      this.#limit ??= this.#context.consume('candidates');
+      if (this.#limit) {
+        return this.#limit;
+      }
+      const solution = this.#solution(
+        equation,
+        target,
+        candidate,
+        commonConditions,
+        options?.tolerance ?? DEFAULT_SOLVE_TOLERANCE
+      );
+      if (solution) {
+        unique.set(
+          this.#dependencies.symbolicKernel.canonicalKey(solution.value),
+          solution
+        );
+      }
+    }
+    const solutions = Object.freeze([...unique.values()].sort((left, right) =>
+      this.#dependencies.symbolicKernel.canonicalKey(left.value)
+        .localeCompare(this.#dependencies.symbolicKernel.canonicalKey(right.value))
+    ));
+    if (solutions.length === 0) {
+      return contradiction(target, domainConditions);
+    }
+    const conditional =
+      aValue === null ||
+      discriminantValue === null ||
+      solutions.some((solution) => solution.verification.status !== 'proven');
+    if (conditional) {
+      return Object.freeze({
+        kind: 'partial',
+        target,
+        solutions,
+        remainder: equation,
+        reason: 'verification-inconclusive'
+      });
+    }
+    return Object.freeze({kind: 'finite', target, solutions});
+  }
+
   solve(
     equation: EqualityNode,
     target: string,
     options?: SolveOptions,
-    maximumDegree = 1
+    maximumDegree = 2
   ): SolveResult {
     this.#context = new SolverContext(target, options);
     this.#limit = this.#context.preflight(equation);
@@ -371,6 +479,15 @@ export class PolynomialEngine {
         return contradiction(target, domain.conditions);
       }
       return unsupportedResult(target, 'no-rule');
+    }
+    if (degree === 2) {
+      return this.#quadraticSolutions(
+        equation,
+        target,
+        residual,
+        domain.conditions,
+        options
+      );
     }
 
     const coefficient = residual.get(1)!;
@@ -435,7 +552,13 @@ export class PolynomialEngine {
 
 export const createPolynomialSolve = customFactory(
   'polynomialSolve',
-  ['ConstantNode', 'OperatorNode', 'SymbolNode', 'symbolicKernel'],
+  [
+    'ConstantNode',
+    'FunctionNode',
+    'OperatorNode',
+    'SymbolNode',
+    'symbolicKernel'
+  ],
   (rawDependencies) => {
     const engine = new PolynomialEngine(
       rawDependencies as unknown as PolynomialDependencies
