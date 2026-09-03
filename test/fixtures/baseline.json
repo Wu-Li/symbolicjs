@@ -1,0 +1,19 @@
+[
+  {"id":"constant-equality","equation":"1 =:= 1","target":"x","expectedKind":"unsupported","provenance":{"kind":"regression","source":"symbolicjs-0.1.0"}},
+  {"id":"affine","equation":"x + 1 =:= 2","target":"x","expectedKind":"finite","provenance":{"kind":"regression","source":"symbolicjs-0.1.0"}},
+  {"id":"zero-identity","equation":"0*x =:= 0","target":"x","expectedKind":"identity","provenance":{"kind":"regression","source":"symbolicjs-0.1.0"}},
+  {"id":"zero-contradiction","equation":"0*x =:= 1","target":"x","expectedKind":"contradiction","provenance":{"kind":"regression","source":"symbolicjs-0.1.0"}},
+  {"id":"conditional-affine","equation":"a*x =:= b","target":"x","expectedKind":"partial","provenance":{"kind":"regression","source":"symbolicjs-0.1.0"}},
+  {"id":"negative-square-root","equation":"sqrt(x) =:= -1","target":"x","expectedKind":"contradiction","provenance":{"kind":"regression","source":"symbolicjs-0.1.0"}},
+  {"id":"absolute-value","equation":"abs(x) =:= 2","target":"x","expectedKind":"finite","provenance":{"kind":"regression","source":"symbolicjs-0.1.0"}},
+  {"id":"collected-affine","equation":"x + x =:= 2","target":"x","expectedKind":"finite","provenance":{"kind":"regression","source":"symbolicjs-0.1.0"}},
+  {"id":"rational-identity","equation":"x/x =:= 1","target":"x","expectedKind":"identity","provenance":{"kind":"regression","source":"symbolicjs-0.1.0"}},
+  {"id":"rational-contradiction","equation":"x/(x - 1) =:= 1","target":"x","expectedKind":"contradiction","provenance":{"kind":"regression","source":"symbolicjs-0.1.0"}},
+  {"id":"quadratic-real","equation":"x*x - 1 =:= 0","target":"x","expectedKind":"finite","provenance":{"kind":"regression","source":"symbolicjs-0.1.0"}},
+  {"id":"quadratic-no-real","equation":"x*x + 1 =:= 0","target":"x","expectedKind":"contradiction","provenance":{"kind":"regression","source":"symbolicjs-0.1.0"}},
+  {"id":"symbolic-quadratic","equation":"a*x*x + b*x + c =:= 0","target":"x","expectedKind":"partial","provenance":{"kind":"regression","source":"symbolicjs-0.1.0"}},
+  {"id":"numeric-cubic","equation":"x*x*x - x =:= 0","target":"x","expectedKind":"finite","provenance":{"kind":"regression","source":"symbolicjs-0.1.0"}},
+  {"id":"symbolic-cubic","equation":"a*x*x*x - x =:= 0","target":"x","expectedKind":"unsupported","provenance":{"kind":"regression","source":"symbolicjs-0.1.0"}},
+  {"id":"unsupported-transcendental","equation":"sin(x) + x =:= 0","target":"x","expectedKind":"unsupported","provenance":{"kind":"regression","source":"symbolicjs-0.1.0"}}
+]
+

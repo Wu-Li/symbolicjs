@@ -1,32 +1,16 @@
 import {all, create} from 'mathjs';
 import {describe, expect, it} from 'vitest';
 import {importsymbolicjs} from '../src/index.js';
+import {loadAcceptanceFixtures} from './support/acceptance.js';
 
-const cases = [
-  ['1 =:= 1', 'x', 'unsupported'],
-  ['x + 1 =:= 2', 'x', 'finite'],
-  ['0*x =:= 0', 'x', 'identity'],
-  ['0*x =:= 1', 'x', 'contradiction'],
-  ['a*x =:= b', 'x', 'partial'],
-  ['sqrt(x) =:= -1', 'x', 'contradiction'],
-  ['abs(x) =:= 2', 'x', 'finite'],
-  ['x + x =:= 2', 'x', 'finite'],
-  ['x/x =:= 1', 'x', 'identity'],
-  ['x/(x - 1) =:= 1', 'x', 'contradiction'],
-  ['x*x - 1 =:= 0', 'x', 'finite'],
-  ['x*x + 1 =:= 0', 'x', 'contradiction'],
-  ['a*x*x + b*x + c =:= 0', 'x', 'partial'],
-  ['x*x*x - x =:= 0', 'x', 'finite'],
-  ['a*x*x*x - x =:= 0', 'x', 'unsupported'],
-  ['sin(x) + x =:= 0', 'x', 'unsupported']
-] as const;
+const cases = loadAcceptanceFixtures(new URL('./fixtures/baseline.json', import.meta.url));
 
 describe('permanent regression corpus', () => {
-  it.each(cases)('%s for %s is %s', (source, target, expected) => {
+  it.each(cases)('$id', ({equation, target, expectedKind}) => {
     const math = importsymbolicjs(create(all!));
-    const result = math.solveEquation(source, target);
+    const result = math.solveEquation(equation, target);
 
-    expect(result.kind).toBe(expected);
+    expect(result.kind).toBe(expectedKind);
     if (result.kind === 'finite') {
       for (const solution of result.solutions) {
         expect(solution.verification.status).toBe('proven');

@@ -33,6 +33,7 @@ try {
     'utf8'
   ));
   assert.deepEqual(packageJson.files, ['dist', 'docs']);
+  assert.deepEqual(packageJson.dependencies ?? {}, {});
 
   const {all, create} = await import(
     pathToFileURL(join(consumer, 'node_modules/mathjs/lib/esm/index.js')).href
