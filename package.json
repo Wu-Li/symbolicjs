@@ -1,6 +1,6 @@
 {
   "name": "symbolicjs",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Computer algebra extensions for MathJS, beginning with first-class equations.",
   "type": "module",
   "license": "MIT",
