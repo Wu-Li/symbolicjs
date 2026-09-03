@@ -7,8 +7,8 @@ Target runtime: MathJS `>=15.2.0 <16`, Node.js `>=22`
 ## 1. Purpose
 
 This plan expands SymbolicJS from its current real-scalar equation solver into a
-bounded, explainable solver for the remaining equation classes needed to replace
-Nerdamer in Spoke:
+bounded, explainable symbolic framework that follows MathJS extension and node
+design patterns:
 
 - complete real solution families for circular trigonometric equations;
 - conservative normalization of common compound trigonometric equations;
@@ -58,7 +58,7 @@ symbolic coefficient condition, or call a sampled result a proof.
 - Proof of completeness for unrestricted numeric searches on the whole real line.
 - Complex parametric solution families for transcendental functions.
 - A general-purpose identity theorem prover or an unrestricted rewrite engine.
-- Runtime dependence on Nerdamer.
+- Runtime dependence on another computer algebra system.
 
 These boundaries are public contract, not temporary silent failures. Unsupported
 inputs must keep returning typed outcomes.
@@ -85,8 +85,8 @@ inputs must keep returning typed outcomes.
    canonical parameter names, normalized conditions, and reproducible diagnostics.
 9. **No hidden fallback.** Numeric search runs only when the public options permit
    it and, for general functions, only over an explicit interval.
-10. **No Nerdamer coupling.** Nerdamer may be a pinned development-time comparison
-    oracle. It is never imported by production code or shipped in the tarball.
+10. **Independent symbolic layer.** Production behavior must not delegate to or
+    ship another computer algebra system.
 
 ## 4. Proposed result and option contracts
 
@@ -181,36 +181,33 @@ Every stage accepts and returns immutable data. “No rule” advances to the ne
 stage; a contradiction, a complete result, or a resource limit stops dispatch.
 Partial results advance only when the next stage is designed to merge them.
 
-## 6. Upstream algorithm adaptation and provenance
+## 6. Algorithm sources and attribution
 
-Nerdamer is useful reference material, not the architecture. The upstream source
-currently contains:
+The following Nerdamer implementations are potential sources for adapted
+algorithms and are attributed here for that purpose only:
 
 - cubic and quartic formula construction in
   [`Solve.js`](https://github.com/jiggzson/nerdamer/blob/4c0ab018848b80fd7627de4eaa6be0a590019353/Solve.js);
 - high-degree numeric polynomial roots in
-  [`Algebra.js`](https://github.com/jiggzson/nerdamer/blob/4c0ab018848b80fd7627de4eaa6be0a590019353/Algebra.js), including a Jenkins–Traub port;
-- point generation, bisection, and Newton iteration in `Solve.js`;
-- an MIT license carrying the copyright notice “Copyright (c) 2015 Martin Donk.”
+  [`Algebra.js`](https://github.com/jiggzson/nerdamer/blob/4c0ab018848b80fd7627de4eaa6be0a590019353/Algebra.js), including a Jenkins–Traub port.
+
+Nerdamer is MIT-licensed with the notice “Copyright (c) 2015 Martin Donk.” Any
+substantial translation must preserve that notice and the MIT permission text in
+the adapted source file and `THIRD_PARTY_NOTICES.md`.
 
 The implementation policy is:
 
-1. Pin every consulted upstream revision in `docs/algorithm-sources.md`.
-2. Prefer mathematical reimplementation against MathJS nodes when the upstream
-   routine is tightly coupled to Nerdamer's parser, `Symbol`, algebra, or calculus
-   internals.
+1. Pin every adapted source revision in `docs/algorithm-sources.md`.
+2. Prefer mathematical reimplementation against MathJS nodes when an upstream
+   routine depends on a different parser, symbol representation, or algebra engine.
 3. If code structure or substantial code is translated, add a source-file header
    and `THIRD_PARTY_NOTICES.md` containing the required copyright and permission
    notice.
-4. Audit nested provenance before copying. Nerdamer describes its Jenkins–Traub
-   section as a verbatim copy of a David Binner port; direct translation is blocked
-   until that port's license and attribution requirements are recorded. If they
-   cannot be established, independently implement the published algorithm or use
-   another permissively licensed implementation.
-5. Keep Nerdamer, if used, pinned in development dependencies only and exclude it
-   from `files`, runtime imports, bundles, and packed-package smoke tests.
-6. Treat differential results as leads, not truth. Every accepted solution must
-   also pass independent substitution, domain, and completeness checks.
+4. Audit nested provenance before copying. The attributed Jenkins–Traub section is
+   described as a verbatim copy of a David Binner port; direct translation is
+   blocked until that port's license and attribution requirements are recorded. If
+   they cannot be established, independently implement the published algorithm or
+   use another permissively licensed implementation.
 
 ## 7. Chapter execution policy
 
@@ -236,7 +233,7 @@ For every chapter:
 7. Commit exactly that chapter. Do not combine the next chapter's scaffolding.
 
 Documentation-only changes may accompany the chapter whose behavior they describe.
-No chapter is complete based solely on matching Nerdamer output.
+No chapter is complete based solely on matching another implementation's output.
 
 ## 8. Chapter plan
 
@@ -256,7 +253,7 @@ adapted algorithms before changing public solver semantics.
   expected result class, expected roots/families, conditions, and provenance.
 - Add helpers for scale-aware residual measurement, complex distance, family
   instantiation, root-set comparison, and deterministic seeded generation.
-- Separate authoritative fixtures from Nerdamer differential fixtures.
+- Separate authoritative fixtures from non-authoritative differential fixtures.
 - Capture the existing 0.1.0 public behavior so later failures identify intentional
   API changes rather than accidental regressions.
 
@@ -268,7 +265,7 @@ adapted algorithms before changing public solver semantics.
 - Root-set comparison is order independent but preserves multiplicity when asked.
 - Residual checks scale by coefficient/expression magnitude and reject NaN/Infinity.
 - Seeded generators reproduce byte-identical fixture sequences.
-- A pack inspection proves no Nerdamer production dependency or source is shipped.
+- A pack inspection proves no undeclared production dependency or source is shipped.
 - License test verifies every adapted source file named in the provenance manifest
   has the required notice.
 
@@ -480,7 +477,7 @@ solutions while retaining the existing numeric cubic path.
 - Keep numeric cubic as the preferred compact output when every coefficient is
   numeric and the caller has not requested exact form.
 
-**Nerdamer adaptation boundary**
+**Adaptation boundary**
 
 The formula layout in pinned `Solve.js` may guide node construction, but its
 string-parsing and root-of-unity approach must not be copied mechanically. The
@@ -498,8 +495,8 @@ candidate verification.
 - Returned symbolic candidates substitute to zero under valid sampled coefficient
   scopes and fail under deliberately violated conditions.
 - Property tests generate cubics from three known rational roots and compare sets.
-- Differential fixtures compare supported cases with Nerdamer but independently
-  verify every root and document intentional representation differences.
+- Differential fixtures compare supported cases with independent implementations
+  but verify every root and document intentional representation differences.
 - Expression-node, branch, candidate, and total-work limits cover formula growth.
 
 **Exit gate**
@@ -530,7 +527,7 @@ without allowing radical formulas to overwhelm the solver.
   expression-size, and total-work budgets.
 - Prefer compact factored solutions over expanded general radicals.
 
-**Nerdamer adaptation boundary**
+**Adaptation boundary**
 
 Pinned `Solve.js` provides a compact Ferrari formula reference. Translate formulas
 through typed node builders only after verifying every exceptional case (`Q=0`,
@@ -596,16 +593,16 @@ four robustly, with an acceptance target through degree 100.
 - Every admitted real root meets the residual threshold on original coefficients.
 - Property tests generate coefficients from bounded known real roots and complex
   conjugate pairs, then compare degree and multiplicity totals.
-- Differential comparison with Nerdamer `proots` flags differences but never
-  bypasses independent residual and root-count invariants.
+- Differential comparison with independent high-precision root sets flags
+  differences but never bypasses residual and root-count invariants.
 - Fixed benchmarks cap median and worst-case time and memory for the degree suite.
 - Degree, iteration, candidate, and total-work exhaustion return typed limits.
 
 **Exit gate**
 
 The numeric root engine passes the full adversarial corpus through degree 100, has
-documented accuracy semantics, and production code contains the required license
-notices with no Nerdamer runtime dependency.
+documented accuracy semantics, and production code contains every required license
+notice without depending on another algebra engine at runtime.
 
 **Estimated human engineering effort:** 10–18 hours.
 
@@ -634,12 +631,11 @@ claiming an unbounded or unjustified complete solution.
 - Diagnostics report evaluated subintervals, singularities, brackets, rejected
   candidates, and why completeness was or was not established.
 
-**Nerdamer adaptation boundary**
+**Design constraint**
 
-Nerdamer's fixed-radius point generation, sign scan, bisection, and Newton routines
-are useful behavioral references but do not meet this contract: they use implicit
-search bounds and can miss tangent roots. Reuse formulas only where provenance is
-clear; retain none of the hidden global settings or completeness assumptions.
+Fixed-radius point generation, uniform sign scans, and unguarded Newton iteration
+do not meet this contract: they use implicit search assumptions and can miss
+tangent roots. Retain no hidden global settings or unsupported completeness claims.
 
 **Required tests**
 
@@ -709,11 +705,10 @@ public result contract did not intentionally change.
 
 **Estimated human engineering effort:** 6–10 hours.
 
-### Chapter 10 — Dispatcher integration, solve-for-all, and compatibility corpus
+### Chapter 10 — Dispatcher integration, solve-for-all, and public conformance
 
 **Goal:** Integrate every solver path into one deterministic public flow and prove
-that the standalone package covers the equations for which Spoke currently uses
-Nerdamer.
+conformance with SymbolicJS contracts and MathJS extension conventions.
 
 **Deliverables**
 
@@ -721,11 +716,11 @@ Nerdamer.
 - Ensure exact algebra and parametric rules run before optional numeric fallback.
 - Extend `solveForAll` so every member variable receives the same domain, interval,
   limits, and diagnostic policy without shared mutable state.
-- Add an independent, data-only Spoke compatibility corpus containing equations,
-  target variables, expected classifications, and semantic assertions. Do not
-  import Spoke or Nerdamer at runtime.
-- Include Graph Lens-relevant symbol names, equations with units/constants if
-  supported, rational-domain exclusions, and serialization round trips.
+- Add an implementation-neutral conformance corpus containing equations, target
+  variables, expected classifications, and semantic assertions organized by
+  mathematical feature rather than by consuming application.
+- Include unusual valid symbol names, configured MathJS constants and functions,
+  rational-domain exclusions, and serialization round trips.
 - Add stable diagnostic rule IDs for every new dispatch path.
 - Document feature detection and the result-kind migration for downstream clients.
 
@@ -737,7 +732,7 @@ Nerdamer.
 - Partial families and finite candidates merge without duplicates or lost remainder.
 - `solveForAll` is permutation independent and produces no parameter-name capture
   between targets.
-- The Spoke compatibility corpus has zero unclassified cases; any intentionally
+- The public conformance corpus has zero unclassified cases; every intentionally
   unsupported case names its exact missing capability.
 - Persisted equations parse, solve, serialize, deserialize, and solve equivalently.
 - Diagnostics are deterministic snapshots and contain no object addresses or
@@ -746,8 +741,8 @@ Nerdamer.
 
 **Exit gate**
 
-The compatibility report shows whether SymbolicJS can replace each current
-Nerdamer call by equation class, with no result inferred from a bare pass count.
+The conformance report catalogs support by mathematical equation class and public
+result semantics, with no result inferred from a bare pass count.
 
 **Estimated human engineering effort:** 5–8 hours.
 
@@ -765,7 +760,7 @@ Nerdamer call by equation class, with no result inferred from a bare pass count.
 - Establish benchmark baselines and documented safe defaults for every new limit.
 - Document algorithms, accuracy, conditions, completeness, domains, intervals,
   parametric materialization, diagnostics, and unsupported scope.
-- Add migration guides for 0.1.x consumers and for replacing Nerdamer-backed calls.
+- Add migration guides for 0.1.x consumers and for callers moving from a legacy CAS.
 - Verify ESM import, type declarations, clean consumer install, packed tarball
   contents, license notices, and npm provenance workflow.
 - Publish prereleases for API feedback before the stable minor releases.
@@ -875,7 +870,7 @@ Recommended release checkpoints:
 | `0.2.0` | 0–3 | domain/interval contract and complete isolated trig families |
 | `0.3.0` | 4–6 | compound trig plus symbolic cubic and quartic |
 | `0.4.0` | 7–8 | high-degree numeric polynomials and bounded fallback |
-| `0.5.0` | 9–11 | complex polynomials, integrated compatibility, hardening |
+| `0.5.0` | 9–11 | complex polynomials, public conformance, hardening |
 
 Prerelease tags such as `0.2.0-next.0` should validate packed-package consumers
 before each public contract is declared stable. A chapter commit does not itself
@@ -906,7 +901,6 @@ The expansion is complete when:
 - general numeric search requires and respects a finite interval;
 - complex solving is opt-in and limited to documented finite algebraic cases;
 - no result overstates proof or completeness;
-- no production or packed dependency on Nerdamer exists;
+- no production or packed dependency on another algebra engine exists;
 - all adapted code has pinned provenance and compliant attribution;
-- the standalone Spoke compatibility corpus reports no unexplained Nerdamer gap.
-
+- the framework-neutral conformance corpus reports no unexplained contract gap.
