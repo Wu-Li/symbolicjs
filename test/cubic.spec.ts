@@ -96,14 +96,14 @@ describe('numeric cubic fallback', () => {
     )).toBe(true);
   });
 
-  it('rejects symbolic cubic coefficients explicitly', () => {
+  it('dispatches symbolic cubic coefficients to the exact solver', () => {
     const math = createMath();
+    const result = math.solveEquation('a*x*x*x + x =:= 0', 'x');
 
-    expect(math.solveEquation('a*x*x*x + x =:= 0', 'x')).toEqual({
-      kind: 'unsupported',
-      target: 'x',
-      reason: 'symbolic-cubic'
-    });
+    expect(result.kind).toBe('partial');
+    expect(result.kind === 'partial' && result.solutions.every(
+      (solution) => solution.certificate?.kind === 'cubic'
+    )).toBe(true);
   });
 });
 

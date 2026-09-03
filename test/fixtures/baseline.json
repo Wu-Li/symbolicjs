@@ -13,7 +13,6 @@
   {"id":"quadratic-no-real","equation":"x*x + 1 =:= 0","target":"x","expectedKind":"contradiction","provenance":{"kind":"regression","source":"symbolicjs-0.1.0"}},
   {"id":"symbolic-quadratic","equation":"a*x*x + b*x + c =:= 0","target":"x","expectedKind":"partial","provenance":{"kind":"regression","source":"symbolicjs-0.1.0"}},
   {"id":"numeric-cubic","equation":"x*x*x - x =:= 0","target":"x","expectedKind":"finite","provenance":{"kind":"regression","source":"symbolicjs-0.1.0"}},
-  {"id":"symbolic-cubic","equation":"a*x*x*x - x =:= 0","target":"x","expectedKind":"unsupported","provenance":{"kind":"regression","source":"symbolicjs-0.1.0"}},
+  {"id":"symbolic-cubic","equation":"a*x*x*x - x =:= 0","target":"x","expectedKind":"partial","provenance":{"kind":"independent","source":"depressed-cubic discriminant construction"}},
   {"id":"unsupported-transcendental","equation":"sin(x) + x =:= 0","target":"x","expectedKind":"unsupported","provenance":{"kind":"regression","source":"symbolicjs-0.1.0"}}
 ]
-

@@ -35,6 +35,21 @@ export interface VerificationEvidence {
   readonly bracket?: readonly [number, number];
 }
 
+export type CubicConstructionBranch =
+  | 'one-real'
+  | 'triple-root'
+  | 'simple-and-double'
+  | 'three-real';
+
+export interface CubicConstructionCertificate {
+  readonly kind: 'cubic';
+  readonly branch: CubicConstructionBranch;
+  readonly coefficients: readonly [MathNode, MathNode, MathNode, MathNode];
+  readonly depressedLinearCoefficient: MathNode;
+  readonly depressedConstant: MathNode;
+  readonly discriminant: MathNode;
+}
+
 export type ScalarDomain = 'real' | 'complex';
 
 export interface RealInterval {
@@ -84,6 +99,7 @@ export interface Solution {
   readonly exact: boolean;
   readonly verification: VerificationResult;
   readonly multiplicity?: number;
+  readonly certificate?: CubicConstructionCertificate;
 }
 
 export interface IntegerParameter {

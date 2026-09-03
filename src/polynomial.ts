@@ -15,6 +15,8 @@ import {
 import type {
   Condition,
   ContradictionResult,
+  CubicConstructionBranch,
+  CubicConstructionCertificate,
   FiniteSolutions,
   IdentityResult,
   LimitResult,
@@ -36,6 +38,7 @@ interface PolynomialDependencies {
   ConstantNode: MathJsInstance['ConstantNode'];
   FunctionNode: MathJsInstance['FunctionNode'];
   OperatorNode: MathJsInstance['OperatorNode'];
+  simplify: MathJsInstance['simplify'];
   SymbolNode: MathJsInstance['SymbolNode'];
   symbolicKernel: SymbolicKernel;
 }
@@ -107,6 +110,34 @@ export class PolynomialEngine {
       new this.#dependencies.SymbolNode(name),
       args
     );
+  }
+
+  #algebraicSimplify(node: MathNode): MathNode {
+    return this.#dependencies.simplify(node) as MathNode;
+  }
+
+  #addNodes(left: MathNode, right: MathNode): MathNode {
+    return this.#operator('+', 'add', [left, right]);
+  }
+
+  #subtractNodes(left: MathNode, right: MathNode): MathNode {
+    return this.#operator('-', 'subtract', [left, right]);
+  }
+
+  #multiplyNodes(left: MathNode, right: MathNode): MathNode {
+    return this.#operator('*', 'multiply', [left, right]);
+  }
+
+  #divideNodes(left: MathNode, right: MathNode): MathNode {
+    return this.#operator('/', 'divide', [left, right]);
+  }
+
+  #negateNode(value: MathNode): MathNode {
+    return this.#operator('-', 'unaryMinus', [value]);
+  }
+
+  #powerNode(value: MathNode, exponent: number): MathNode {
+    return this.#operator('^', 'pow', [value, this.#constant(exponent)]);
   }
 
   #numericValue(node: MathNode): number | null {
@@ -366,6 +397,290 @@ export class PolynomialEngine {
     });
   }
 
+  #chargeSymbolicNodes(...nodes: readonly MathNode[]): boolean {
+    let count = 0;
+    for (const node of nodes) {
+      node.traverse(() => { count += 1; });
+    }
+    this.#limit ??= this.#context.consume('symbolic-expression-nodes', count);
+    this.#limit ??= this.#context.consume('total-work', count);
+    return this.#limit === null;
+  }
+
+  #cubicCertificate(
+    branch: CubicConstructionBranch,
+    coefficients: readonly [MathNode, MathNode, MathNode, MathNode],
+    p: MathNode,
+    q: MathNode,
+    discriminant: MathNode
+  ): CubicConstructionCertificate {
+    return Object.freeze({
+      kind: 'cubic',
+      branch,
+      coefficients: Object.freeze([...coefficients]) as readonly [
+        MathNode,
+        MathNode,
+        MathNode,
+        MathNode
+      ],
+      depressedLinearCoefficient: p,
+      depressedConstant: q,
+      discriminant
+    });
+  }
+
+  #cubicConstructionSolution(
+    candidate: MathNode,
+    conditions: readonly Condition[],
+    certificate: CubicConstructionCertificate,
+    multiplicity = 1
+  ): Solution | null {
+    const value = this.#algebraicSimplify(candidate);
+    if (!this.#chargeSymbolicNodes(value)) {
+      return null;
+    }
+    const normalized = this.#dependencies.symbolicKernel.normalizeConditions([
+      ...conditions,
+      ...this.#dependencies.symbolicKernel.conditionsForDefinedness(value)
+    ]);
+    if (normalized.contradictory) {
+      return null;
+    }
+    return Object.freeze({
+      value,
+      conditions: normalized.conditions,
+      exact: true,
+      verification: Object.freeze({
+        status: 'proven',
+        evidence: Object.freeze({method: 'construction'})
+      }),
+      multiplicity,
+      certificate
+    });
+  }
+
+  #symbolicCubicSolutions(
+    equation: EqualityNode,
+    target: string,
+    coefficients: readonly [MathNode, MathNode, MathNode, MathNode],
+    domainConditions: readonly Condition[]
+  ): SolveResult {
+    const [a, b, c, d] = coefficients;
+    const three = this.#constant(3);
+    const commonConditions = [...domainConditions];
+    if (this.#numericValue(a) === null) {
+      commonConditions.push(this.#dependencies.symbolicKernel.condition('nonzero', a));
+    }
+
+    const aSquared = this.#powerNode(a, 2);
+    const aCubed = this.#powerNode(a, 3);
+    const bSquared = this.#powerNode(b, 2);
+    const bCubed = this.#powerNode(b, 3);
+    const p = this.#algebraicSimplify(this.#divideNodes(
+      this.#subtractNodes(this.#multiplyNodes(this.#multiplyNodes(three, a), c), bSquared),
+      this.#multiplyNodes(three, aSquared)
+    ));
+    const q = this.#algebraicSimplify(this.#divideNodes(
+      this.#addNodes(
+        this.#subtractNodes(
+          this.#multiplyNodes(this.#constant(2), bCubed),
+          this.#multiplyNodes(
+            this.#multiplyNodes(this.#constant(9), a),
+            this.#multiplyNodes(b, c)
+          )
+        ),
+        this.#multiplyNodes(
+          this.#multiplyNodes(this.#constant(27), aSquared),
+          d
+        )
+      ),
+      this.#multiplyNodes(this.#constant(27), aCubed)
+    ));
+    const halfQ = this.#divideNodes(q, this.#constant(2));
+    const thirdP = this.#divideNodes(p, three);
+    const discriminant = this.#algebraicSimplify(this.#addNodes(
+      this.#powerNode(halfQ, 2),
+      this.#powerNode(thirdP, 3)
+    ));
+    const shift = this.#algebraicSimplify(this.#divideNodes(
+      b,
+      this.#multiplyNodes(three, a)
+    ));
+    if (!this.#chargeSymbolicNodes(p, q, discriminant, shift)) {
+      return this.#limit!;
+    }
+
+    const discriminantValue = this.#numericValue(discriminant);
+    const qValue = this.#numericValue(q);
+    const specifications: {
+      candidate: MathNode;
+      conditions: readonly Condition[];
+      branch: CubicConstructionBranch;
+      multiplicity?: number;
+    }[] = [];
+    const condition = (kind: Condition['kind'], expression: MathNode) =>
+      this.#dependencies.symbolicKernel.condition(kind, expression);
+
+    const addOneReal = (): void => {
+      const rootDiscriminant = this.#function('sqrt', [discriminant]);
+      const negativeHalfQ = this.#negateNode(halfQ);
+      const u = this.#function('nthRoot', [
+        this.#addNodes(negativeHalfQ, rootDiscriminant),
+        this.#constant(3)
+      ]);
+      const v = this.#function('nthRoot', [
+        this.#subtractNodes(negativeHalfQ, rootDiscriminant),
+        this.#constant(3)
+      ]);
+      specifications.push({
+        candidate: this.#subtractNodes(this.#addNodes(u, v), shift),
+        conditions: [...commonConditions, condition('positive', discriminant)],
+        branch: 'one-real'
+      });
+    };
+
+    const addZeroDiscriminant = (): void => {
+      if (qValue === null || qValue === 0) {
+        specifications.push({
+          candidate: this.#negateNode(shift),
+          conditions: [
+            ...commonConditions,
+            condition('zero', discriminant),
+            condition('zero', q)
+          ],
+          branch: 'triple-root',
+          multiplicity: 3
+        });
+      }
+      if (qValue === null || qValue !== 0) {
+        const u = this.#function('nthRoot', [
+          this.#negateNode(halfQ),
+          this.#constant(3)
+        ]);
+        const zeroConditions = [
+          ...commonConditions,
+          condition('zero', discriminant),
+          condition('nonzero', q)
+        ];
+        specifications.push({
+          candidate: this.#subtractNodes(
+            this.#multiplyNodes(this.#constant(2), u),
+            shift
+          ),
+          conditions: zeroConditions,
+          branch: 'simple-and-double'
+        });
+        specifications.push({
+          candidate: this.#subtractNodes(this.#negateNode(u), shift),
+          conditions: zeroConditions,
+          branch: 'simple-and-double',
+          multiplicity: 2
+        });
+      }
+    };
+
+    const addThreeReal = (): void => {
+      const radius = this.#multiplyNodes(
+        this.#constant(2),
+        this.#function('sqrt', [this.#negateNode(thirdP)])
+      );
+      const cosineArgument = this.#algebraicSimplify(this.#multiplyNodes(
+        this.#divideNodes(
+          this.#multiplyNodes(three, q),
+          this.#multiplyNodes(this.#constant(2), p)
+        ),
+        this.#function('sqrt', [this.#divideNodes(this.#constant(-3), p)])
+      ));
+      const theta = this.#divideNodes(
+        this.#function('acos', [cosineArgument]),
+        three
+      );
+      const rangeCondition = condition('nonnegative', this.#subtractNodes(
+        this.#constant(1),
+        this.#powerNode(cosineArgument, 2)
+      ));
+      for (let index = 0; index < 3; index += 1) {
+        const angle = index === 0
+          ? theta
+          : this.#subtractNodes(
+            theta,
+            this.#divideNodes(
+              this.#multiplyNodes(
+                this.#constant(2 * index),
+                new this.#dependencies.SymbolNode('pi')
+              ),
+              three
+            )
+          );
+        specifications.push({
+          candidate: this.#subtractNodes(
+            this.#multiplyNodes(radius, this.#function('cos', [angle])),
+            shift
+          ),
+          conditions: [
+            ...commonConditions,
+            condition('negative', discriminant),
+            condition('negative', p),
+            rangeCondition
+          ],
+          branch: 'three-real'
+        });
+      }
+    };
+
+    if (discriminantValue === null || discriminantValue > 0) {
+      addOneReal();
+    }
+    if (discriminantValue === null || discriminantValue === 0) {
+      addZeroDiscriminant();
+    }
+    if (discriminantValue === null || discriminantValue < 0) {
+      addThreeReal();
+    }
+
+    if (specifications.length > 1) {
+      this.#limit ??= this.#context.consume('branches', specifications.length);
+      if (this.#limit) {
+        return this.#limit;
+      }
+    }
+    const solutions: Solution[] = [];
+    for (const specification of specifications) {
+      this.#limit ??= this.#context.consume('candidates');
+      if (this.#limit) {
+        return this.#limit;
+      }
+      const solution = this.#cubicConstructionSolution(
+        specification.candidate,
+        specification.conditions,
+        this.#cubicCertificate(
+          specification.branch,
+          coefficients,
+          p,
+          q,
+          discriminant
+        ),
+        specification.multiplicity
+      );
+      if (this.#limit) {
+        return this.#limit;
+      }
+      if (solution) {
+        solutions.push(solution);
+      }
+    }
+    if (solutions.length === 0) {
+      return contradiction(target, domainConditions);
+    }
+    return Object.freeze({
+      kind: 'partial',
+      target,
+      solutions: Object.freeze(solutions),
+      remainder: equation,
+      reason: 'verification-inconclusive'
+    });
+  }
+
   #cubicSolutions(
     equation: EqualityNode,
     target: string,
@@ -373,11 +688,19 @@ export class PolynomialEngine {
     domainConditions: readonly Condition[],
     options?: SolveOptions
   ): SolveResult {
-    const coefficients = [3, 2, 1, 0].map((degree) =>
-      this.#numericValue(residual.get(degree) ?? this.#constant(0))
+    const coefficientNodes = [3, 2, 1, 0].map((degree) =>
+      residual.get(degree) ?? this.#constant(0)
+    ) as [MathNode, MathNode, MathNode, MathNode];
+    const coefficients = coefficientNodes.map((coefficient) =>
+      this.#numericValue(coefficient)
     );
     if (coefficients.some((coefficient) => coefficient === null)) {
-      return unsupportedResult(target, 'symbolic-cubic');
+      return this.#symbolicCubicSolutions(
+        equation,
+        target,
+        coefficientNodes,
+        domainConditions
+      );
     }
     const [a, b, c, d] = coefficients as [number, number, number, number];
     const tolerance = options?.tolerance ?? DEFAULT_SOLVE_TOLERANCE;
@@ -730,6 +1053,7 @@ export const createPolynomialSolve = customFactory(
     'ConstantNode',
     'FunctionNode',
     'OperatorNode',
+    'simplify',
     'SymbolNode',
     'symbolicKernel'
   ],

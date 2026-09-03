@@ -62,6 +62,8 @@ export type {
   Condition,
   ConditionKind,
   ContradictionResult,
+  CubicConstructionBranch,
+  CubicConstructionCertificate,
   FiniteSolutions,
   IdentityResult,
   IntegerParameter,

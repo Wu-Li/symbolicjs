@@ -126,6 +126,7 @@ describe('polynomial boundaries and limits', () => {
       ConstantNode: math.ConstantNode,
       FunctionNode: math.FunctionNode,
       OperatorNode: math.OperatorNode,
+      simplify: math.simplify,
       SymbolNode: math.SymbolNode,
       symbolicKernel: math.symbolicKernel
     });

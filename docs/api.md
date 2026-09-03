@@ -51,8 +51,10 @@ the real scalar domain by default and returns a discriminated union:
 - `limit`: a deterministic safety budget stopped the operation.
 
 Every solution contains a MathJS `value`, domain `conditions`, an `exact` flag,
-and a verification result. Numeric cubic roots are approximate; symbolic linear
-and quadratic expressions are exact.
+and a verification result. Numeric cubic roots are approximate; symbolic linear,
+quadratic, and cubic expressions are exact. Symbolic cubic solutions also expose
+a frozen construction certificate containing the original coefficients, depressed
+cubic coefficients, discriminant, and selected real branch.
 
 The options contract accepts `domain: 'real' | 'complex'`, a finite real
 `interval`, and `numericFallback`. Unsupported domain-specific behavior remains a
@@ -109,6 +111,8 @@ interval subdivisions, numeric iterations, and total work.
 - Rational normalization with denominator exclusions.
 - Symbolic affine and quadratic equations.
 - Numeric-coefficient cubics with real roots.
+- Conditional exact real roots for target-free symbolic-coefficient cubics,
+  including repeated-root and three-real-root discriminant branches.
 - Complete real parametric families for isolated `sin`, `cos`, `tan`, `sec`,
   `csc`, and `cot` with affine inner arguments.
 - Principal-range inversion of `asin`, `acos`, and `atan`.
@@ -117,5 +121,5 @@ interval subdivisions, numeric iterations, and total work.
   `A*sin(u)+B*cos(u)=C` equations.
 
 Mixed-frequency trigonometric identities, simultaneous systems, inequalities,
-symbolic cubics, matrices, units, and general complex branch analysis are
+matrices, units, and general complex branch analysis are
 unsupported.
