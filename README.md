@@ -3,8 +3,7 @@
 Computer algebra extensions for [MathJS](https://mathjs.org/), beginning with
 first-class equations.
 
-> Early development release. The initial package provides the equation node and
-> parser boundary; solving is the next milestone.
+> Early development release. The package API may change before 1.0.0.
 
 ## Install
 
@@ -23,6 +22,9 @@ first-class equations.
     equation.rhs.toString(); // 'y / 2'
     equation.toString();     // 'x + 1 =:= y / 2'
     equation.toTex();        // MathJS LaTeX joined by '='
+
+    const result = math.solveEquation('x*x - 5*x + 6 =:= 0', 'x');
+    // result.kind === 'finite'; roots are 2 and 3
 
 The lower-level factory array can be imported directly when an application
 manages its own MathJS instance typing:
@@ -54,7 +56,7 @@ The package does not monkey-patch or silently replace **math.parse**. Ordinary
 MathJS parsing, including assignment parsing, remains unchanged.
 Assignments and function assignments are rejected inside equation sides.
 
-## Initial API
+## API
 
 - **importsymbolicjs(math)** imports the symbolicjs factories and returns the same
   instance with typed **EqualityNode** and **parseEquation** members.
@@ -63,25 +65,32 @@ Assignments and function assignments are rejected inside equation sides.
 - **splitEquation(expression)** validates and splits one top-level **=:=**.
 - **isEqualityNode(value)** is the runtime type guard.
 - **EQUALITY_OPERATOR** is the canonical **=:=** token.
+- **equationSymbols(equation)** returns sorted free member symbols.
+- **solveEquation(equation, target, options?)** solves for one target.
+- **solveEquationForAll(equation, options?)** independently attempts every
+  member symbol and returns an immutable result map.
 
 **EqualityNode** supports MathJS traversal, transformation, cloning,
 compilation, equality evaluation, string output, LaTeX output, HTML output, and
 its own JSON codec.
 
-## Roadmap
+See the [API guide](docs/api.md), [implementation plan](docs/implementation-plan.md),
+and [security guidance](docs/security.md) for result types, supported families,
+limits, and integration details.
 
-1. First-class equality node, parser boundary, formatting, and serialization.
-2. Symbol discovery, immutable substitution, conservative simplification,
-   domain conditions, and candidate verification.
-3. Single-occurrence isolation for arithmetic, powers, roots, exponential,
-   logarithm, and absolute value.
-4. Target-relative rational and polynomial normalization, with symbolic linear
-   and quadratic solving.
-5. Typed solve cases for finite roots, identities, contradictions, conditions,
-   partial results, unsupported families, and complexity limits.
-6. Numeric cubic fallback when all coefficients are numeric.
+## Implemented solver scope
 
-The initial solver domain will be real scalar equations. Periodic
+- First-class equality nodes, parsing, formatting, and serialization.
+- Symbol discovery, immutable substitution, conservative simplification,
+  domain conditions, candidate verification, and deterministic limits.
+- Single-occurrence isolation for arithmetic, powers, roots, exponential,
+  logarithm, and absolute value.
+- Target-relative rational normalization and symbolic affine/quadratic solving.
+- Numeric cubic fallback when every coefficient is numeric.
+- Typed finite, identity, contradiction, partial, unsupported, and limit results.
+- Independent solve-for-all orchestration and opt-in diagnostics.
+
+The solver domain is real scalar equations. Periodic
 trigonometric families, simultaneous systems, matrices, units, and a general
 equivalence prover are not part of the first solver release.
 
@@ -91,11 +100,15 @@ Requires Node 22 or newer.
 
     npm install
     npm run check
+    npm run test:benchmark
     npm run pack:dry
 
 The package is tested independently of any consuming application. MathJS is a
 peer dependency and is pinned to 15.2.0 in development so the node contract is
 tested against a known implementation.
+
+The stable-release requirements are tracked in the
+[release checklist](docs/release-checklist.md).
 
 ## Publishing
 

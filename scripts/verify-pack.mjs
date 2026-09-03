@@ -32,7 +32,7 @@ try {
     join(consumer, 'node_modules/symbolicjs/package.json'),
     'utf8'
   ));
-  assert.deepEqual(packageJson.files, ['dist']);
+  assert.deepEqual(packageJson.files, ['dist', 'docs']);
 
   const {all, create} = await import(
     pathToFileURL(join(consumer, 'node_modules/mathjs/lib/esm/index.js')).href
@@ -46,6 +46,10 @@ try {
   assert.equal(equation.type, 'EqualityNode');
   assert.equal(equation.toString(), 'x + 1 =:= 3');
   assert.equal(equation.compile().evaluate({x: 2}), true);
+  const solved = math.solveEquation('x*x - 1 =:= 0', 'x');
+  assert.equal(solved.kind, 'finite');
+  assert.equal(solved.solutions.length, 2);
+  assert.deepEqual([...math.solveEquationForAll('x + y =:= 1').keys()], ['x', 'y']);
 } finally {
   rmSync(temporary, {recursive: true, force: true});
 }

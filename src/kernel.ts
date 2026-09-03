@@ -219,7 +219,18 @@ export class SymbolicKernel {
   }
 
   canonicalKey(node: MathNode): string {
-    return this.simplify(node).toString({parenthesis: 'all'});
+    const simplified = this.simplify(node);
+    if (nodeSymbols(simplified).length === 0) {
+      try {
+        const value = asFiniteNumber(simplified.compile().evaluate());
+        if (value !== null) {
+          return 'number:' + (value === 0 ? '0' : value.toString());
+        }
+      } catch {
+        // Fall through to the structural key.
+      }
+    }
+    return simplified.toString({parenthesis: 'all'});
   }
 
   verify(

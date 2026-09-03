@@ -354,8 +354,12 @@ export class PolynomialEngine {
       normalized.conditions,
       tolerance
     );
+    let value = this.#dependencies.symbolicKernel.simplify(candidate);
+    if (this.#numericValue(value) === 0) {
+      value = this.#constant(0);
+    }
     return verification.status === 'rejected' ? null : Object.freeze({
-      value: this.#dependencies.symbolicKernel.simplify(candidate),
+      value,
       conditions: normalized.conditions,
       exact,
       verification
