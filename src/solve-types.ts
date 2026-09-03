@@ -91,12 +91,22 @@ export interface IntegerParameter {
   readonly domain: 'integer';
 }
 
+export interface PeriodicFamilyCertificate {
+  readonly kind: 'periodic';
+  readonly functionName: string;
+  readonly inverseFunction: string;
+  readonly period: MathNode;
+  readonly inner: MathNode;
+  readonly branch: string;
+}
+
 export interface ParametricFamily {
   readonly value: MathNode;
   readonly parameters: readonly IntegerParameter[];
   readonly conditions: readonly Condition[];
   readonly exact: true;
   readonly verification: VerificationResult;
+  readonly certificate?: PeriodicFamilyCertificate;
 }
 
 export interface ParametricSolutions extends DiagnosableResult {
@@ -339,7 +349,10 @@ export function parametricResult(
         ...parameter
       }))),
       conditions: Object.freeze([...family.conditions]),
-      verification
+      verification,
+      ...(family.certificate === undefined ? {} : {certificate: Object.freeze({
+        ...family.certificate
+      })})
     });
   }));
   return Object.freeze({

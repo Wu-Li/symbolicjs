@@ -25,6 +25,14 @@ export {
   solveEquationForAll
 } from './solve-all.js';
 export {
+  allocateIntegerParameter,
+  createCanonicalizeParametricFamilies,
+  createInstantiateFamily,
+  createMaterializeSolutions,
+  createVerifyParametricFamily,
+  ParametricEngine
+} from './parametric.js';
+export {
   DEFAULT_SOLVER_LIMITS,
   DEFAULT_SOLVE_TOLERANCE,
   createSearchScope,
@@ -52,6 +60,7 @@ export type {
   ParametricFamily,
   ParametricSolutions,
   PartialResult,
+  PeriodicFamilyCertificate,
   RealInterval,
   ScalarDomain,
   SearchCompleteness,

@@ -1,5 +1,13 @@
 import type {MathJsInstance, MathNode, NodeCtor} from 'mathjs';
-import type {SolveOptions, SolveResult} from './solve-types.js';
+import type {
+  ParametricFamily,
+  ParametricSolutions,
+  PartialResult,
+  RealInterval,
+  SolveOptions,
+  SolveResult
+} from './solve-types.js';
+import type {VerificationResult} from './solve-types.js';
 import type {SymbolicKernel} from './kernel.js';
 
 export interface EqualityNode extends MathNode {
@@ -36,6 +44,28 @@ export interface symbolicjsInstance extends MathJsInstance {
     equation: EqualityNode | string,
     options?: SolveOptions
   ): ReadonlyMap<string, SolveResult>;
+  canonicalizeParametricFamilies(
+    families: readonly ParametricFamily[],
+    usedSymbols?: readonly string[]
+  ): readonly ParametricFamily[];
+  instantiateFamily(
+    family: ParametricFamily,
+    assignments: Readonly<Record<string, number>>
+  ): MathNode;
+  materializeSolutions(
+    result: ParametricSolutions | (PartialResult & {
+      readonly families: readonly ParametricFamily[];
+    }),
+    interval: RealInterval,
+    scope?: Readonly<Record<string, unknown>>,
+    options?: SolveOptions
+  ): SolveResult;
+  verifyParametricFamily(
+    equation: EqualityNode,
+    target: string,
+    family: ParametricFamily,
+    integers?: readonly number[]
+  ): VerificationResult;
 }
 
 export interface EqualityNodeDependencies {

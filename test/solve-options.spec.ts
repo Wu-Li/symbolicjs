@@ -21,6 +21,7 @@ describe('solve domains and intervals', () => {
   });
 
   it.each([
+    [null, 'object'],
     [{domain: 'integer'}, 'domain'],
     [{numericFallback: 1}, 'numericFallback'],
     [{diagnostics: 'yes'}, 'diagnostics'],
@@ -90,6 +91,9 @@ describe('normalized public metadata', () => {
       upper: 1
     })).toThrow('real domain');
     expect(() => createSearchScope('real', 'complete-in-interval')).toThrow('interval');
+    expect(() => createSearchScope('integer' as never, 'complete')).toThrow('domain');
+    expect(() => createSearchScope('real', 'unknown' as never)).toThrow('completeness');
+    expect(() => normalizeRealInterval(null as never)).toThrow('object');
   });
 
   it('deep-freezes the reserved parametric result shape', () => {
@@ -117,4 +121,3 @@ describe('normalized public metadata', () => {
     expect(Object.isFrozen(result.families[0]?.verification.evidence?.bracket)).toBe(true);
   });
 });
-

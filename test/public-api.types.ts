@@ -2,6 +2,11 @@ import {all, create} from 'mathjs';
 import {
   EQUALITY_NODE_NAME,
   EQUALITY_OPERATOR,
+  allocateIntegerParameter,
+  createCanonicalizeParametricFamilies,
+  createInstantiateFamily,
+  createMaterializeSolutions,
+  createVerifyParametricFamily,
   createSearchScope,
   createEqualityNode,
   createEquationSymbols,
@@ -59,6 +64,11 @@ declare const parametric: ParametricSolutions;
 
 void EQUALITY_NODE_NAME;
 void EQUALITY_OPERATOR;
+void allocateIntegerParameter([]);
+void createCanonicalizeParametricFamilies;
+void createInstantiateFamily;
+void createMaterializeSolutions;
+void createVerifyParametricFamily;
 void createEqualityNode;
 void createEquationSymbols;
 void createIsolateEquation;
@@ -77,5 +87,9 @@ void interval;
 void scope;
 void resultKind(result);
 void parametric;
+void math.canonicalizeParametricFamilies(parametric.families);
+void math.instantiateFamily(parametric.families[0]!, {_k0: 0});
+void math.materializeSolutions(parametric, {lower: -1, upper: 1});
+void math.verifyParametricFamily(equation, 'x', parametric.families[0]!);
 void splitEquation('x =:= 1');
 void symbolicjsFactories;

@@ -60,6 +60,20 @@ typed result when its implementation chapter lands. Intervals use closed endpoin
 by default; endpoint inclusion may be controlled with `includeLower` and
 `includeUpper`.
 
+## Parametric families
+
+Parametric results contain exact MathJS expressions and explicit integer
+parameters. `math.instantiateFamily(family, assignments)` substitutes safe integer
+assignments and returns a MathJS node. `math.canonicalizeParametricFamilies()`
+alpha-normalizes and deduplicates families without capturing symbols already used
+by an equation.
+
+`math.materializeSolutions(result, interval, scope?, options?)` converts families
+that are affine in one integer parameter into sorted finite solutions over a finite
+real interval. It derives integer bounds analytically, respects open endpoints and
+solver budgets, and returns `complete-in-interval` scope metadata. Non-affine or
+multi-parameter families return a typed unsupported result.
+
 ## Solving every member symbol
 
 `math.solveEquationForAll(equation, options)` invokes the single-target solver
