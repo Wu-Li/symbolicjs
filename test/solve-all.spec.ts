@@ -38,6 +38,43 @@ describe('solveEquationForAll', () => {
     expect(results.get('y')?.kind).toBe('parametric');
   });
 
+  it('is permutation independent and prevents parameter capture between targets', () => {
+    const math = createMath();
+    const first = math.solveEquationForAll('sin(x) + _k0 =:= 0');
+    const second = math.solveEquationForAll('0 =:= _k0 + sin(x)');
+
+    expect([...first.keys()]).toEqual(['_k0', 'x']);
+    expect([...second.keys()]).toEqual(['_k0', 'x']);
+    expect([...first].map(([target, result]) => [target, result.kind]))
+      .toEqual([...second].map(([target, result]) => [target, result.kind]));
+    const xResult = first.get('x');
+    expect(xResult?.kind).toBe('parametric');
+    if (xResult?.kind === 'parametric') {
+      expect(xResult.families.flatMap((family) =>
+        family.parameters.map((parameter) => parameter.name)
+      )).not.toContain('_k0');
+    }
+  });
+
+  it('forwards complex domains, limits, and diagnostics independently', () => {
+    const math = createMath();
+    const complex = math.solveEquationForAll('x^2 + y^2 =:= 0', {
+      domain: 'complex',
+      diagnostics: true
+    });
+    const limited = math.solveEquationForAll('x^2 + y^2 =:= 0', {
+      limits: {branches: 0}
+    });
+
+    expect([...complex.values()].every((result) =>
+      result.kind === 'partial' && result.scope?.domain === 'complex' &&
+      result.diagnostics !== undefined
+    )).toBe(true);
+    expect([...limited.values()].every((result) =>
+      result.kind === 'limit' && result.limit === 'branches'
+    )).toBe(true);
+  });
+
   it('returns an immutable empty map for a constant equation', () => {
     const math = createMath();
     const results = math.solveEquationForAll('1 =:= 1');

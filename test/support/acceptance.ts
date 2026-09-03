@@ -38,6 +38,27 @@ export interface ComplexValue {
   readonly im: number;
 }
 
+export type AcceptanceCompleteness =
+  | 'complete'
+  | 'complete-in-interval'
+  | 'partial';
+
+export interface AcceptanceSemanticAssertions {
+  readonly reason?: string;
+  readonly roots?: readonly (number | ComplexValue)[];
+  readonly multiplicities?: readonly number[];
+  readonly familyCount?: number;
+  readonly conditionKinds?: readonly string[];
+  readonly completeness?: AcceptanceCompleteness;
+  readonly serialize?: boolean;
+}
+
+export interface ConformanceFixture extends AcceptanceFixture {
+  readonly feature: string;
+  readonly numericFallback?: boolean;
+  readonly assertions: AcceptanceSemanticAssertions;
+}
+
 const RESULT_KINDS = new Set<AcceptanceResultKind>([
   'finite',
   'parametric',
@@ -174,6 +195,126 @@ export function loadAcceptanceFixtures(url: URL): readonly AcceptanceFixture[] {
   return parseAcceptanceFixtures(JSON.parse(readFileSync(url, 'utf8')) as unknown);
 }
 
+function finiteNumber(value: unknown, context: string): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    throw new RangeError(`${context} must be finite`);
+  }
+  return value;
+}
+
+function parseRoot(value: unknown, context: string): number | ComplexValue {
+  if (typeof value === 'number') {
+    return finiteNumber(value, context);
+  }
+  if (!isRecord(value)) {
+    throw new TypeError(`${context} must be a number or complex object`);
+  }
+  return Object.freeze({
+    re: finiteNumber(value.re, `${context}.re`),
+    im: finiteNumber(value.im, `${context}.im`)
+  });
+}
+
+const COMPLETENESS = new Set<AcceptanceCompleteness>([
+  'complete',
+  'complete-in-interval',
+  'partial'
+]);
+
+function parseSemanticAssertions(
+  value: unknown,
+  context: string
+): AcceptanceSemanticAssertions {
+  if (!isRecord(value)) {
+    throw new TypeError(`${context} must be an object`);
+  }
+  const roots = value.roots;
+  if (roots !== undefined && !Array.isArray(roots)) {
+    throw new TypeError(`${context}.roots must be an array`);
+  }
+  const multiplicities = value.multiplicities;
+  if (multiplicities !== undefined && (
+    !Array.isArray(multiplicities) ||
+    multiplicities.some((entry) => !Number.isSafeInteger(entry) || entry <= 0)
+  )) {
+    throw new RangeError(`${context}.multiplicities must contain positive integers`);
+  }
+  if (
+    Array.isArray(roots) &&
+    Array.isArray(multiplicities) &&
+    roots.length !== multiplicities.length
+  ) {
+    throw new RangeError(`${context}.multiplicities must align with roots`);
+  }
+  const familyCount = value.familyCount;
+  if (
+    familyCount !== undefined &&
+    (!Number.isSafeInteger(familyCount) || (familyCount as number) < 0)
+  ) {
+    throw new RangeError(`${context}.familyCount must be a nonnegative integer`);
+  }
+  const conditionKinds = value.conditionKinds;
+  if (conditionKinds !== undefined && (
+    !Array.isArray(conditionKinds) ||
+    conditionKinds.some((entry) => typeof entry !== 'string' || entry.length === 0)
+  )) {
+    throw new TypeError(`${context}.conditionKinds must contain nonempty strings`);
+  }
+  const completeness = value.completeness;
+  if (
+    completeness !== undefined &&
+    (typeof completeness !== 'string' || !COMPLETENESS.has(
+      completeness as AcceptanceCompleteness
+    ))
+  ) {
+    throw new TypeError(`${context}.completeness is unknown`);
+  }
+  const serialize = optionalBoolean(value, 'serialize', context);
+  const reason = value.reason === undefined
+    ? undefined
+    : requiredString(value, 'reason', context);
+  return Object.freeze({
+    ...(reason === undefined ? {} : {reason}),
+    ...(roots === undefined ? {} : {
+      roots: Object.freeze(roots.map((entry, index) =>
+        parseRoot(entry, `${context}.roots[${index}]`)
+      ))
+    }),
+    ...(multiplicities === undefined ? {} : {
+      multiplicities: Object.freeze([...(multiplicities as number[])])
+    }),
+    ...(familyCount === undefined ? {} : {familyCount: familyCount as number}),
+    ...(conditionKinds === undefined ? {} : {
+      conditionKinds: Object.freeze([...(conditionKinds as string[])])
+    }),
+    ...(completeness === undefined
+      ? {}
+      : {completeness: completeness as AcceptanceCompleteness}),
+    ...(serialize === undefined ? {} : {serialize})
+  });
+}
+
+export function parseConformanceFixtures(value: unknown): readonly ConformanceFixture[] {
+  const fixtures = parseAcceptanceFixtures(value);
+  return Object.freeze(fixtures.map((fixture, index) => {
+    const source = (value as readonly unknown[])[index] as Record<string, unknown>;
+    const numericFallback = optionalBoolean(source, 'numericFallback', `fixtures[${index}]`);
+    return Object.freeze({
+      ...fixture,
+      feature: requiredString(source, 'feature', `fixtures[${index}]`),
+      ...(numericFallback === undefined ? {} : {numericFallback}),
+      assertions: parseSemanticAssertions(
+        source.assertions,
+        `fixtures[${index}].assertions`
+      )
+    });
+  }));
+}
+
+export function loadConformanceFixtures(url: URL): readonly ConformanceFixture[] {
+  return parseConformanceFixtures(JSON.parse(readFileSync(url, 'utf8')) as unknown);
+}
+
 function asComplex(value: number | ComplexValue): ComplexValue {
   return typeof value === 'number' ? {re: value, im: 0} : value;
 }
@@ -278,4 +419,3 @@ export function instantiateIntegerExpression(
   }
   return expression.compile().evaluate(assignments);
 }
-

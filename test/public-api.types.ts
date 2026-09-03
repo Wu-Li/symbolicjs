@@ -25,6 +25,7 @@ import {
   equationSymbols,
   importsymbolicjs,
   isEqualityNode,
+  mergePartialSolveResults,
   normalizeRealInterval,
   splitEquation,
   symbolicjsFactories
@@ -97,6 +98,7 @@ void createCompoundTrigonometricSolve;
 void createSymbolicKernel;
 void constructor;
 void isEqualityNode(json);
+void mergePartialSolveResults;
 void equationSymbols(equation);
 void result;
 void allResults;

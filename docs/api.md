@@ -84,6 +84,31 @@ independently for each discovered symbol and returns an immutable
 `ReadonlyMap<string, SolveResult>` in sorted symbol order. It does not solve a
 simultaneous system.
 
+The same options object is applied independently to every target. Solver state and
+integer-family parameter allocation are not shared between targets, so a limit or
+domain result for one member cannot suppress another member's result.
+
+## Feature detection and result migration
+
+Consumers can detect the extension without depending on an implementation class:
+
+```ts
+const hasSymbolicJS =
+  typeof math.parseEquation === 'function' &&
+  typeof math.solveEquation === 'function' &&
+  typeof math.EqualityNode === 'function';
+```
+
+Code written against the initial finite-only shell should switch exhaustively on
+`result.kind`. In particular, `parametric` carries infinite integer-parameter
+families, `partial` may carry both finite `solutions` and parametric `families`, and
+`limit` is distinct from mathematical `unsupported` or `contradiction`. Complex and
+bounded numeric results expose `scope`; callers should inspect its `domain` and
+`completeness` instead of inferring completeness from the presence of candidates.
+
+The framework-neutral support matrix and stable diagnostic identifiers are listed
+in the [conformance report](conformance.md).
+
 ## Diagnostics and limits
 
 ```ts

@@ -1,0 +1,209 @@
+[
+  {
+    "id": "isolation-affine",
+    "feature": "single-occurrence isolation",
+    "equation": "2*x + 1 =:= 7",
+    "target": "x",
+    "expectedKind": "finite",
+    "assertions": {"roots": [3], "serialize": true},
+    "provenance": {"kind": "independent", "source": "elementary affine equation"}
+  },
+  {
+    "id": "rational-domain-identity",
+    "feature": "rational domain exclusions",
+    "equation": "x/x =:= 1",
+    "target": "x",
+    "expectedKind": "identity",
+    "assertions": {"conditionKinds": ["nonzero"], "serialize": true},
+    "provenance": {"kind": "independent", "source": "division definedness invariant"}
+  },
+  {
+    "id": "isolated-exponential",
+    "feature": "exact transcendental isolation",
+    "equation": "exp(x) =:= 3",
+    "target": "x",
+    "expectedKind": "finite",
+    "tolerance": 1e-10,
+    "assertions": {"roots": [1.0986122886681098]},
+    "provenance": {"kind": "independent", "source": "natural logarithm inverse"}
+  },
+  {
+    "id": "isolated-sine",
+    "feature": "periodic trigonometric families",
+    "equation": "sin(x) =:= 1/2",
+    "target": "x",
+    "expectedKind": "parametric",
+    "assertions": {"familyCount": 2, "completeness": "complete", "serialize": true},
+    "provenance": {"kind": "independent", "source": "sine inverse and period identities"}
+  },
+  {
+    "id": "linear-trig-combination",
+    "feature": "compound trigonometric reduction",
+    "equation": "2*sin(x) + 2*cos(x) =:= 1",
+    "target": "x",
+    "expectedKind": "parametric",
+    "assertions": {"familyCount": 2, "completeness": "complete"},
+    "provenance": {"kind": "independent", "source": "amplitude-phase identity"}
+  },
+  {
+    "id": "polynomial-in-sine",
+    "feature": "polynomial trigonometric reduction",
+    "equation": "2*sin(x)^2 - 3*sin(x) + 1 =:= 0",
+    "target": "x",
+    "expectedKind": "parametric",
+    "assertions": {"familyCount": 3, "completeness": "complete"},
+    "provenance": {"kind": "independent", "source": "factored auxiliary polynomial"}
+  },
+  {
+    "id": "three-real-cubic",
+    "feature": "symbolic cubic construction",
+    "equation": "x^3 - 3*x + 1 =:= 0",
+    "target": "x",
+    "expectedKind": "finite",
+    "tolerance": 1e-9,
+    "assertions": {"roots": [-1.879385241571817, 0.3472963553338613, 1.532088886237956], "serialize": true},
+    "provenance": {"kind": "independent", "source": "trigonometric depressed-cubic identity"}
+  },
+  {
+    "id": "biquadratic",
+    "feature": "symbolic quartic construction",
+    "equation": "x^4 - 5*x^2 + 4 =:= 0",
+    "target": "x",
+    "expectedKind": "finite",
+    "assertions": {"roots": [-2, -1, 1, 2]},
+    "provenance": {"kind": "independent", "source": "biquadratic factorization"}
+  },
+  {
+    "id": "degree-five-numeric",
+    "feature": "high-degree numeric polynomial",
+    "equation": "x^5 - x =:= 0",
+    "target": "x",
+    "expectedKind": "finite",
+    "tolerance": 1e-8,
+    "assertions": {"roots": [-1, 0, 1], "multiplicities": [1, 1, 1]},
+    "provenance": {"kind": "independent", "source": "known factorization x(x-1)(x+1)(x^2+1)"}
+  },
+  {
+    "id": "bounded-mixed-transcendental",
+    "feature": "bounded real numeric fallback",
+    "equation": "sin(x) =:= x/2",
+    "target": "x",
+    "expectedKind": "partial",
+    "numericFallback": true,
+    "interval": {"lower": -2, "upper": 2},
+    "tolerance": 1e-8,
+    "assertions": {"reason": "numeric-search-incomplete", "roots": [-1.895494267033981, 0, 1.895494267033981], "completeness": "partial"},
+    "provenance": {"kind": "independent", "source": "bracketed residual roots"}
+  },
+  {
+    "id": "bounded-tangent-discontinuities",
+    "feature": "numeric discontinuity handling",
+    "equation": "tan(x) + x =:= 0",
+    "target": "x",
+    "expectedKind": "partial",
+    "numericFallback": true,
+    "interval": {"lower": -4, "upper": 4},
+    "tolerance": 1e-8,
+    "assertions": {"reason": "numeric-search-incomplete", "roots": [-2.028757838110434, 0, 2.028757838110434], "completeness": "partial"},
+    "provenance": {"kind": "independent", "source": "bounded tangent residual"}
+  },
+  {
+    "id": "complex-quadratic",
+    "feature": "finite complex polynomial",
+    "equation": "x^2 + 1 =:= 0",
+    "target": "x",
+    "expectedKind": "finite",
+    "domain": "complex",
+    "tolerance": 1e-10,
+    "assertions": {"roots": [{"re": 0, "im": -1}, {"re": 0, "im": 1}], "multiplicities": [1, 1], "completeness": "complete", "serialize": true},
+    "provenance": {"kind": "independent", "source": "square roots of negative one"}
+  },
+  {
+    "id": "complex-roots-of-unity",
+    "feature": "higher-degree complex polynomial",
+    "equation": "x^5 - 1 =:= 0",
+    "target": "x",
+    "expectedKind": "finite",
+    "domain": "complex",
+    "tolerance": 1e-9,
+    "assertions": {
+      "roots": [
+        {"re": -0.8090169943749475, "im": -0.5877852522924731},
+        {"re": -0.8090169943749475, "im": 0.5877852522924731},
+        {"re": 0.3090169943749474, "im": -0.9510565162951535},
+        {"re": 0.3090169943749474, "im": 0.9510565162951535},
+        1
+      ],
+      "multiplicities": [1, 1, 1, 1, 1],
+      "completeness": "complete"
+    },
+    "provenance": {"kind": "independent", "source": "fifth roots of unity"}
+  },
+  {
+    "id": "conditional-complex-quadratic",
+    "feature": "symbolic complex polynomial",
+    "equation": "a*x^2 + 1 =:= 0",
+    "target": "x",
+    "expectedKind": "partial",
+    "domain": "complex",
+    "assertions": {"reason": "verification-inconclusive", "conditionKinds": ["nonzero"], "completeness": "partial"},
+    "provenance": {"kind": "independent", "source": "conditional quadratic formula"}
+  },
+  {
+    "id": "unsupported-mixed-frequency",
+    "feature": "unsupported trigonometric form",
+    "equation": "sin(x) + cos(2*x) =:= 0",
+    "target": "x",
+    "expectedKind": "unsupported",
+    "assertions": {"reason": "unsupported-trig-form"},
+    "provenance": {"kind": "regression", "source": "documented mixed-frequency boundary"}
+  },
+  {
+    "id": "unsupported-complex-transcendental",
+    "feature": "unsupported complex family",
+    "equation": "sin(x) =:= 0",
+    "target": "x",
+    "expectedKind": "unsupported",
+    "domain": "complex",
+    "assertions": {"reason": "unsupported-domain"},
+    "provenance": {"kind": "regression", "source": "documented finite-algebraic complex boundary"}
+  },
+  {
+    "id": "numeric-interval-required",
+    "feature": "numeric fallback precondition",
+    "equation": "sin(x) + x =:= 0",
+    "target": "x",
+    "expectedKind": "unsupported",
+    "numericFallback": true,
+    "assertions": {"reason": "interval-required"},
+    "provenance": {"kind": "regression", "source": "explicit bounded-search contract"}
+  },
+  {
+    "id": "unicode-symbol",
+    "feature": "MathJS symbol compatibility",
+    "equation": "theta_θ + 1 =:= 2",
+    "target": "theta_θ",
+    "expectedKind": "finite",
+    "assertions": {"roots": [1], "serialize": true},
+    "provenance": {"kind": "independent", "source": "valid Unicode MathJS identifier"}
+  },
+  {
+    "id": "configured-constant-function",
+    "feature": "configured MathJS namespace",
+    "equation": "x =:= tauConstant + triple(2)",
+    "target": "x",
+    "expectedKind": "finite",
+    "tolerance": 1e-10,
+    "assertions": {"roots": [12.283185307179586], "serialize": true},
+    "provenance": {"kind": "independent", "source": "configured constant and function"}
+  },
+  {
+    "id": "equation-json-roundtrip",
+    "feature": "EqualityNode persistence",
+    "equation": "x^2 - 1 =:= 0",
+    "target": "x",
+    "expectedKind": "finite",
+    "assertions": {"roots": [-1, 1], "serialize": true},
+    "provenance": {"kind": "regression", "source": "MathJS reviver round trip"}
+  }
+]

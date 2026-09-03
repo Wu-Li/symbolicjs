@@ -2,6 +2,9 @@ import {customFactory} from './custom-factory.js';
 import {SolverContext} from './budget.js';
 import {unsupportedResult, validateSolveOptions} from './solve-types.js';
 import type {
+  ParametricFamily,
+  PartialResult,
+  Solution,
   SolveDiagnostics,
   SolveOptions,
   SolveResult,
@@ -38,6 +41,69 @@ interface SolveDependencies {
     target: string,
     options?: SolveOptions
   ): SolveResult;
+}
+
+function conditionKey(
+  conditions: readonly import('./solve-types.js').Condition[]
+): string {
+  return [...conditions].map((condition) =>
+    condition.kind + ':' + condition.expression.toString({parenthesis: 'all'})
+  ).sort().join('|');
+}
+
+function uniqueSolutions(results: readonly PartialResult[]): readonly Solution[] {
+  const values = new Map<string, Solution>();
+  for (const result of results) {
+    for (const solution of result.solutions) {
+      const key = solution.value.toString({parenthesis: 'all'}) + '|' +
+        conditionKey(solution.conditions);
+      if (!values.has(key)) {
+        values.set(key, solution);
+      }
+    }
+  }
+  return Object.freeze([...values.values()]);
+}
+
+function uniqueFamilies(results: readonly PartialResult[]): readonly ParametricFamily[] {
+  const values = new Map<string, ParametricFamily>();
+  for (const result of results) {
+    for (const family of result.families ?? []) {
+      const key = family.value.toString({parenthesis: 'all'}) + '|' +
+        family.parameters.map((parameter) => parameter.name).join(',') + '|' +
+        conditionKey(family.conditions);
+      if (!values.has(key)) {
+        values.set(key, family);
+      }
+    }
+  }
+  return Object.freeze([...values.values()]);
+}
+
+export function mergePartialSolveResults(
+  equation: EqualityNode,
+  target: string,
+  results: readonly PartialResult[]
+): PartialResult {
+  if (results.length === 0) {
+    throw new RangeError('At least one partial result is required');
+  }
+  if (results.length === 1) {
+    return results[0]!;
+  }
+  const families = uniqueFamilies(results);
+  const scope = results.find((result) => result.scope)?.scope;
+  return Object.freeze({
+    kind: 'partial',
+    target,
+    solutions: uniqueSolutions(results),
+    ...(families.length === 0 ? {} : {families}),
+    remainder: equation,
+    reason: results.some((result) => result.reason === 'numeric-search-incomplete')
+      ? 'numeric-search-incomplete'
+      : results[0]!.reason,
+    ...(scope === undefined ? {} : {scope})
+  });
 }
 
 export function solveEquation(
@@ -119,6 +185,17 @@ export function solveEquation(
         : polynomial
     );
   }
+  const partials: PartialResult[] = [];
+  const preservePartial = (result: SolveResult): SolveResult | null => {
+    if (result.kind === 'partial') {
+      partials.push(result);
+      return null;
+    }
+    if (result.kind === 'contradiction' && partials.length > 0) {
+      return null;
+    }
+    return result;
+  };
   const isolated = dependencies.isolateEquation(equation, target, options);
   trace({
     stage: 'dispatch',
@@ -140,7 +217,10 @@ export function solveEquation(
       trigonometric.reason !== 'no-rule' &&
       trigonometric.reason !== 'unsupported-trig-form'
     )) {
-      return finish(trigonometric);
+      const terminal = preservePartial(trigonometric);
+      if (terminal) {
+        return finish(terminal);
+      }
     }
     const compound = dependencies.compoundTrigonometricSolve(equation, target, options);
     trace({
@@ -151,7 +231,10 @@ export function solveEquation(
     if (compound.kind !== 'unsupported' || (
       compound.reason !== 'no-rule' && compound.reason !== 'unsupported-trig-form'
     )) {
-      return finish(compound);
+      const terminal = preservePartial(compound);
+      if (terminal) {
+        return finish(terminal);
+      }
     }
     const polynomial = dependencies.polynomialSolve(equation, target, options);
     trace({
@@ -169,17 +252,45 @@ export function solveEquation(
         : 'rational-polynomial',
       outcome: polynomial.kind
     });
+    if (polynomial.kind === 'partial') {
+      partials.push(polynomial);
+      trace({
+        stage: 'dispatch',
+        rule: 'merge-partial-results',
+        outcome: String(partials.length)
+      });
+      return finish(mergePartialSolveResults(equation, target, partials));
+    }
+    if (polynomial.kind === 'unsupported' && partials.length > 0) {
+      trace({
+        stage: 'dispatch',
+        rule: 'merge-partial-results',
+        outcome: String(partials.length)
+      });
+      return finish(mergePartialSolveResults(equation, target, partials));
+    }
     if (polynomial.kind === 'unsupported' && options?.numericFallback) {
       const numeric = dependencies.numericSolve(equation, target, options);
       trace({stage: 'dispatch', rule: 'bounded-numeric-search', outcome: numeric.kind});
       return finish(numeric);
     }
+    const terminal = preservePartial(polynomial);
+    if (terminal === null) {
+      trace({
+        stage: 'dispatch',
+        rule: 'merge-partial-results',
+        outcome: String(partials.length)
+      });
+      return finish(mergePartialSolveResults(equation, target, partials));
+    }
     return finish(
-      polynomial.kind === 'unsupported' && polynomial.reason === 'no-rule' &&
-      (compound.reason === 'unsupported-trig-form' ||
-        trigonometric.reason === 'unsupported-trig-form')
+      terminal.kind === 'unsupported' && terminal.reason === 'no-rule' &&
+      ((compound.kind === 'unsupported' &&
+        compound.reason === 'unsupported-trig-form') ||
+        (trigonometric.kind === 'unsupported' &&
+          trigonometric.reason === 'unsupported-trig-form'))
         ? unsupportedResult(target, 'unsupported-trig-form')
-        : polynomial
+        : terminal
     );
   }
   return finish(isolated);
