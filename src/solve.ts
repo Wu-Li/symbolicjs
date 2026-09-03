@@ -28,6 +28,11 @@ interface SolveDependencies {
     target: string,
     options?: SolveOptions
   ): SolveResult;
+  compoundTrigonometricSolve(
+    equation: EqualityNode,
+    target: string,
+    options?: SolveOptions
+  ): SolveResult;
 }
 
 export function solveEquation(
@@ -114,6 +119,17 @@ export function solveEquation(
     )) {
       return finish(trigonometric);
     }
+    const compound = dependencies.compoundTrigonometricSolve(equation, target, options);
+    trace({
+      stage: 'dispatch',
+      rule: 'compound-trigonometric',
+      outcome: compound.kind
+    });
+    if (compound.kind !== 'unsupported' || (
+      compound.reason !== 'no-rule' && compound.reason !== 'unsupported-trig-form'
+    )) {
+      return finish(compound);
+    }
     const polynomial = dependencies.polynomialSolve(equation, target, options);
     trace({
       stage: 'dispatch',
@@ -124,8 +140,9 @@ export function solveEquation(
     });
     return finish(
       polynomial.kind === 'unsupported' && polynomial.reason === 'no-rule' &&
-      trigonometric.reason === 'unsupported-trig-form'
-        ? trigonometric
+      (compound.reason === 'unsupported-trig-form' ||
+        trigonometric.reason === 'unsupported-trig-form')
+        ? unsupportedResult(target, 'unsupported-trig-form')
         : polynomial
     );
   }
@@ -139,6 +156,7 @@ export const createSolveEquation = customFactory(
     'parseEquation',
     'isolateEquation',
     'trigonometricSolve',
+    'compoundTrigonometricSolve',
     'polynomialSolve'
   ],
   (rawDependencies) => {

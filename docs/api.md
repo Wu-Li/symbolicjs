@@ -112,6 +112,10 @@ interval subdivisions, numeric iterations, and total work.
 - Complete real parametric families for isolated `sin`, `cos`, `tan`, `sec`,
   `csc`, and `cot` with affine inner arguments.
 - Principal-range inversion of `asin`, `acos`, and `atan`.
+- Conservative compound-trig reductions for Pythagorean pairs,
+  `sin(u)*cos(u)`, polynomials in one trig atom, and same-argument
+  `A*sin(u)+B*cos(u)=C` equations.
 
-Compound trigonometric identities, simultaneous systems, inequalities, symbolic
-cubics, matrices, units, and general complex branch analysis are unsupported.
+Mixed-frequency trigonometric identities, simultaneous systems, inequalities,
+symbolic cubics, matrices, units, and general complex branch analysis are
+unsupported.

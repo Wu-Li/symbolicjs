@@ -157,7 +157,7 @@ describe('isolated sine, cosine, and tangent', () => {
     expect(result.kind).toBe('parametric');
   });
 
-  it('rejects non-affine and target-dependent outer forms precisely', () => {
+  it('rejects non-affine and target-dependent mixed forms precisely', () => {
     const math = createMath();
 
     expect(math.solveEquation('sin(x^2) =:= 0', 'x')).toEqual({
@@ -166,9 +166,7 @@ describe('isolated sine, cosine, and tangent', () => {
     expect(math.solveEquation('sin(x) + x =:= 0', 'x')).toEqual({
       kind: 'unsupported', target: 'x', reason: 'unsupported-trig-form'
     });
-    expect(math.solveEquation('sin(x) =:= cos(x)', 'x')).toEqual({
-      kind: 'unsupported', target: 'x', reason: 'unsupported-trig-form'
-    });
+    expect(math.solveEquation('sin(x) =:= cos(x)', 'x').kind).toBe('parametric');
   });
 });
 

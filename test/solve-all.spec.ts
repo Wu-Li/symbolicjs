@@ -97,13 +97,15 @@ describe('solver diagnostics', () => {
       'dispatch',
       'dispatch',
       'dispatch',
+      'dispatch',
       'verification',
       'verification',
       'result'
     ]);
     expect(diagnostics.steps[2]?.rule).toBe('trigonometric');
-    expect(diagnostics.steps[3]?.rule).toBe('rational-polynomial');
-    expect(diagnostics.steps[4]?.expression).toContain('x = ');
+    expect(diagnostics.steps[3]?.rule).toBe('compound-trigonometric');
+    expect(diagnostics.steps[4]?.rule).toBe('rational-polynomial');
+    expect(diagnostics.steps[5]?.expression).toContain('x = ');
     expect(diagnostics.steps.at(-1)?.outcome).toBe('finite');
     expect(Object.isFrozen(diagnostics)).toBe(true);
     expect(Object.isFrozen(diagnostics.steps)).toBe(true);

@@ -3,6 +3,7 @@ import {
   EQUALITY_NODE_NAME,
   EQUALITY_OPERATOR,
   CIRCULAR_FUNCTIONS,
+  CompoundTrigonometricEngine,
   allocateIntegerParameter,
   createCanonicalizeParametricFamilies,
   createInstantiateFamily,
@@ -17,6 +18,7 @@ import {
   createSolveEquation,
   createSolveEquationForAll,
   createTrigonometricSolve,
+  createCompoundTrigonometricSolve,
   createSymbolicKernel,
   equationSymbols,
   importsymbolicjs,
@@ -67,6 +69,7 @@ declare const parametric: ParametricSolutions;
 void EQUALITY_NODE_NAME;
 void EQUALITY_OPERATOR;
 void CIRCULAR_FUNCTIONS.sin;
+void CompoundTrigonometricEngine;
 void allocateIntegerParameter([]);
 void createCanonicalizeParametricFamilies;
 void createInstantiateFamily;
@@ -80,6 +83,7 @@ void createParseEquation;
 void createSolveEquation;
 void createSolveEquationForAll;
 void createTrigonometricSolve;
+void createCompoundTrigonometricSolve;
 void createSymbolicKernel;
 void constructor;
 void isEqualityNode(json);

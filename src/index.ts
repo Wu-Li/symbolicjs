@@ -39,6 +39,10 @@ export {
 } from './trigonometric.js';
 export type {CircularFunctionDefinition} from './trigonometric.js';
 export {
+  CompoundTrigonometricEngine,
+  createCompoundTrigonometricSolve
+} from './compound-trigonometric.js';
+export {
   DEFAULT_SOLVER_LIMITS,
   DEFAULT_SOLVE_TOLERANCE,
   createSearchScope,
