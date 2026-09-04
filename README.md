@@ -140,13 +140,6 @@ tested against a known implementation.
 The stable-release requirements are tracked in the
 [release checklist](docs/release-checklist.md).
 
-## Publishing
-
-The repository includes a tag-triggered GitHub Actions publishing workflow. A tag
-must exactly match the package version, for example `v0.5.0` for package version
-`0.5.0`. The workflow reruns the complete gate and asks npm to record provenance;
-registry authentication is configured outside the repository.
-
 ## License
 
 [MIT](LICENSE)
