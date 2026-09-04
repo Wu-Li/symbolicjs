@@ -1,4 +1,5 @@
 import type {MathNode} from 'mathjs';
+import {OperationBudget} from './core/operation-context.js';
 import {
   DEFAULT_SOLVER_LIMITS,
   limitResult,
@@ -16,7 +17,10 @@ type ConsumableLimit = Exclude<
   'input-nodes' | 'polynomial-degree' | 'numeric-polynomial-degree'
 >;
 
-const LIMIT_PROPERTY: Readonly<Record<ConsumableLimit, keyof SolverLimits>> = {
+const LIMIT_PROPERTY: Readonly<Record<LimitKind, keyof SolverLimits>> = {
+  'input-nodes': 'inputNodes',
+  'polynomial-degree': 'polynomialDegree',
+  'numeric-polynomial-degree': 'numericPolynomialDegree',
   'rewrite-steps': 'rewriteSteps',
   'recursion-depth': 'recursionDepth',
   branches: 'branches',
@@ -49,6 +53,13 @@ export function resolveLimits(options?: SolveOptions): SolverLimits {
   return Object.freeze(limits);
 }
 
+function operationLimits(limits: SolverLimits): Readonly<Record<string, number>> {
+  return Object.freeze(Object.fromEntries(
+    Object.entries(LIMIT_PROPERTY).map(([kind, property]) => [kind, limits[property]])
+  ));
+}
+
+/** Compatibility adapter from operation-neutral budgets to public solver limits. */
 export class SolverContext {
   readonly target: string;
   readonly limits: SolverLimits;
@@ -66,9 +77,12 @@ export class SolverContext {
     'total-work': 0
   };
 
+  readonly #budget: OperationBudget;
+
   constructor(target: string, options?: SolveOptions) {
     this.target = target;
     this.limits = resolveLimits(options);
+    this.#budget = new OperationBudget(operationLimits(this.limits));
   }
 
   preflight(node: MathNode): LimitResult | null {
@@ -76,29 +90,28 @@ export class SolverContext {
     node.traverse(() => {
       count += 1;
     });
-    return count > this.limits.inputNodes
-      ? limitResult(this.target, 'input-nodes')
-      : null;
+    return this.#legacyLimit(this.#budget.check('input-nodes', count));
   }
 
   checkPolynomialDegree(degree: number): LimitResult | null {
-    return degree > this.limits.polynomialDegree
-      ? limitResult(this.target, 'polynomial-degree')
-      : null;
+    return this.#legacyLimit(this.#budget.check('polynomial-degree', degree));
   }
 
   checkNumericPolynomialDegree(degree: number): LimitResult | null {
-    return degree > this.limits.numericPolynomialDegree
-      ? limitResult(this.target, 'numeric-polynomial-degree')
-      : null;
+    return this.#legacyLimit(this.#budget.check('numeric-polynomial-degree', degree));
   }
 
   consume(kind: ConsumableLimit, amount = 1): LimitResult | null {
-    validateLimit('amount', amount);
-    this.used[kind] += amount;
-    const property = LIMIT_PROPERTY[kind];
-    return this.used[kind] > this.limits[property]
-      ? limitResult(this.target, kind)
+    const exceeded = this.#budget.consume(kind, amount);
+    this.used[kind] = this.#budget.usage(kind);
+    return this.#legacyLimit(exceeded);
+  }
+
+  #legacyLimit(
+    exceeded: {readonly limit: string} | null
+  ): LimitResult | null {
+    return exceeded
+      ? limitResult(this.target, exceeded.limit as LimitKind)
       : null;
   }
 }

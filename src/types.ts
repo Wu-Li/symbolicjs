@@ -1,4 +1,5 @@
 import type {MathJsInstance, MathNode, NodeCtor} from 'mathjs';
+import type {SymbolicContext} from './core/symbolic-context.js';
 import type {
   ParametricFamily,
   ParametricSolutions,
@@ -34,6 +35,7 @@ export interface symbolicjsInstance extends MathJsInstance {
   EqualityNode: EqualityNodeConstructor;
   parseEquation(expression: string): EqualityNode;
   equationSymbols(equation: EqualityNode): readonly string[];
+  readonly symbolic: SymbolicContext;
   readonly symbolicKernel: SymbolicKernel;
   solveEquation(
     equation: EqualityNode | string,

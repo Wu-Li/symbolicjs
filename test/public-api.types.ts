@@ -52,6 +52,9 @@ const allResults: ReadonlyMap<string, SolveResult> = math.solveEquationForAll(eq
 const verification = math.symbolicKernel.verify(equation, 'x', math.parse('1'));
 const interval: RealInterval = normalizeRealInterval({lower: -1, upper: 1});
 const scope = createSearchScope('real', 'complete-in-interval', interval);
+const symbolicNode = math.symbolic.nodes.symbol('x');
+const symbolicOperation = math.symbolic.operation({limits: {steps: 1}});
+const symbolicLimit = symbolicOperation.consume('steps');
 
 function resultKind(value: SolveResult): string {
   switch (value.kind) {
@@ -105,6 +108,8 @@ void allResults;
 void verification;
 void interval;
 void scope;
+void symbolicNode;
+void symbolicLimit;
 void resultKind(result);
 void parametric;
 void cubicCertificate;

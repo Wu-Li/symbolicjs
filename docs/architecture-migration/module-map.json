@@ -19,10 +19,10 @@
     },
     {
       "path": "src/budget.ts",
-      "currentRole": "solver limits and counters",
+      "currentRole": "legacy solver adapter over operation-neutral budgets",
       "targetLayer": "core.operation-context",
       "migrationChapter": 1,
-      "action": "adapt"
+      "action": "adapted"
     },
     {
       "path": "src/compound-trigonometric.ts",
@@ -39,11 +39,46 @@
       "action": "preserve"
     },
     {
+      "path": "src/core/math-adapter.ts",
+      "currentRole": "instance-local supported MathJS API boundary",
+      "targetLayer": "integration.mathjs",
+      "migrationChapter": 1,
+      "action": "new"
+    },
+    {
+      "path": "src/core/node-builder.ts",
+      "currentRole": "configured-instance MathNode construction",
+      "targetLayer": "integration.mathjs",
+      "migrationChapter": 1,
+      "action": "new"
+    },
+    {
+      "path": "src/core/operation-context.ts",
+      "currentRole": "operation-neutral limits, memoization, and diagnostics",
+      "targetLayer": "core.operation-context",
+      "migrationChapter": 1,
+      "action": "new"
+    },
+    {
+      "path": "src/core/registry.ts",
+      "currentRole": "instance-local symbolic operator and function metadata",
+      "targetLayer": "core.registry",
+      "migrationChapter": 1,
+      "action": "new"
+    },
+    {
+      "path": "src/core/symbolic-context.ts",
+      "currentRole": "experimental MathJS-native symbolic service",
+      "targetLayer": "core.context",
+      "migrationChapter": 1,
+      "action": "new"
+    },
+    {
       "path": "src/custom-factory.ts",
       "currentRole": "MathJS factory typing boundary",
       "targetLayer": "integration.factory",
       "migrationChapter": 1,
-      "action": "strengthen"
+      "action": "preserve"
     },
     {
       "path": "src/equality-node.ts",
@@ -61,7 +96,7 @@
     },
     {
       "path": "src/install.ts",
-      "currentRole": "all-in-one MathJS installation",
+      "currentRole": "all-in-one MathJS installation including symbolic context",
       "targetLayer": "integration.install",
       "migrationChapter": 14,
       "action": "split-and-preserve"
@@ -145,10 +180,10 @@
     },
     {
       "path": "src/types.ts",
-      "currentRole": "MathJS extension and equality types",
+      "currentRole": "MathJS extension, equality, and symbolic-context types",
       "targetLayer": "integration.types",
       "migrationChapter": 14,
-      "action": "extend-and-preserve"
+      "action": "extended"
     }
   ]
 }

@@ -28,6 +28,8 @@ try {
     'docs/api.md',
     'docs/architecture-migration/README.md',
     'docs/architecture-migration/baseline-metrics.json',
+    'docs/architecture-migration/chapter-1.md',
+    'docs/architecture-migration/mathjs-api-boundary.md',
     'docs/architecture-migration/module-map.json',
     'docs/architecture-migration/public-api.json',
     'docs/conformance.md',
@@ -71,6 +73,13 @@ try {
   assert.equal(equation.type, 'EqualityNode');
   assert.equal(equation.toString(), 'x + 1 =:= 3');
   assert.equal(equation.compile().evaluate({x: 2}), true);
+  const symbolicNode = math.symbolic.nodes.symbol('x');
+  assert.equal(symbolicNode.type, 'SymbolNode');
+  const operation = math.symbolic.operation({limits: {steps: 1}});
+  assert.equal(operation.consume('steps'), null);
+  assert.deepEqual(operation.consume('steps'), {
+    kind: 'limit', limit: 'steps', used: 2, maximum: 1
+  });
   const solved = math.solveEquation('x*x - 1 =:= 0', 'x');
   assert.equal(solved.kind, 'finite');
   assert.equal(solved.solutions.length, 2);

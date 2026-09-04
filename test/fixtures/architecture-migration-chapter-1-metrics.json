@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "7762e44238f3ae7cc9a0743fe73ff8e4341794b8",
+  "packageVersion": "0.5.3",
+  "runtime": {
+    "node": "v24.20.0",
+    "mathjs": "15.2.0"
+  },
+  "package": {
+    "packedBytes": 128438,
+    "unpackedBytes": 629990,
+    "fileCount": 121
+  },
+  "productionJavaScriptBytes": {
+    "analysis.js": 1908,
+    "budget.js": 2980,
+    "compound-trigonometric.js": 17867,
+    "constants.js": 127,
+    "core/math-adapter.js": 2508,
+    "core/node-builder.js": 1540,
+    "core/operation-context.js": 4443,
+    "core/registry.js": 4649,
+    "core/symbolic-context.js": 2396,
+    "custom-factory.js": 114,
+    "equality-node.js": 2817,
+    "index.js": 1426,
+    "install.js": 1512,
+    "isolate.js": 16989,
+    "kernel.js": 11935,
+    "numeric-polynomial.js": 13747,
+    "numeric-solve.js": 16025,
+    "parametric.js": 14952,
+    "parse-equation.js": 3040,
+    "polynomial.js": 57469,
+    "solve-all.js": 1772,
+    "solve-types.js": 5068,
+    "solve.js": 9391,
+    "trigonometric.js": 20158,
+    "types.js": 44
+  },
+  "timings": [
+    {
+      "label": "simplify-neutral-elements",
+      "iterations": 1000,
+      "elapsedMilliseconds": 27.031,
+      "averageMicroseconds": 27.031
+    },
+    {
+      "label": "canonical-key-polynomial",
+      "iterations": 500,
+      "elapsedMilliseconds": 26.428,
+      "averageMicroseconds": 52.855
+    },
+    {
+      "label": "conformance-corpus",
+      "iterations": 3,
+      "elapsedMilliseconds": 161.133,
+      "averageMicroseconds": 53711.043
+    },
+    {
+      "label": "symbolic-cubic",
+      "iterations": 10,
+      "elapsedMilliseconds": 387.37,
+      "averageMicroseconds": 38736.968
+    },
+    {
+      "label": "symbolic-biquadratic",
+      "iterations": 10,
+      "elapsedMilliseconds": 134.313,
+      "averageMicroseconds": 13431.345
+    }
+  ],
+  "expressionMetrics": [
+    {
+      "label": "symbolic-cubic",
+      "resultKind": "partial",
+      "expressionCount": 7,
+      "totalNodes": 117,
+      "peakNodes": 39
+    },
+    {
+      "label": "symbolic-biquadratic",
+      "resultKind": "partial",
+      "expressionCount": 9,
+      "totalNodes": 77,
+      "peakNodes": 15
+    }
+  ],
+  "baselineComparison": {
+    "packedBytes": 15554,
+    "unpackedBytes": 65620,
+    "productionJavaScriptBytes": 16068
+  }
+}
