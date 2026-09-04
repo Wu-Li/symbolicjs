@@ -17,28 +17,15 @@ for (const version of ['22', '24', '26']) {
   assert.ok(ci.includes(version), `CI omits supported Node ${version}`);
 }
 assert.match(ci, /mathjs-version:[\s\S]*15\.2\.0/);
-assert.match(publish, /push:[\s\S]*tags:[\s\S]*["']v\*["']/);
-assert.match(
-  publish,
-  /workflow_run:[\s\S]*workflows:\s*\[CI\][\s\S]*types:\s*\[completed\][\s\S]*branches:\s*\[main\]/
-);
+assert.match(publish, /push:[\s\S]*branches:\s*\[main\]/);
 assert.match(publish, /workflow_dispatch:/);
-assert.match(
-  publish,
-  /github\.event_name == 'workflow_dispatch' && github\.ref == 'refs\/heads\/main'/
-);
-assert.match(publish, /workflow_run\.conclusion == 'success'/);
-assert.match(publish, /workflow_run\.event == 'push'/);
-assert.match(publish, /workflow_run\.head_branch == 'main'/);
-assert.match(publish, /workflow_run\.head_repository\.full_name == github\.repository/);
-assert.match(
-  publish,
-  /ref:\s*\$\{\{\s*github\.event\.workflow_run\.head_sha \|\| github\.sha\s*\}\}/
-);
-assert.match(publish, /contents:\s*write/);
+assert.doesNotMatch(publish, /^\s+tags:/m);
+assert.doesNotMatch(publish, /workflow_run:/);
+assert.match(publish, /github\.ref == 'refs\/heads\/main'/);
+assert.match(publish, /contents:\s*read/);
 assert.match(publish, /id-token:\s*write/);
-assert.match(publish, /cancel-in-progress:\s*false/);
-assert.match(publish, /git fetch --no-tags origin main/);
+assert.match(publish, /group:\s*npm-publish-main/);
+assert.match(publish, /cancel-in-progress:\s*true/);
 assert.match(publish, /npm run test:release/);
 assert.match(publish, /npm run check/);
 assert.match(
@@ -50,25 +37,5 @@ assert.match(publish, /grep -q 'E404'/);
 assert.match(publish, /exit "\$registry_status"/);
 assert.match(publish, /steps\.registry\.outputs\.published == 'false'/);
 assert.match(publish, /npm publish --provenance --access public/);
-assert.match(
-  publish,
-  /name: Ensure release tag[\s\S]*steps\.registry\.outputs\.published == 'false'[\s\S]*steps\.final-source\.outputs\.current == 'true'/
-);
-assert.match(publish, /git push origin "refs\/tags\/\$\{tag\}"/);
-
-const tagStep = publish.indexOf('name: Ensure release tag');
-const publishStep = publish.indexOf('name: Publish to npm');
-assert.ok(tagStep >= 0 && tagStep < publishStep, 'Release tag must be created before npm publish');
-
-const tagName = process.env.GITHUB_REF_TYPE === 'tag'
-  ? process.env.GITHUB_REF_NAME
-  : process.env.GITHUB_REF?.startsWith('refs/tags/')
-    ? process.env.GITHUB_REF.slice('refs/tags/'.length)
-    : undefined;
-if (tagName !== undefined) {
-  assert.equal(
-    tagName,
-    `v${packageJson.version}`,
-    'Release tag must exactly match package.json version'
-  );
-}
+assert.doesNotMatch(publish, /Ensure release tag/);
+assert.doesNotMatch(publish, /git (?:tag|push)/);
