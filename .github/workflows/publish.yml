@@ -2,8 +2,7 @@ name: Publish
 
 on:
   push:
-    tags:
-      - "v*"
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -11,7 +10,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: npm-publish-${{ github.ref }}
+  group: npm-publish-main
   cancel-in-progress: false
 
 jobs:
@@ -20,8 +19,6 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
       - uses: actions/setup-node@v6
         with:
           node-version: 24
@@ -38,25 +35,6 @@ jobs:
           console.log(`name=${name}`);
           console.log(`version=${version}`);
           NODE
-      - name: Validate release tag
-        if: github.event_name == 'push'
-        shell: bash
-        env:
-          PACKAGE_VERSION: ${{ steps.package.outputs.version }}
-        run: |
-          expected="v${PACKAGE_VERSION}"
-          if [[ "$GITHUB_REF_NAME" != "$expected" ]]; then
-            echo "::error::Release tag $GITHUB_REF_NAME does not match package version $PACKAGE_VERSION. Expected $expected."
-            exit 1
-          fi
-      - name: Validate manual release source
-        if: github.event_name == 'workflow_dispatch'
-        shell: bash
-        run: |
-          if [[ "$GITHUB_REF" != "refs/heads/main" ]]; then
-            echo "::error::Manual publishing is only allowed from main."
-            exit 1
-          fi
       - name: Validate release metadata
         run: npm run test:release
       - name: Check npm registry
@@ -66,18 +44,35 @@ jobs:
           PACKAGE_NAME: ${{ steps.package.outputs.name }}
           PACKAGE_VERSION: ${{ steps.package.outputs.version }}
         run: |
-          if published="$(npm view "${PACKAGE_NAME}@${PACKAGE_VERSION}" version 2>/dev/null)"; then
-            published="$(printf '%s' "$published" | tr -d '[:space:]')"
-            if [[ "$published" == "$PACKAGE_VERSION" ]]; then
-              echo "::error::${PACKAGE_NAME}@${PACKAGE_VERSION} is already published. Bump the version before publishing again."
+          registry_stdout="$(mktemp)"
+          registry_stderr="$(mktemp)"
+          trap 'rm -f "$registry_stdout" "$registry_stderr"' EXIT
+
+          if npm view "${PACKAGE_NAME}@${PACKAGE_VERSION}" version >"$registry_stdout" 2>"$registry_stderr"; then
+            published="$(tr -d '[:space:]' < "$registry_stdout")"
+            if [[ "$published" != "$PACKAGE_VERSION" ]]; then
+              cat "$registry_stderr" >&2
+              echo "::error::npm returned unexpected version: $published"
               exit 1
             fi
-            echo "::error::npm returned unexpected version: $published"
-            exit 1
+            echo "published=true" >> "$GITHUB_OUTPUT"
+            echo "${PACKAGE_NAME}@${PACKAGE_VERSION} is already published; nothing to do."
+          else
+            registry_status=$?
+            if grep -q 'E404' "$registry_stdout" "$registry_stderr"; then
+              echo "published=false" >> "$GITHUB_OUTPUT"
+              echo "${PACKAGE_NAME}@${PACKAGE_VERSION} is not published yet."
+            else
+              cat "$registry_stdout" "$registry_stderr" >&2
+              exit "$registry_status"
+            fi
           fi
       - name: Install dependencies
+        if: steps.registry.outputs.published == 'false'
         run: npm ci
       - name: Verify package
+        if: steps.registry.outputs.published == 'false'
         run: npm run check
       - name: Publish to npm
+        if: steps.registry.outputs.published == 'false'
         run: npm publish --provenance --access public
