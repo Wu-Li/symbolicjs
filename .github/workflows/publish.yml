@@ -85,14 +85,28 @@ jobs:
           PACKAGE_NAME: ${{ steps.package.outputs.name }}
           PACKAGE_VERSION: ${{ steps.package.outputs.version }}
         run: |
-          published="$(
-            npm view "${PACKAGE_NAME}@${PACKAGE_VERSION}" version --json 2>/dev/null || true
-          )"
-          if [[ "$published" == "\"${PACKAGE_VERSION}\"" || "$published" == "$PACKAGE_VERSION" ]]; then
+          registry_stdout="$(mktemp)"
+          registry_stderr="$(mktemp)"
+          trap 'rm -f "$registry_stdout" "$registry_stderr"' EXIT
+
+          if npm view "${PACKAGE_NAME}@${PACKAGE_VERSION}" version \
+            >"$registry_stdout" 2>"$registry_stderr"; then
+            published="$(tr -d '[:space:]' < "$registry_stdout")"
+            if [[ "$published" != "$PACKAGE_VERSION" ]]; then
+              cat "$registry_stderr" >&2
+              echo "::error::npm returned unexpected version: $published"
+              exit 1
+            fi
             echo "published=true" >> "$GITHUB_OUTPUT"
             echo "${PACKAGE_NAME}@${PACKAGE_VERSION} is already published."
           else
-            echo "published=false" >> "$GITHUB_OUTPUT"
+            registry_status=$?
+            if grep -q 'E404' "$registry_stdout" "$registry_stderr"; then
+              echo "published=false" >> "$GITHUB_OUTPUT"
+            else
+              cat "$registry_stdout" "$registry_stderr" >&2
+              exit "$registry_status"
+            fi
           fi
       - name: Install dependencies
         if: steps.registry.outputs.published == 'false'
@@ -124,7 +138,9 @@ jobs:
           steps.final-source.outputs.current == 'true'
         run: npm publish --provenance --access public
       - name: Ensure release tag
-        if: steps.final-source.outputs.current == 'true'
+        if: >-
+          steps.registry.outputs.published == 'false' &&
+          steps.final-source.outputs.current == 'true'
         shell: bash
         env:
           PACKAGE_VERSION: ${{ steps.package.outputs.version }}

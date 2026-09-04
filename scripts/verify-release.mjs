@@ -45,10 +45,17 @@ assert.match(publish, /npm run test:release/);
 assert.match(publish, /npm run check/);
 assert.match(
   publish,
-  /npm view "\$\{PACKAGE_NAME\}@\$\{PACKAGE_VERSION\}" version --json/
+  /npm view "\$\{PACKAGE_NAME\}@\$\{PACKAGE_VERSION\}" version/
 );
+assert.match(publish, /registry_status=\$\?/);
+assert.match(publish, /grep -q 'E404'/);
+assert.match(publish, /exit "\$registry_status"/);
 assert.match(publish, /steps\.registry\.outputs\.published == 'false'/);
 assert.match(publish, /npm publish --provenance --access public/);
+assert.match(
+  publish,
+  /name: Ensure release tag[\s\S]*steps\.registry\.outputs\.published == 'false'[\s\S]*steps\.final-source\.outputs\.current == 'true'/
+);
 assert.match(publish, /git push origin "refs\/tags\/\$\{tag\}"/);
 
 const tagName = process.env.GITHUB_REF_TYPE === 'tag'
