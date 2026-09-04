@@ -19,10 +19,16 @@ for (const version of ['22', '24', '26']) {
   assert.ok(ci.includes(version), `CI omits supported Node ${version}`);
 }
 assert.match(ci, /mathjs-version:[\s\S]*15\.2\.0/);
-assert.match(publish, /tags:[\s\S]*["']v\*["']/);
+assert.match(publish, /push:[\s\S]*branches:\s*\[main\]/);
+assert.match(publish, /paths:[\s\S]*package\.json/);
+assert.match(publish, /workflow_dispatch:/);
+assert.match(publish, /contents:\s*write/);
 assert.match(publish, /id-token:\s*write/);
 assert.match(publish, /npm run check/);
+assert.match(publish, /npm view "\$\{PACKAGE_NAME\}@\$\{PACKAGE_VERSION\}"/);
+assert.match(publish, /steps\.registry\.outputs\.published != 'true'/);
 assert.match(publish, /npm publish --provenance --access public/);
+assert.match(publish, /git push origin "refs\/tags\/\$\{tag\}"/);
 
 const tagName = process.env.GITHUB_REF_TYPE === 'tag'
   ? process.env.GITHUB_REF_NAME
