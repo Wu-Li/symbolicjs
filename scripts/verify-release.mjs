@@ -6,14 +6,12 @@ const root = resolve(import.meta.dirname, '..');
 const read = (path) => readFileSync(resolve(root, path), 'utf8');
 const packageJson = JSON.parse(read('package.json'));
 const packageLock = JSON.parse(read('package-lock.json'));
-const changelog = read('CHANGELOG.md');
 const ci = read('.github/workflows/ci.yml');
 const publish = read('.github/workflows/publish.yml');
 
 assert.match(packageJson.version, /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/);
 assert.equal(packageLock.version, packageJson.version);
 assert.equal(packageLock.packages[''].version, packageJson.version);
-assert.match(changelog, new RegExp(`^## ${packageJson.version.replaceAll('.', '\\.')}\\b`, 'm'));
 
 for (const version of ['22', '24', '26']) {
   assert.ok(ci.includes(version), `CI omits supported Node ${version}`);
@@ -57,6 +55,10 @@ assert.match(
   /name: Ensure release tag[\s\S]*steps\.registry\.outputs\.published == 'false'[\s\S]*steps\.final-source\.outputs\.current == 'true'/
 );
 assert.match(publish, /git push origin "refs\/tags\/\$\{tag\}"/);
+
+const tagStep = publish.indexOf('name: Ensure release tag');
+const publishStep = publish.indexOf('name: Publish to npm');
+assert.ok(tagStep >= 0 && tagStep < publishStep, 'Release tag must be created before npm publish');
 
 const tagName = process.env.GITHUB_REF_TYPE === 'tag'
   ? process.env.GITHUB_REF_NAME

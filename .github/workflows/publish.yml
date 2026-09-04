@@ -132,11 +132,6 @@ jobs:
             echo "current=false" >> "$GITHUB_OUTPUT"
             echo "Main advanced to $current_sha; skipping $RELEASE_SHA."
           fi
-      - name: Publish to npm
-        if: >-
-          steps.registry.outputs.published == 'false' &&
-          steps.final-source.outputs.current == 'true'
-        run: npm publish --provenance --access public
       - name: Ensure release tag
         if: >-
           steps.registry.outputs.published == 'false' &&
@@ -159,3 +154,8 @@ jobs:
             git tag "${tag}" "$RELEASE_SHA"
             git push origin "refs/tags/${tag}"
           fi
+      - name: Publish to npm
+        if: >-
+          steps.registry.outputs.published == 'false' &&
+          steps.final-source.outputs.current == 'true'
+        run: npm publish --provenance --access public

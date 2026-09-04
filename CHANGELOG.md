@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.5.2 - 2026-09-03
+
+- Repair automatic publishing so a successful `main` CI run releases the current
+  package without requiring a hand-authored changelog heading.
+- Create the release tag before publishing so a failed npm attempt can be retried
+  without losing the source revision.
+
 ## 0.5.1 - 2026-09-03
 
 - Stabilize the clustered-root quartic test under CI load.
