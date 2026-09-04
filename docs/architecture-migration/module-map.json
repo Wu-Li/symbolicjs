@@ -46,6 +46,27 @@
       "action": "new"
     },
     {
+      "path": "src/core/canonicalize/engine.ts",
+      "currentRole": "assumption-aware deterministic MathJS canonicalization",
+      "targetLayer": "core.canonicalization",
+      "migrationChapter": 4,
+      "action": "new"
+    },
+    {
+      "path": "src/core/canonicalize/index.ts",
+      "currentRole": "canonicalization module boundary",
+      "targetLayer": "core.canonicalization",
+      "migrationChapter": 4,
+      "action": "new"
+    },
+    {
+      "path": "src/core/canonicalize/types.ts",
+      "currentRole": "canonicalization profiles, options, trace, and result contracts",
+      "targetLayer": "core.canonicalization",
+      "migrationChapter": 4,
+      "action": "new"
+    },
+    {
       "path": "src/core/definedness.ts",
       "currentRole": "domain-aware definedness obligations",
       "targetLayer": "core.definedness",
@@ -124,7 +145,7 @@
     },
     {
       "path": "src/core/symbolic-context.ts",
-      "currentRole": "experimental MathJS-native symbolic service and semantic query facade",
+      "currentRole": "experimental MathJS-native semantic, structural, and canonicalization facade",
       "targetLayer": "core.context",
       "migrationChapter": 1,
       "action": "new"

@@ -31,6 +31,7 @@ try {
     'docs/architecture-migration/chapter-1.md',
     'docs/architecture-migration/chapter-2.md',
     'docs/architecture-migration/chapter-3.md',
+    'docs/architecture-migration/chapter-4.md',
     'docs/architecture-migration/mathjs-api-boundary.md',
     'docs/architecture-migration/module-map.json',
     'docs/architecture-migration/public-api.json',
@@ -93,6 +94,17 @@ try {
   );
   assert.equal(structure.cost.metrics.targetOccurrences, 1);
   assert.match(structure.fingerprint, /^s1-[0-9a-f]{16}$/);
+  const canonical = math.symbolic.canonicalize(math.parse('y + x + 0'), {
+    profile: 'scalar',
+    mode: 'conditional'
+  });
+  assert.equal(canonical.expression.toString({parenthesis: 'all'}), 'x + y');
+  assert.deepEqual(
+    canonical.requirements.map((requirement) =>
+      requirement.kind === 'domain' ? requirement.domain : requirement.property
+    ),
+    ['scalar', 'scalar']
+  );
   const solved = math.solveEquation('x*x - 1 =:= 0', 'x');
   assert.equal(solved.kind, 'finite');
   assert.equal(solved.solutions.length, 2);

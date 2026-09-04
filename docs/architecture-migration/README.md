@@ -13,7 +13,8 @@ shared symbolic layer is built underneath it.
 | 1 — MathJS integration substrate and operation context | Complete |
 | 2 — assumptions, domains, predicates, and definedness | Complete |
 | 3 — structural identity, ordering, fingerprints, and cost | Complete |
-| 4–14 | Not started |
+| 4 — canonicalization engine | Complete |
+| 5–14 | Not started |
 
 ## Scope freeze
 
@@ -30,8 +31,9 @@ solver algorithms or dispatch. Chapter 2 adds the immutable assumptions,
 domain, predicate, definedness, and semantic-inference layer while preserving
 the existing solver contracts through compatibility adapters. Chapter 3
 centralizes lossless structural identity, deterministic ordering, fingerprints,
-and syntax-aware expression cost while leaving algebraic canonicalization to
-Chapter 4.
+and syntax-aware expression cost. Chapter 4 adds bounded, idempotent,
+assumption-aware canonicalization profiles over MathJS nodes and routes the legacy
+canonical-key facade through the shared canonical structural identity.
 
 Affected surfaces:
 
@@ -40,7 +42,8 @@ Affected surfaces:
 - package contents because `docs/architecture-migration/` is published;
 - benchmark and package-size measurement tooling;
 - future chapters, which will maintain the machine-readable module map;
-- the configured MathJS instance, which now exposes experimental `math.symbolic`.
+- the configured MathJS instance, which now exposes experimental semantic,
+  structural, and canonicalization services through `math.symbolic`.
 
 Primary risks and regression coverage:
 
@@ -81,6 +84,7 @@ Compatibility checks are divided deliberately:
 - `chapter-1.md`: Chapter 1 impact map and focused verification scope.
 - `chapter-2.md`: Chapter 2 semantic contracts, risks, and focused gate.
 - `chapter-3.md`: Chapter 3 structural identity, ordering, cost, and test scope.
+- `chapter-4.md`: Chapter 4 canonicalization contracts, safety boundaries, and test scope.
 
 Regenerate measurements after a build with:
 

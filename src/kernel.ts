@@ -199,18 +199,28 @@ export class SymbolicKernel {
   }
 
   canonicalKey(node: MathNode): string {
-    const simplified = this.simplify(node);
-    if (nodeSymbols(simplified).length === 0) {
+    const canonical = this.#symbolic.canonicalize(node, {
+      profile: 'scalar',
+      domain: 'real',
+      mode: 'conditional'
+    }).expression;
+    if (nodeSymbols(canonical).length === 0) {
       try {
-        const value = asFiniteNumber(simplified.compile().evaluate());
+        const value = asFiniteNumber(canonical.compile().evaluate());
         if (value !== null) {
           return 'number:' + (value === 0 ? '0' : value.toString());
         }
       } catch {
-        // Fall through to the structural key.
+        // Fall through to the canonical structural identity.
       }
     }
-    return simplified.toString({parenthesis: 'all'});
+    const key = this.#symbolic.structure.key(canonical, {
+      parentheses: 'transparent'
+    });
+    return 'canonical:' +
+      this.#symbolic.structure.fingerprint(canonical, {
+        parentheses: 'transparent'
+      }) + ':' + key;
   }
 
   verify(

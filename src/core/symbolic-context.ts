@@ -1,5 +1,14 @@
 import type {MathNode} from 'mathjs';
 import {customFactory} from '../custom-factory.js';
+import {
+  CanonicalizationEngine,
+  normalizeCanonicalizationOptions
+} from './canonicalize/engine.js';
+import type {
+  CanonicalizationOptions,
+  CanonicalizationProfile,
+  CanonicalizationResult
+} from './canonicalize/types.js';
 import type {Assumption} from './assumptions.js';
 import {AssumptionSet} from './assumptions.js';
 import {DefinednessAnalyzer} from './definedness.js';
@@ -95,6 +104,25 @@ function mergeOperationOptions(
   });
 }
 
+function canonicalizationDomain(
+  profile: CanonicalizationProfile,
+  supplied: OperationDomain | undefined
+): OperationDomain | undefined {
+  if (profile === 'real-algebraic') {
+    if (supplied !== undefined && supplied !== 'real') {
+      throw new RangeError('real-algebraic canonicalization requires the real domain');
+    }
+    return 'real';
+  }
+  if (profile === 'complex-safe') {
+    if (supplied !== undefined && supplied !== 'complex') {
+      throw new RangeError('complex-safe canonicalization requires the complex domain');
+    }
+    return 'complex';
+  }
+  return supplied === undefined ? undefined : validateOperationDomain(supplied);
+}
+
 /** Experimental MathJS-native entry point for the generalized symbolic layer. */
 export class SymbolicContext {
   readonly math: MathAdapter;
@@ -102,6 +130,7 @@ export class SymbolicContext {
   readonly registry: SymbolicRegistry;
   readonly predicates: PredicateFactory;
   readonly structure: StructuralEngine;
+  readonly canonicalization: CanonicalizationEngine;
   readonly #definedness: DefinednessAnalyzer;
   readonly #semantics: PredicateEngine;
   readonly #operationDefaults: NormalizedOperationContextOptions;
@@ -127,6 +156,14 @@ export class SymbolicContext {
       this.predicates,
       registry,
       this.#definedness
+    );
+    this.canonicalization = new CanonicalizationEngine(
+      math,
+      this.nodes,
+      this.predicates,
+      this.#semantics,
+      this.#definedness,
+      this.structure
     );
     this.#operationDefaults = normalizedOperationOptions(operationDefaults);
     Object.freeze(this);
@@ -156,6 +193,32 @@ export class SymbolicContext {
     options: OperationContextOptions = {}
   ): RequirementResult {
     return this.#semantics.require(predicate, this.operation(options));
+  }
+
+  canonicalize(
+    node: MathNode,
+    options: CanonicalizationOptions = {}
+  ): CanonicalizationResult {
+    const normalized = normalizeCanonicalizationOptions(options);
+    const domain = canonicalizationDomain(normalized.profile, options.domain);
+    const canonicalSteps = Math.min(
+      normalized.maximumSteps,
+      this.#operationDefaults.limits.canonicalSteps ?? normalized.maximumSteps,
+      options.limits?.canonicalSteps ?? normalized.maximumSteps
+    );
+    const operation = this.operation({
+      ...(options.assumptions === undefined
+        ? {}
+        : {assumptions: options.assumptions}),
+      ...(options.scope === undefined ? {} : {scope: options.scope}),
+      ...(domain === undefined ? {} : {domain}),
+      limits: {...options.limits, canonicalSteps},
+      ...(options.mode === undefined ? {} : {mode: options.mode}),
+      ...(options.diagnostics === undefined
+        ? {}
+        : {diagnostics: options.diagnostics})
+    });
+    return this.canonicalization.canonicalize(node, operation, normalized);
   }
 
   definedness(
