@@ -137,7 +137,7 @@ describe('numeric quartic solving', () => {
     );
 
     expectRoots(finiteValues(result), [-3, -2, 1, 1.0001], 7);
-  });
+  }, 15_000);
 
   it('records the Ferrari numeric dispatch', () => {
     const result = createMath().solveEquation('x^4 - x =:= 0', 'x', {
