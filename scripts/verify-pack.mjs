@@ -29,11 +29,11 @@ try {
     'docs/architecture-migration/README.md',
     'docs/architecture-migration/baseline-metrics.json',
     'docs/architecture-migration/chapter-1.md',
+    'docs/architecture-migration/chapter-2.md',
     'docs/architecture-migration/mathjs-api-boundary.md',
     'docs/architecture-migration/module-map.json',
     'docs/architecture-migration/public-api.json',
     'docs/conformance.md',
-    'docs/migration-0.5.md',
     'docs/performance.md',
     'docs/security.md',
     'docs/testing.md'
@@ -80,6 +80,12 @@ try {
   assert.deepEqual(operation.consume('steps'), {
     kind: 'limit', limit: 'steps', used: 2, maximum: 1
   });
+  const predicate = math.symbolic.predicates.positive(symbolicNode);
+  assert.equal(math.symbolic.ask(predicate).truth, 'unknown');
+  assert.equal(
+    math.symbolic.require(predicate, {mode: 'conditional'}).kind,
+    'conditional'
+  );
   const solved = math.solveEquation('x*x - 1 =:= 0', 'x');
   assert.equal(solved.kind, 'finite');
   assert.equal(solved.solutions.length, 2);

@@ -55,6 +55,11 @@ const scope = createSearchScope('real', 'complete-in-interval', interval);
 const symbolicNode = math.symbolic.nodes.symbol('x');
 const symbolicOperation = math.symbolic.operation({limits: {steps: 1}});
 const symbolicLimit = symbolicOperation.consume('steps');
+const symbolicPredicate = math.symbolic.predicates.positive(symbolicNode);
+const symbolicJudgment = math.symbolic.ask(symbolicPredicate);
+const symbolicRequirement = math.symbolic.require(symbolicPredicate, {
+  mode: 'conditional'
+});
 
 function resultKind(value: SolveResult): string {
   switch (value.kind) {
@@ -110,6 +115,8 @@ void interval;
 void scope;
 void symbolicNode;
 void symbolicLimit;
+void symbolicJudgment;
+void symbolicRequirement;
 void resultKind(result);
 void parametric;
 void cubicCertificate;

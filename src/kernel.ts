@@ -6,6 +6,8 @@ import {
 } from 'mathjs';
 import type {MathJsInstance, MathNode} from 'mathjs';
 import {nodeSymbols} from './analysis.js';
+import {conditionToPredicate, predicateToCondition} from './core/legacy-condition.js';
+import type {SymbolicContext} from './core/symbolic-context.js';
 import {customFactory} from './custom-factory.js';
 import {DEFAULT_SOLVE_TOLERANCE} from './solve-types.js';
 import type {
@@ -18,21 +20,13 @@ import type {EqualityNode} from './types.js';
 interface KernelDependencies {
   OperatorNode: MathJsInstance['OperatorNode'];
   simplifyCore: MathJsInstance['simplifyCore'];
+  symbolic: SymbolicContext;
 }
 
 export interface NormalizedConditions {
   readonly conditions: readonly Condition[];
   readonly contradictory: boolean;
 }
-
-const SIGN_SETS: Readonly<Record<Exclude<ConditionKind, 'defined'>, string>> = {
-  zero: '0',
-  nonzero: '-+',
-  positive: '+',
-  nonnegative: '0+',
-  negative: '-',
-  nonpositive: '-0'
-};
 
 function frozenVerification(
   status: VerificationResult['status'],
@@ -97,32 +91,6 @@ function constantNodeValue(node: MathNode): number | null {
   }
 }
 
-function conditionHolds(condition: Condition, scope: Record<string, number>): boolean {
-  try {
-    const value = condition.expression.compile().evaluate(scope);
-    const numeric = asFiniteNumber(value);
-    const scalar = asFiniteScalar(value);
-    switch (condition.kind) {
-      case 'zero': return scalar !== null && scalar.re === 0 && scalar.im === 0;
-      case 'nonzero': return scalar !== null && (scalar.re !== 0 || scalar.im !== 0);
-      case 'positive': return numeric !== null && numeric > 0;
-      case 'nonnegative': return numeric !== null && numeric >= 0;
-      case 'negative': return numeric !== null && numeric < 0;
-      case 'nonpositive': return numeric !== null && numeric <= 0;
-      case 'defined': return scalar !== null || typeof value === 'boolean';
-    }
-  } catch {
-    return false;
-  }
-}
-
-function constantConditionHolds(condition: Condition): boolean | null {
-  if (nodeSymbols(condition.expression).length > 0) {
-    return null;
-  }
-  return conditionHolds(condition, {});
-}
-
 function isClose(lhs: unknown, rhs: unknown, tolerance: number): boolean | null {
   const left = asFiniteScalar(lhs);
   const right = asFiniteScalar(rhs);
@@ -142,10 +110,12 @@ function isClose(lhs: unknown, rhs: unknown, tolerance: number): boolean | null 
 export class SymbolicKernel {
   readonly #OperatorNode: KernelDependencies['OperatorNode'];
   readonly #simplifyCore: KernelDependencies['simplifyCore'];
+  readonly #symbolic: SymbolicContext;
 
   constructor(dependencies: KernelDependencies) {
     this.#OperatorNode = dependencies.OperatorNode;
     this.#simplifyCore = dependencies.simplifyCore;
+    this.#symbolic = dependencies.symbolic;
   }
 
   substitute(node: MathNode, target: string, replacement: MathNode): MathNode {
@@ -178,81 +148,40 @@ export class SymbolicKernel {
   }
 
   conditionsForDefinedness(node: MathNode): readonly Condition[] {
-    const conditions: Condition[] = [];
-    node.traverse((candidate) => {
-      if (isOperatorNode(candidate) && candidate.op === '/') {
-        conditions.push(this.condition('nonzero', candidate.args[1]!));
-      }
-      if (isOperatorNode(candidate) && candidate.op === '^') {
-        const exponent = candidate.args[1];
-        if (exponent) {
-          const value = constantNodeValue(exponent);
-          if (value !== null && value < 0) {
-            conditions.push(this.condition('nonzero', candidate.args[0]!));
-          }
-          if (value !== null && !Number.isInteger(value)) {
-            conditions.push(this.condition('nonnegative', candidate.args[0]!));
-          }
-        }
-      }
-      if (isFunctionNode(candidate)) {
-        const name = isSymbolNode(candidate.fn) ? candidate.fn.name : '';
-        if (name === 'sqrt') {
-          conditions.push(this.condition('nonnegative', candidate.args[0]!));
-        } else if (name === 'log' || name === 'log10') {
-          conditions.push(this.condition('positive', candidate.args[0]!));
-        } else if (name === 'nthRoot') {
-          const degree = candidate.args[1];
-          if (degree && isConstantNode(degree)) {
-            const value = asFiniteNumber(degree.value);
-            if (value !== null && Number.isInteger(value) && value % 2 === 0) {
-              conditions.push(this.condition('nonnegative', candidate.args[0]!));
-            }
-          }
-        }
-      }
+    const analysis = this.#symbolic.definedness(node, {
+      domain: 'real',
+      mode: 'conditional',
+      includeLeafDefinedness: false,
+      legacySolverCompatibility: true
     });
-    const normalized = this.normalizeConditions(conditions);
-    // Keep an impossible requirement observable so callers that combine
-    // definedness conditions can recover the contradictory-domain result.
-    // Returning the normalized empty list here would erase that distinction.
-    return normalized.contradictory
-      ? Object.freeze(conditions)
-      : normalized.conditions;
+    return Object.freeze(analysis.requirements
+      .map((predicate) => predicateToCondition(predicate))
+      .filter((condition): condition is Condition => condition !== null));
   }
 
   normalizeConditions(conditions: readonly Condition[]): NormalizedConditions {
     const unique = new Map<string, Condition>();
-    const signs = new Map<string, Set<string>>();
+    let assumptions = this.#symbolic.assumptions();
 
     for (const condition of conditions) {
       const expression = this.simplify(condition.expression);
       const normalized = this.condition(condition.kind, expression);
-      const constant = constantConditionHolds(normalized);
-      if (constant === true) {
+      const predicate = conditionToPredicate(this.#symbolic.predicates, normalized);
+      const judgment = this.#symbolic.ask(predicate, {domain: 'real'});
+      if (judgment.truth === 'proven') {
         continue;
       }
-      if (constant === false) {
+      if (judgment.truth === 'disproven') {
         return Object.freeze({conditions: Object.freeze([]), contradictory: true});
       }
-      const expressionKey = expression.toString();
-      const key = condition.kind + ':' + expressionKey;
-      unique.set(key, normalized);
-      if (condition.kind !== 'defined') {
-        const allowed = new Set(SIGN_SETS[condition.kind]);
-        const existing = signs.get(expressionKey);
-        signs.set(
-          expressionKey,
-          existing
-            ? new Set([...existing].filter((sign) => allowed.has(sign)))
-            : allowed
-        );
+      try {
+        assumptions = assumptions.with(predicate);
+      } catch {
+        return Object.freeze({conditions: Object.freeze([]), contradictory: true});
       }
+      unique.set(condition.kind + ':' + expression.toString(), normalized);
     }
 
-    if ([...signs.values()].some((allowed) => allowed.size === 0)) {
-      return Object.freeze({conditions: Object.freeze([]), contradictory: true});
-    }
     return Object.freeze({
       conditions: Object.freeze([...unique.values()].sort((lhs, rhs) =>
         (lhs.kind + ':' + lhs.expression.toString())
@@ -260,6 +189,13 @@ export class SymbolicKernel {
       )),
       contradictory: false
     });
+  }
+
+  #conditionHolds(condition: Condition, scope: Record<string, number>): boolean {
+    return this.#symbolic.ask(
+      conditionToPredicate(this.#symbolic.predicates, condition),
+      {domain: 'real', scope}
+    ).truth === 'proven';
   }
 
   canonicalKey(node: MathNode): string {
@@ -336,7 +272,7 @@ export class SymbolicKernel {
         symbol,
         samples[(index + symbolIndex) % samples.length]!
       ]));
-      if (!normalized.conditions.every((condition) => conditionHolds(condition, scope))) {
+      if (!normalized.conditions.every((condition) => this.#conditionHolds(condition, scope))) {
         continue;
       }
       try {
@@ -364,7 +300,7 @@ export class SymbolicKernel {
 
 export const createSymbolicKernel = customFactory(
   'symbolicKernel',
-  ['OperatorNode', 'simplifyCore'],
+  ['OperatorNode', 'simplifyCore', 'symbolic'],
   (rawDependencies) => new SymbolicKernel(
     rawDependencies as unknown as KernelDependencies
   )

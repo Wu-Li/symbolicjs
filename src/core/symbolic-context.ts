@@ -1,37 +1,73 @@
+import type {MathNode} from 'mathjs';
 import {customFactory} from '../custom-factory.js';
+import type {Assumption} from './assumptions.js';
+import {AssumptionSet} from './assumptions.js';
+import {DefinednessAnalyzer} from './definedness.js';
+import type {DefinednessAnalysisOptions} from './definedness.js';
+import type {OperationDomain} from './domains.js';
+import {validateOperationDomain} from './domains.js';
 import {MathAdapter} from './math-adapter.js';
 import type {MathAdapterDependencies} from './math-adapter.js';
 import {NodeBuilder} from './node-builder.js';
-import {OperationContext} from './operation-context.js';
+import {
+  normalizeAssumptions,
+  OperationContext
+} from './operation-context.js';
 import type {
   OperationContextOptions,
-  OperationMode,
-  SymbolicDomainPlaceholder
+  OperationMode
 } from './operation-context.js';
+import {
+  createJudgment,
+  PredicateFactory
+} from './predicate.js';
+import type {
+  Judgment,
+  RequirementResult,
+  SymbolicEvidence,
+  SymbolicPredicate
+} from './predicate.js';
 import {
   createDefaultSymbolicRegistry,
   SymbolicRegistry
 } from './registry.js';
+import {PredicateEngine} from './semantic-engine.js';
 
 export interface SymbolicContextOptions {
   readonly registry?: SymbolicRegistry;
   readonly operationDefaults?: OperationContextOptions;
 }
 
+export interface DefinednessQueryOptions extends OperationContextOptions {
+  readonly includeLeafDefinedness?: boolean;
+  readonly legacySolverCompatibility?: boolean;
+}
+
 interface NormalizedOperationContextOptions {
-  readonly assumptions: Readonly<Record<string, unknown>>;
-  readonly domain: SymbolicDomainPlaceholder;
+  readonly assumptions: AssumptionSet;
+  readonly scope: Readonly<Record<string, unknown>>;
+  readonly domain: OperationDomain;
   readonly limits: Readonly<Record<string, number>>;
   readonly mode: OperationMode;
   readonly diagnostics: boolean;
+}
+
+function normalizedScope(
+  scope: Readonly<Record<string, unknown>> = {}
+): Readonly<Record<string, unknown>> {
+  if (!scope || typeof scope !== 'object' || Array.isArray(scope)) {
+    throw new TypeError('Operation scope must be an object');
+  }
+  return Object.freeze({...scope});
 }
 
 function normalizedOperationOptions(
   supplied: OperationContextOptions = {}
 ): NormalizedOperationContextOptions {
   return Object.freeze({
-    assumptions: Object.freeze({...supplied.assumptions}),
-    domain: supplied.domain ?? 'unknown',
+    assumptions: normalizeAssumptions(supplied.assumptions),
+    scope: normalizedScope(supplied.scope),
+    domain: validateOperationDomain(supplied.domain ?? 'unknown'),
     limits: Object.freeze({...supplied.limits}),
     mode: supplied.mode ?? 'strict',
     diagnostics: supplied.diagnostics ?? false
@@ -42,8 +78,12 @@ function mergeOperationOptions(
   defaults: NormalizedOperationContextOptions,
   supplied: OperationContextOptions
 ): NormalizedOperationContextOptions {
+  const assumptions = supplied.assumptions === undefined
+    ? defaults.assumptions
+    : defaults.assumptions.withAll(normalizeAssumptions(supplied.assumptions).entries());
   return normalizedOperationOptions({
-    assumptions: {...defaults.assumptions, ...supplied.assumptions},
+    assumptions,
+    scope: {...defaults.scope, ...supplied.scope},
     domain: supplied.domain ?? defaults.domain,
     limits: {...defaults.limits, ...supplied.limits},
     mode: supplied.mode ?? defaults.mode,
@@ -56,6 +96,9 @@ export class SymbolicContext {
   readonly math: MathAdapter;
   readonly nodes: NodeBuilder;
   readonly registry: SymbolicRegistry;
+  readonly predicates: PredicateFactory;
+  readonly #definedness: DefinednessAnalyzer;
+  readonly #semantics: PredicateEngine;
   readonly #operationDefaults: NormalizedOperationContextOptions;
 
   constructor(
@@ -66,8 +109,25 @@ export class SymbolicContext {
     this.math = math;
     this.nodes = new NodeBuilder(math);
     this.registry = registry;
+    this.predicates = new PredicateFactory(math);
+    this.#definedness = new DefinednessAnalyzer(
+      math,
+      this.nodes,
+      this.predicates,
+      registry
+    );
+    this.#semantics = new PredicateEngine(
+      math,
+      this.predicates,
+      registry,
+      this.#definedness
+    );
     this.#operationDefaults = normalizedOperationOptions(operationDefaults);
     Object.freeze(this);
+  }
+
+  assumptions(entries: Iterable<Assumption> = []): AssumptionSet {
+    return new AssumptionSet(entries);
   }
 
   operation(options: OperationContextOptions = {}): OperationContext {
@@ -75,6 +135,64 @@ export class SymbolicContext {
       this.math,
       this.registry,
       mergeOperationOptions(this.#operationDefaults, options)
+    );
+  }
+
+  ask(
+    predicate: SymbolicPredicate,
+    options: OperationContextOptions = {}
+  ): Judgment {
+    return this.#semantics.ask(predicate, this.operation(options));
+  }
+
+  require(
+    predicate: SymbolicPredicate,
+    options: OperationContextOptions = {}
+  ): RequirementResult {
+    return this.#semantics.require(predicate, this.operation(options));
+  }
+
+  definedness(
+    node: MathNode,
+    options: DefinednessQueryOptions = {}
+  ): Judgment {
+    const operation = this.operation(options);
+    const analysisOptions: DefinednessAnalysisOptions = {
+      domain: operation.domain,
+      ...(options.includeLeafDefinedness === undefined
+        ? {}
+        : {includeLeafDefinedness: options.includeLeafDefinedness}),
+      ...(options.legacySolverCompatibility === undefined
+        ? {}
+        : {legacySolverCompatibility: options.legacySolverCompatibility})
+    };
+    const requirements = this.#definedness.requirements(node, analysisOptions);
+    const unresolved = new Map<string, SymbolicPredicate>();
+    const evidence: SymbolicEvidence[] = [];
+
+    for (const requirement of requirements) {
+      const judgment = this.#semantics.ask(requirement, operation);
+      evidence.push(...judgment.evidence);
+      if (judgment.truth === 'disproven') {
+        return createJudgment('disproven', [requirement], evidence);
+      }
+      if (judgment.truth === 'unknown') {
+        for (const outstanding of judgment.requirements) {
+          const qualifier = outstanding.kind === 'domain'
+            ? outstanding.domain
+            : outstanding.property;
+          unresolved.set(
+            `${outstanding.kind}:${qualifier}:${outstanding.expression.toString({parenthesis: 'all'})}`,
+            outstanding
+          );
+        }
+      }
+    }
+
+    return createJudgment(
+      unresolved.size === 0 ? 'proven' : 'unknown',
+      [...unresolved.values()],
+      evidence
     );
   }
 

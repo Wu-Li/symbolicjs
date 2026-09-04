@@ -250,6 +250,7 @@ describe('candidate verification', () => {
     const math = createMath();
     const kernel = new (math.symbolicKernel.constructor as typeof import('../src/kernel.js').SymbolicKernel)({
       OperatorNode: math.OperatorNode,
+      symbolic: math.symbolic,
       simplifyCore: ((node) =>
         isOperatorNode(node) && node.op === '-'
           ? new math.ConstantNode(0)

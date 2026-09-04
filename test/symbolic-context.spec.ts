@@ -4,6 +4,7 @@ import {all, create} from 'mathjs';
 import {describe, expect, it, vi} from 'vitest';
 import {importsymbolicjs} from '../src/index.js';
 import type {EqualityNode, symbolicjsInstance} from '../src/index.js';
+import {assume} from '../src/core/assumptions.js';
 import {OperationBudget} from '../src/core/operation-context.js';
 import {SYMBOLIC_MATHJS_DEPENDENCIES} from '../src/core/symbolic-context.js';
 
@@ -146,13 +147,15 @@ describe('symbolic registry', () => {
       symbol: '+',
       arities: [2],
       commutative: 'scalar',
-      associative: 'scalar'
+      associative: 'scalar',
+      semantic: 'addition'
     });
     expect(registry.getOperator('divide')?.commutative).toBe('never');
     expect(registry.getFunction('log')).toEqual({
       name: 'log',
       minimumArguments: 1,
-      maximumArguments: 2
+      maximumArguments: 2,
+      semantic: 'logarithm'
     });
     expect(registry.getFunction('unknown')).toBeUndefined();
     expect(registry.operatorNames()).toEqual([
@@ -231,9 +234,12 @@ describe('operation-neutral contexts and budgets', () => {
     const math = createMath();
     const node = math.parse('x + 1');
     const createValue = vi.fn(() => ({value: 1}));
+    const assumptions = math.symbolic.assumptions([
+      assume(math.symbolic.predicates.real(math.parse('x')))
+    ]);
     const quiet = math.symbolic.operation();
     const traced = quiet.with({
-      assumptions: {x: 'real'},
+      assumptions,
       domain: 'real',
       limits: {steps: 3},
       mode: 'conditional',
@@ -254,20 +260,25 @@ describe('operation-neutral contexts and budgets', () => {
       {stage: 'analysis', rule: 'classified', outcome: 'real'}
     ]);
     expect(Object.isFrozen(traced.traceSnapshot())).toBe(true);
-    expect(traced.assumptions).toEqual({x: 'real'});
+    expect(traced.assumptions.ask(
+      math.symbolic.predicates.real(math.parse('x'))
+    ).truth).toBe('proven');
     expect(traced.domain).toBe('real');
     expect(traced.mode).toBe('conditional');
     expect(traced.limits.steps).toBe(3);
-    expect(quiet.assumptions).toEqual({});
+    expect(quiet.assumptions.size).toBe(0);
     expect(quiet.domain).toBe('unknown');
     expect(Object.isFrozen(traced.assumptions)).toBe(true);
   });
 
   it('applies immutable SymbolicContext operation defaults', () => {
     const symbolic = createMath().symbolic;
+    const assumptions = symbolic.assumptions([
+      assume(symbolic.predicates.integer(symbolic.nodes.symbol('n')))
+    ]);
     const configured = symbolic.with({
       operationDefaults: {
-        assumptions: {n: 'integer'},
+        assumptions,
         domain: 'real',
         limits: {work: 2},
         mode: 'conditional',
@@ -276,7 +287,9 @@ describe('operation-neutral contexts and budgets', () => {
     });
     const operation = configured.operation({limits: {branches: 1}});
 
-    expect(operation.assumptions).toEqual({n: 'integer'});
+    expect(operation.assumptions.ask(
+      symbolic.predicates.integer(symbolic.nodes.symbol('n'))
+    ).truth).toBe('proven');
     expect(operation.domain).toBe('real');
     expect(operation.mode).toBe('conditional');
     expect(operation.diagnostics).toBe(true);

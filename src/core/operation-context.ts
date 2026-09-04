@@ -1,10 +1,15 @@
 import type {MathNode} from 'mathjs';
+import type {Assumption} from './assumptions.js';
+import {AssumptionSet} from './assumptions.js';
+import type {OperationDomain} from './domains.js';
+import {validateOperationDomain} from './domains.js';
 import {MathAdapter} from './math-adapter.js';
 import {NodeBuilder} from './node-builder.js';
 import {SymbolicRegistry} from './registry.js';
 
 export type OperationMode = 'strict' | 'conditional';
-export type SymbolicDomainPlaceholder = 'unknown' | 'real' | 'complex';
+export type SymbolicDomainPlaceholder = OperationDomain;
+export type OperationAssumptions = AssumptionSet | Iterable<Assumption>;
 
 export interface OperationLimitExceeded {
   readonly kind: 'limit';
@@ -20,8 +25,9 @@ export interface OperationTraceStep {
 }
 
 export interface OperationContextOptions {
-  readonly assumptions?: Readonly<Record<string, unknown>>;
-  readonly domain?: SymbolicDomainPlaceholder;
+  readonly assumptions?: OperationAssumptions;
+  readonly scope?: Readonly<Record<string, unknown>>;
+  readonly domain?: OperationDomain;
   readonly limits?: Readonly<Record<string, number>>;
   readonly mode?: OperationMode;
   readonly diagnostics?: boolean;
@@ -39,6 +45,26 @@ function nonempty(value: string, label: string): string {
     throw new TypeError(`${label} must be a nonempty string`);
   }
   return value;
+}
+
+export function normalizeAssumptions(
+  assumptions?: OperationAssumptions
+): AssumptionSet {
+  if (assumptions === undefined) {
+    return new AssumptionSet();
+  }
+  return assumptions instanceof AssumptionSet
+    ? assumptions
+    : new AssumptionSet(assumptions);
+}
+
+function normalizedScope(
+  scope: Readonly<Record<string, unknown>> = {}
+): Readonly<Record<string, unknown>> {
+  if (!scope || typeof scope !== 'object' || Array.isArray(scope)) {
+    throw new TypeError('Operation scope must be an object');
+  }
+  return Object.freeze({...scope});
 }
 
 /** Operation-neutral deterministic counters and limits. */
@@ -95,8 +121,9 @@ export class OperationContext {
   readonly math: MathAdapter;
   readonly nodes: NodeBuilder;
   readonly registry: SymbolicRegistry;
-  readonly assumptions: Readonly<Record<string, unknown>>;
-  readonly domain: SymbolicDomainPlaceholder;
+  readonly assumptions: AssumptionSet;
+  readonly scope: Readonly<Record<string, unknown>>;
+  readonly domain: OperationDomain;
   readonly limits: Readonly<Record<string, number>>;
   readonly mode: OperationMode;
   readonly diagnostics: boolean;
@@ -113,8 +140,9 @@ export class OperationContext {
     this.math = math;
     this.nodes = new NodeBuilder(math);
     this.registry = registry;
-    this.assumptions = Object.freeze({...options.assumptions});
-    this.domain = options.domain ?? 'unknown';
+    this.assumptions = normalizeAssumptions(options.assumptions);
+    this.scope = normalizedScope(options.scope);
+    this.domain = validateOperationDomain(options.domain ?? 'unknown');
     this.mode = options.mode ?? 'strict';
     this.diagnostics = options.diagnostics ?? false;
     this.#budget = new OperationBudget(options.limits);
@@ -173,8 +201,12 @@ export class OperationContext {
   }
 
   with(options: OperationContextOptions): OperationContext {
+    const assumptions = options.assumptions === undefined
+      ? this.assumptions
+      : this.assumptions.withAll(normalizeAssumptions(options.assumptions).entries());
     return new OperationContext(this.math, this.registry, {
-      assumptions: {...this.assumptions, ...options.assumptions},
+      assumptions,
+      scope: {...this.scope, ...options.scope},
       domain: options.domain ?? this.domain,
       limits: {...this.limits, ...options.limits},
       mode: options.mode ?? this.mode,

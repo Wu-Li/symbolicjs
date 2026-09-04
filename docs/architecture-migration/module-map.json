@@ -39,6 +39,34 @@
       "action": "preserve"
     },
     {
+      "path": "src/core/assumptions.ts",
+      "currentRole": "immutable assumptions and implication closure",
+      "targetLayer": "core.assumptions",
+      "migrationChapter": 2,
+      "action": "new"
+    },
+    {
+      "path": "src/core/definedness.ts",
+      "currentRole": "domain-aware definedness obligations",
+      "targetLayer": "core.definedness",
+      "migrationChapter": 2,
+      "action": "new"
+    },
+    {
+      "path": "src/core/domains.ts",
+      "currentRole": "symbolic scalar domain lattice",
+      "targetLayer": "core.domains",
+      "migrationChapter": 2,
+      "action": "new"
+    },
+    {
+      "path": "src/core/legacy-condition.ts",
+      "currentRole": "legacy solver-condition compatibility adapter",
+      "targetLayer": "core.compatibility-facade",
+      "migrationChapter": 2,
+      "action": "new"
+    },
+    {
       "path": "src/core/math-adapter.ts",
       "currentRole": "instance-local supported MathJS API boundary",
       "targetLayer": "integration.mathjs",
@@ -54,21 +82,35 @@
     },
     {
       "path": "src/core/operation-context.ts",
-      "currentRole": "operation-neutral limits, memoization, and diagnostics",
+      "currentRole": "operation-neutral limits, assumptions, scope, memoization, and diagnostics",
       "targetLayer": "core.operation-context",
       "migrationChapter": 1,
       "action": "new"
     },
     {
+      "path": "src/core/predicate.ts",
+      "currentRole": "typed symbolic predicates and three-valued judgments",
+      "targetLayer": "core.predicates",
+      "migrationChapter": 2,
+      "action": "new"
+    },
+    {
       "path": "src/core/registry.ts",
-      "currentRole": "instance-local symbolic operator and function metadata",
+      "currentRole": "instance-local symbolic operator and function semantics",
       "targetLayer": "core.registry",
       "migrationChapter": 1,
       "action": "new"
     },
     {
+      "path": "src/core/semantic-engine.ts",
+      "currentRole": "three-valued semantic inference over MathJS nodes",
+      "targetLayer": "core.semantics",
+      "migrationChapter": 2,
+      "action": "new"
+    },
+    {
       "path": "src/core/symbolic-context.ts",
-      "currentRole": "experimental MathJS-native symbolic service",
+      "currentRole": "experimental MathJS-native symbolic service and semantic query facade",
       "targetLayer": "core.context",
       "migrationChapter": 1,
       "action": "new"
@@ -110,7 +152,7 @@
     },
     {
       "path": "src/kernel.ts",
-      "currentRole": "mixed symbolic utility and verification facade",
+      "currentRole": "legacy symbolic utility and verification facade over semantic services",
       "targetLayer": "core.compatibility-facade",
       "migrationChapter": 9,
       "action": "redesign"
