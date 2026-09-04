@@ -19,36 +19,21 @@ for (const version of ['22', '24', '26']) {
   assert.ok(ci.includes(version), `CI omits supported Node ${version}`);
 }
 assert.match(ci, /mathjs-version:[\s\S]*15\.2\.0/);
-assert.match(publish, /push:[\s\S]*tags:[\s\S]*["']v\*["']/);
+assert.match(publish, /push:[\s\S]*branches:\s*\[main\]/);
 assert.match(publish, /workflow_dispatch:/);
+assert.doesNotMatch(publish, /tags:/);
 assert.doesNotMatch(publish, /workflow_run:/);
 assert.match(publish, /contents:\s*read/);
 assert.match(publish, /id-token:\s*write/);
 assert.match(publish, /cancel-in-progress:\s*false/);
-assert.match(publish, /github\.event_name == 'push'/);
-assert.match(publish, /GITHUB_REF_NAME/);
-assert.match(publish, /github\.event_name == 'workflow_dispatch'/);
-assert.match(publish, /refs\/heads\/main/);
 assert.match(publish, /npm run test:release/);
 assert.match(publish, /npm run check/);
 assert.match(
   publish,
   /npm view "\$\{PACKAGE_NAME\}@\$\{PACKAGE_VERSION\}" version/
 );
-assert.match(publish, /already published\. Bump the version before publishing again/);
+assert.match(publish, /steps\.registry\.outputs\.published == 'false'/);
 assert.match(publish, /npm publish --provenance --access public/);
+assert.doesNotMatch(publish, /GITHUB_REF_NAME/);
 assert.doesNotMatch(publish, /Ensure release tag/);
-assert.doesNotMatch(publish, /git push origin/);
-
-const tagName = process.env.GITHUB_REF_TYPE === 'tag'
-  ? process.env.GITHUB_REF_NAME
-  : process.env.GITHUB_REF?.startsWith('refs/tags/')
-    ? process.env.GITHUB_REF.slice('refs/tags/'.length)
-    : undefined;
-if (tagName !== undefined) {
-  assert.equal(
-    tagName,
-    `v${packageJson.version}`,
-    'Release tag must exactly match package.json version'
-  );
-}
+assert.doesNotMatch(publish, /git (?:tag|push)/);
