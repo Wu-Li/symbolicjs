@@ -5,66 +5,30 @@ on:
     tags:
       - "v*"
   workflow_dispatch:
-  workflow_run:
-    workflows: [CI]
-    types: [completed]
-    branches: [main]
 
 permissions:
-  contents: write
+  contents: read
   id-token: write
 
 concurrency:
-  group: npm-publish
+  group: npm-publish-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
   publish:
-    if: >-
-      github.event_name == 'push' ||
-      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
-      (
-        github.event_name == 'workflow_run' &&
-        github.event.workflow_run.conclusion == 'success' &&
-        github.event.workflow_run.event == 'push' &&
-        github.event.workflow_run.head_branch == 'main' &&
-        github.event.workflow_run.head_repository.full_name == github.repository
-      )
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    env:
-      RELEASE_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
           fetch-depth: 0
-      - name: Ignore stale CI runs
-        id: source
-        shell: bash
-        run: |
-          if [[ "$GITHUB_EVENT_NAME" != "workflow_run" ]]; then
-            echo "current=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          git fetch --no-tags origin main
-          current_sha="$(git rev-parse FETCH_HEAD)"
-          if [[ "$RELEASE_SHA" == "$current_sha" ]]; then
-            echo "current=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "current=false" >> "$GITHUB_OUTPUT"
-            echo "Skipping stale CI commit $RELEASE_SHA; main is $current_sha."
-          fi
       - uses: actions/setup-node@v6
-        if: steps.source.outputs.current == 'true'
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org
           package-manager-cache: false
       - name: Read package identity
         id: package
-        if: steps.source.outputs.current == 'true'
         shell: bash
         run: |
           node --input-type=module <<'NODE' >> "$GITHUB_OUTPUT"
@@ -74,88 +38,46 @@ jobs:
           console.log(`name=${name}`);
           console.log(`version=${version}`);
           NODE
+      - name: Validate release tag
+        if: github.event_name == 'push'
+        shell: bash
+        env:
+          PACKAGE_VERSION: ${{ steps.package.outputs.version }}
+        run: |
+          expected="v${PACKAGE_VERSION}"
+          if [[ "$GITHUB_REF_NAME" != "$expected" ]]; then
+            echo "::error::Release tag $GITHUB_REF_NAME does not match package version $PACKAGE_VERSION. Expected $expected."
+            exit 1
+          fi
+      - name: Validate manual release source
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF" != "refs/heads/main" ]]; then
+            echo "::error::Manual publishing is only allowed from main."
+            exit 1
+          fi
       - name: Validate release metadata
-        if: steps.source.outputs.current == 'true'
         run: npm run test:release
       - name: Check npm registry
         id: registry
-        if: steps.source.outputs.current == 'true'
         shell: bash
         env:
           PACKAGE_NAME: ${{ steps.package.outputs.name }}
           PACKAGE_VERSION: ${{ steps.package.outputs.version }}
         run: |
-          registry_stdout="$(mktemp)"
-          registry_stderr="$(mktemp)"
-          trap 'rm -f "$registry_stdout" "$registry_stderr"' EXIT
-
-          if npm view "${PACKAGE_NAME}@${PACKAGE_VERSION}" version \
-            >"$registry_stdout" 2>"$registry_stderr"; then
-            published="$(tr -d '[:space:]' < "$registry_stdout")"
-            if [[ "$published" != "$PACKAGE_VERSION" ]]; then
-              cat "$registry_stderr" >&2
-              echo "::error::npm returned unexpected version: $published"
+          if published="$(npm view "${PACKAGE_NAME}@${PACKAGE_VERSION}" version 2>/dev/null)"; then
+            published="$(printf '%s' "$published" | tr -d '[:space:]')"
+            if [[ "$published" == "$PACKAGE_VERSION" ]]; then
+              echo "::error::${PACKAGE_NAME}@${PACKAGE_VERSION} is already published. Bump the version before publishing again."
               exit 1
             fi
-            echo "published=true" >> "$GITHUB_OUTPUT"
-            echo "${PACKAGE_NAME}@${PACKAGE_VERSION} is already published."
-          else
-            registry_status=$?
-            if grep -q 'E404' "$registry_stdout" "$registry_stderr"; then
-              echo "published=false" >> "$GITHUB_OUTPUT"
-            else
-              cat "$registry_stdout" "$registry_stderr" >&2
-              exit "$registry_status"
-            fi
+            echo "::error::npm returned unexpected version: $published"
+            exit 1
           fi
       - name: Install dependencies
-        if: steps.registry.outputs.published == 'false'
         run: npm ci
       - name: Verify package
-        if: steps.registry.outputs.published == 'false'
         run: npm run check
-      - name: Recheck release source
-        id: final-source
-        if: steps.source.outputs.current == 'true'
-        shell: bash
-        run: |
-          if [[ "$GITHUB_EVENT_NAME" != "workflow_run" ]]; then
-            echo "current=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          git fetch --no-tags origin main
-          current_sha="$(git rev-parse FETCH_HEAD)"
-          if [[ "$RELEASE_SHA" == "$current_sha" ]]; then
-            echo "current=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "current=false" >> "$GITHUB_OUTPUT"
-            echo "Main advanced to $current_sha; skipping $RELEASE_SHA."
-          fi
       - name: Publish to npm
-        if: >-
-          steps.registry.outputs.published == 'false' &&
-          steps.final-source.outputs.current == 'true'
         run: npm publish --provenance --access public
-      - name: Ensure release tag
-        if: >-
-          steps.registry.outputs.published == 'false' &&
-          steps.final-source.outputs.current == 'true'
-        shell: bash
-        env:
-          PACKAGE_VERSION: ${{ steps.package.outputs.version }}
-        run: |
-          tag="v${PACKAGE_VERSION}"
-          git fetch --force --tags origin
-
-          if git show-ref --verify --quiet "refs/tags/${tag}"; then
-            tagged_sha="$(git rev-list -n 1 "${tag}")"
-            if [[ "$tagged_sha" != "$RELEASE_SHA" ]]; then
-              echo "::error::${tag} points to ${tagged_sha}, not ${RELEASE_SHA}."
-              exit 1
-            fi
-            echo "${tag} already points to this release."
-          else
-            git tag "${tag}" "$RELEASE_SHA"
-            git push origin "refs/tags/${tag}"
-          fi
