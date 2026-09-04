@@ -1,9 +1,8 @@
-name: CI
+name: Full verification
 
 on:
-  push:
-    branches: [main]
-  pull_request:
+  workflow_call:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -11,6 +10,7 @@ permissions:
 jobs:
   test:
     strategy:
+      fail-fast: false
       matrix:
         node-version: [22, 24, 26]
         mathjs-version: ["15.2.0", "^15.2.0"]
