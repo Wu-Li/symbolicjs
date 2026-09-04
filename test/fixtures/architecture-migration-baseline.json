@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "f37f1636689c382cc514d29cc168d0aa010baee7",
+  "newEquationClassesResumeAfterChapter": 14,
+  "exactStringCases": [
+    {
+      "id": "canonical-equation-rendering",
+      "equation": "x + 1 =:= y / 2",
+      "expected": "x + 1 =:= y / 2"
+    }
+  ],
+  "semanticCases": [
+    {
+      "id": "finite",
+      "equation": "x + 1 =:= 3",
+      "target": "x",
+      "expected": {
+        "kind": "finite",
+        "target": "x",
+        "solutionCount": 1,
+        "exactCount": 1,
+        "approximateCount": 0,
+        "verificationStatuses": ["proven"],
+        "conditionKinds": [],
+        "multiplicityTotal": 1
+      }
+    },
+    {
+      "id": "parametric",
+      "equation": "sin(x) =:= 0",
+      "target": "x",
+      "expected": {
+        "kind": "parametric",
+        "target": "x",
+        "familyCount": 1,
+        "exactCount": 1,
+        "verificationStatuses": ["proven"],
+        "conditionKinds": [],
+        "parameterDomains": ["integer"],
+        "domain": "real",
+        "completeness": "complete"
+      }
+    },
+    {
+      "id": "identity",
+      "equation": "x / x =:= 1",
+      "target": "x",
+      "expected": {
+        "kind": "identity",
+        "target": "x",
+        "conditionKinds": ["nonzero"]
+      }
+    },
+    {
+      "id": "contradiction",
+      "equation": "x =:= x + 1",
+      "target": "x",
+      "expected": {
+        "kind": "contradiction",
+        "target": "x",
+        "conditionKinds": []
+      }
+    },
+    {
+      "id": "partial",
+      "equation": "a*x^2 + 1 =:= 0",
+      "target": "x",
+      "options": {
+        "domain": "complex"
+      },
+      "expected": {
+        "kind": "partial",
+        "target": "x",
+        "solutionCount": 2,
+        "familyCount": 0,
+        "exactCount": 2,
+        "approximateCount": 0,
+        "verificationStatuses": ["proven"],
+        "conditionKinds": ["nonzero"],
+        "multiplicityTotal": 2,
+        "reason": "verification-inconclusive",
+        "scope": {
+          "domain": "complex",
+          "completeness": "partial"
+        }
+      }
+    },
+    {
+      "id": "unsupported",
+      "equation": "sin(x) + cos(2*x) =:= 0",
+      "target": "x",
+      "expected": {
+        "kind": "unsupported",
+        "target": "x",
+        "reason": "unsupported-trig-form"
+      }
+    },
+    {
+      "id": "limit",
+      "equation": "x + 1 =:= 2",
+      "target": "x",
+      "options": {
+        "limits": {
+          "inputNodes": 0
+        }
+      },
+      "expected": {
+        "kind": "limit",
+        "target": "x",
+        "limit": "input-nodes"
+      }
+    }
+  ]
+}

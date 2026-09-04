@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "f37f1636689c382cc514d29cc168d0aa010baee7",
+  "packageVersion": "0.5.3",
+  "runtime": {
+    "node": "v24.20.0",
+    "mathjs": "15.2.0"
+  },
+  "package": {
+    "packedBytes": 112884,
+    "unpackedBytes": 564370,
+    "fileCount": 95
+  },
+  "productionJavaScriptBytes": {
+    "analysis.js": 1908,
+    "budget.js": 2543,
+    "compound-trigonometric.js": 17867,
+    "constants.js": 127,
+    "custom-factory.js": 114,
+    "equality-node.js": 2817,
+    "index.js": 1426,
+    "install.js": 1417,
+    "isolate.js": 16989,
+    "kernel.js": 11935,
+    "numeric-polynomial.js": 13747,
+    "numeric-solve.js": 16025,
+    "parametric.js": 14952,
+    "parse-equation.js": 3040,
+    "polynomial.js": 57469,
+    "solve-all.js": 1772,
+    "solve-types.js": 5068,
+    "solve.js": 9391,
+    "trigonometric.js": 20158,
+    "types.js": 44
+  },
+  "timings": [
+    {
+      "label": "simplify-neutral-elements",
+      "iterations": 1000,
+      "elapsedMilliseconds": 26.493,
+      "averageMicroseconds": 26.493
+    },
+    {
+      "label": "canonical-key-polynomial",
+      "iterations": 500,
+      "elapsedMilliseconds": 31.007,
+      "averageMicroseconds": 62.015
+    },
+    {
+      "label": "conformance-corpus",
+      "iterations": 3,
+      "elapsedMilliseconds": 158.243,
+      "averageMicroseconds": 52747.641
+    },
+    {
+      "label": "symbolic-cubic",
+      "iterations": 10,
+      "elapsedMilliseconds": 373.181,
+      "averageMicroseconds": 37318.089
+    },
+    {
+      "label": "symbolic-biquadratic",
+      "iterations": 10,
+      "elapsedMilliseconds": 128.362,
+      "averageMicroseconds": 12836.207
+    }
+  ],
+  "expressionMetrics": [
+    {
+      "label": "symbolic-cubic",
+      "resultKind": "partial",
+      "expressionCount": 7,
+      "totalNodes": 117,
+      "peakNodes": 39
+    },
+    {
+      "label": "symbolic-biquadratic",
+      "resultKind": "partial",
+      "expressionCount": 9,
+      "totalNodes": 77,
+      "peakNodes": 15
+    }
+  ]
+}

@@ -1,0 +1,154 @@
+{
+  "schemaVersion": 1,
+  "baselineCommit": "f37f1636689c382cc514d29cc168d0aa010baee7",
+  "targetLayers": [
+    "integration",
+    "core",
+    "algebra",
+    "solver",
+    "numeric",
+    "public-api"
+  ],
+  "modules": [
+    {
+      "path": "src/analysis.ts",
+      "currentRole": "free-symbol discovery",
+      "targetLayer": "core.analysis",
+      "migrationChapter": 5,
+      "action": "redesign"
+    },
+    {
+      "path": "src/budget.ts",
+      "currentRole": "solver limits and counters",
+      "targetLayer": "core.operation-context",
+      "migrationChapter": 1,
+      "action": "adapt"
+    },
+    {
+      "path": "src/compound-trigonometric.ts",
+      "currentRole": "compound trigonometric rewrites and solving",
+      "targetLayer": "solver.trigonometric",
+      "migrationChapter": 12,
+      "action": "rebuild"
+    },
+    {
+      "path": "src/constants.ts",
+      "currentRole": "equation syntax constants",
+      "targetLayer": "integration.equality",
+      "migrationChapter": 1,
+      "action": "preserve"
+    },
+    {
+      "path": "src/custom-factory.ts",
+      "currentRole": "MathJS factory typing boundary",
+      "targetLayer": "integration.factory",
+      "migrationChapter": 1,
+      "action": "strengthen"
+    },
+    {
+      "path": "src/equality-node.ts",
+      "currentRole": "MathJS-native equality node",
+      "targetLayer": "integration.equality",
+      "migrationChapter": 1,
+      "action": "preserve"
+    },
+    {
+      "path": "src/index.ts",
+      "currentRole": "public package exports",
+      "targetLayer": "public-api",
+      "migrationChapter": 14,
+      "action": "consolidate"
+    },
+    {
+      "path": "src/install.ts",
+      "currentRole": "all-in-one MathJS installation",
+      "targetLayer": "integration.install",
+      "migrationChapter": 14,
+      "action": "split-and-preserve"
+    },
+    {
+      "path": "src/isolate.ts",
+      "currentRole": "single-occurrence equation isolation",
+      "targetLayer": "solver.isolation",
+      "migrationChapter": 11,
+      "action": "rebuild"
+    },
+    {
+      "path": "src/kernel.ts",
+      "currentRole": "mixed symbolic utility and verification facade",
+      "targetLayer": "core.compatibility-facade",
+      "migrationChapter": 9,
+      "action": "redesign"
+    },
+    {
+      "path": "src/numeric-polynomial.ts",
+      "currentRole": "numeric polynomial root backend",
+      "targetLayer": "numeric.polynomial",
+      "migrationChapter": 10,
+      "action": "preserve-and-adapt"
+    },
+    {
+      "path": "src/numeric-solve.ts",
+      "currentRole": "bounded numeric equation fallback",
+      "targetLayer": "numeric.equation",
+      "migrationChapter": 9,
+      "action": "preserve-and-adapt"
+    },
+    {
+      "path": "src/parametric.ts",
+      "currentRole": "parametric family operations",
+      "targetLayer": "algebra.parametric",
+      "migrationChapter": 9,
+      "action": "redesign-over-core"
+    },
+    {
+      "path": "src/parse-equation.ts",
+      "currentRole": "equation parser boundary",
+      "targetLayer": "integration.equality",
+      "migrationChapter": 1,
+      "action": "preserve"
+    },
+    {
+      "path": "src/polynomial.ts",
+      "currentRole": "private polynomial analysis and solving",
+      "targetLayer": "algebra.polynomial-and-solver.polynomial",
+      "migrationChapter": 10,
+      "action": "split-and-rebuild"
+    },
+    {
+      "path": "src/solve-all.ts",
+      "currentRole": "solve-for-every-symbol orchestration",
+      "targetLayer": "solver.orchestration",
+      "migrationChapter": 13,
+      "action": "adapt"
+    },
+    {
+      "path": "src/solve-types.ts",
+      "currentRole": "public solving contracts",
+      "targetLayer": "public-api.solve-contracts",
+      "migrationChapter": 14,
+      "action": "preserve"
+    },
+    {
+      "path": "src/solve.ts",
+      "currentRole": "hard-coded solver dispatch",
+      "targetLayer": "solver.orchestration",
+      "migrationChapter": 13,
+      "action": "rebuild"
+    },
+    {
+      "path": "src/trigonometric.ts",
+      "currentRole": "isolated trigonometric solving",
+      "targetLayer": "solver.trigonometric",
+      "migrationChapter": 12,
+      "action": "rebuild"
+    },
+    {
+      "path": "src/types.ts",
+      "currentRole": "MathJS extension and equality types",
+      "targetLayer": "integration.types",
+      "migrationChapter": 14,
+      "action": "extend-and-preserve"
+    }
+  ]
+}

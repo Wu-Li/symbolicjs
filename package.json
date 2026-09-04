@@ -46,6 +46,7 @@
     "test:benchmark": "node scripts/benchmark.mjs",
     "test:release": "node scripts/verify-release.mjs",
     "check": "npm run typecheck && npm run test:coverage && npm run build && npm run test:benchmark && npm run test:pack && npm run test:release",
+    "measure:architecture-baseline": "node scripts/measure-architecture-baseline.mjs",
     "pack:dry": "npm pack --dry-run"
   },
   "peerDependencies": {
