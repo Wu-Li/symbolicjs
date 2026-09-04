@@ -4,21 +4,142 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
 
 permissions:
-  contents: read
+  contents: write
   id-token: write
+
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
 
 jobs:
   publish:
+    if: >-
+      github.event_name == 'push' ||
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
+      (
+        github.event_name == 'workflow_run' &&
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.head_branch == 'main' &&
+        github.event.workflow_run.head_repository.full_name == github.repository
+      )
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      RELEASE_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          fetch-depth: 0
+      - name: Ignore stale CI runs
+        id: source
+        shell: bash
+        run: |
+          if [[ "$GITHUB_EVENT_NAME" != "workflow_run" ]]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git fetch --no-tags origin main
+          current_sha="$(git rev-parse FETCH_HEAD)"
+          if [[ "$RELEASE_SHA" == "$current_sha" ]]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "current=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping stale CI commit $RELEASE_SHA; main is $current_sha."
+          fi
       - uses: actions/setup-node@v6
+        if: steps.source.outputs.current == 'true'
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org
           package-manager-cache: false
-      - run: npm ci
-      - run: npm run check
-      - run: npm publish --provenance --access public
+      - name: Read package identity
+        id: package
+        if: steps.source.outputs.current == 'true'
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE' >> "$GITHUB_OUTPUT"
+          import {readFileSync} from 'node:fs';
+
+          const {name, version} = JSON.parse(readFileSync('package.json', 'utf8'));
+          console.log(`name=${name}`);
+          console.log(`version=${version}`);
+          NODE
+      - name: Validate release metadata
+        if: steps.source.outputs.current == 'true'
+        run: npm run test:release
+      - name: Check npm registry
+        id: registry
+        if: steps.source.outputs.current == 'true'
+        shell: bash
+        env:
+          PACKAGE_NAME: ${{ steps.package.outputs.name }}
+          PACKAGE_VERSION: ${{ steps.package.outputs.version }}
+        run: |
+          published="$(
+            npm view "${PACKAGE_NAME}@${PACKAGE_VERSION}" version --json 2>/dev/null || true
+          )"
+          if [[ "$published" == "\"${PACKAGE_VERSION}\"" || "$published" == "$PACKAGE_VERSION" ]]; then
+            echo "published=true" >> "$GITHUB_OUTPUT"
+            echo "${PACKAGE_NAME}@${PACKAGE_VERSION} is already published."
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Install dependencies
+        if: steps.registry.outputs.published == 'false'
+        run: npm ci
+      - name: Verify package
+        if: steps.registry.outputs.published == 'false'
+        run: npm run check
+      - name: Recheck release source
+        id: final-source
+        if: steps.source.outputs.current == 'true'
+        shell: bash
+        run: |
+          if [[ "$GITHUB_EVENT_NAME" != "workflow_run" ]]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git fetch --no-tags origin main
+          current_sha="$(git rev-parse FETCH_HEAD)"
+          if [[ "$RELEASE_SHA" == "$current_sha" ]]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "current=false" >> "$GITHUB_OUTPUT"
+            echo "Main advanced to $current_sha; skipping $RELEASE_SHA."
+          fi
+      - name: Publish to npm
+        if: >-
+          steps.registry.outputs.published == 'false' &&
+          steps.final-source.outputs.current == 'true'
+        run: npm publish --provenance --access public
+      - name: Ensure release tag
+        if: steps.final-source.outputs.current == 'true'
+        shell: bash
+        env:
+          PACKAGE_VERSION: ${{ steps.package.outputs.version }}
+        run: |
+          tag="v${PACKAGE_VERSION}"
+          git fetch --force --tags origin
+
+          if git show-ref --verify --quiet "refs/tags/${tag}"; then
+            tagged_sha="$(git rev-list -n 1 "${tag}")"
+            if [[ "$tagged_sha" != "$RELEASE_SHA" ]]; then
+              echo "::error::${tag} points to ${tagged_sha}, not ${RELEASE_SHA}."
+              exit 1
+            fi
+            echo "${tag} already points to this release."
+          else
+            git tag "${tag}" "$RELEASE_SHA"
+            git push origin "refs/tags/${tag}"
+          fi

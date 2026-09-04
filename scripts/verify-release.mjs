@@ -19,10 +19,37 @@ for (const version of ['22', '24', '26']) {
   assert.ok(ci.includes(version), `CI omits supported Node ${version}`);
 }
 assert.match(ci, /mathjs-version:[\s\S]*15\.2\.0/);
-assert.match(publish, /tags:[\s\S]*["']v\*["']/);
+assert.match(publish, /push:[\s\S]*tags:[\s\S]*["']v\*["']/);
+assert.match(
+  publish,
+  /workflow_run:[\s\S]*workflows:\s*\[CI\][\s\S]*types:\s*\[completed\][\s\S]*branches:\s*\[main\]/
+);
+assert.match(publish, /workflow_dispatch:/);
+assert.match(
+  publish,
+  /github\.event_name == 'workflow_dispatch' && github\.ref == 'refs\/heads\/main'/
+);
+assert.match(publish, /workflow_run\.conclusion == 'success'/);
+assert.match(publish, /workflow_run\.event == 'push'/);
+assert.match(publish, /workflow_run\.head_branch == 'main'/);
+assert.match(publish, /workflow_run\.head_repository\.full_name == github\.repository/);
+assert.match(
+  publish,
+  /ref:\s*\$\{\{\s*github\.event\.workflow_run\.head_sha \|\| github\.sha\s*\}\}/
+);
+assert.match(publish, /contents:\s*write/);
 assert.match(publish, /id-token:\s*write/);
+assert.match(publish, /cancel-in-progress:\s*false/);
+assert.match(publish, /git fetch --no-tags origin main/);
+assert.match(publish, /npm run test:release/);
 assert.match(publish, /npm run check/);
+assert.match(
+  publish,
+  /npm view "\$\{PACKAGE_NAME\}@\$\{PACKAGE_VERSION\}" version --json/
+);
+assert.match(publish, /steps\.registry\.outputs\.published == 'false'/);
 assert.match(publish, /npm publish --provenance --access public/);
+assert.match(publish, /git push origin "refs\/tags\/\$\{tag\}"/);
 
 const tagName = process.env.GITHUB_REF_TYPE === 'tag'
   ? process.env.GITHUB_REF_NAME
