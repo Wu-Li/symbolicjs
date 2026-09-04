@@ -1,6 +1,6 @@
 {
   "name": "symbolicjs",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "description": "MathJS-native symbolic equations with bounded real and finite complex solving.",
   "type": "module",
   "license": "MIT",
