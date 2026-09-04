@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-## 0.5.0 - 2026-09-03
+## 0.5.1 - 2026-09-03
 
 - Add typed real and opt-in finite complex equation-solving domains with explicit
   conditions, verification evidence, completeness scopes, and deterministic
