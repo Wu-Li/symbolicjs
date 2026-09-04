@@ -4,6 +4,12 @@
 
 ## 0.5.1 - 2026-09-03
 
+- Stabilize the clustered-root quartic test under CI load.
+- Publish automatically after successful CI on `main` while safely skipping versions
+  that already exist on npm.
+
+## 0.5.0 - 2026-09-03
+
 - Add typed real and opt-in finite complex equation-solving domains with explicit
   conditions, verification evidence, completeness scopes, and deterministic
   safety limits.
