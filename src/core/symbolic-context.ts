@@ -32,6 +32,7 @@ import {
   SymbolicRegistry
 } from './registry.js';
 import {PredicateEngine} from './semantic-engine.js';
+import {StructuralEngine} from './structure.js';
 
 export interface SymbolicContextOptions {
   readonly registry?: SymbolicRegistry;
@@ -81,9 +82,12 @@ function mergeOperationOptions(
   const assumptions = supplied.assumptions === undefined
     ? defaults.assumptions
     : defaults.assumptions.withAll(normalizeAssumptions(supplied.assumptions).entries());
+  const scope = supplied.scope === undefined
+    ? defaults.scope
+    : {...defaults.scope, ...normalizedScope(supplied.scope)};
   return normalizedOperationOptions({
     assumptions,
-    scope: {...defaults.scope, ...supplied.scope},
+    scope,
     domain: supplied.domain ?? defaults.domain,
     limits: {...defaults.limits, ...supplied.limits},
     mode: supplied.mode ?? defaults.mode,
@@ -97,6 +101,7 @@ export class SymbolicContext {
   readonly nodes: NodeBuilder;
   readonly registry: SymbolicRegistry;
   readonly predicates: PredicateFactory;
+  readonly structure: StructuralEngine;
   readonly #definedness: DefinednessAnalyzer;
   readonly #semantics: PredicateEngine;
   readonly #operationDefaults: NormalizedOperationContextOptions;
@@ -110,6 +115,7 @@ export class SymbolicContext {
     this.nodes = new NodeBuilder(math);
     this.registry = registry;
     this.predicates = new PredicateFactory(math);
+    this.structure = new StructuralEngine(math);
     this.#definedness = new DefinednessAnalyzer(
       math,
       this.nodes,

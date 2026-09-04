@@ -12,7 +12,8 @@ shared symbolic layer is built underneath it.
 | 0 — baseline and migration harness | Complete |
 | 1 — MathJS integration substrate and operation context | Complete |
 | 2 — assumptions, domains, predicates, and definedness | Complete |
-| 3–14 | Not started |
+| 3 — structural identity, ordering, fingerprints, and cost | Complete |
+| 4–14 | Not started |
 
 ## Scope freeze
 
@@ -27,7 +28,10 @@ not alter `src/` production algorithms or public exports. Chapter 1 adds the
 instance-local symbolic substrate and adapts legacy solver budgets, without changing
 solver algorithms or dispatch. Chapter 2 adds the immutable assumptions,
 domain, predicate, definedness, and semantic-inference layer while preserving
-the existing solver contracts through compatibility adapters.
+the existing solver contracts through compatibility adapters. Chapter 3
+centralizes lossless structural identity, deterministic ordering, fingerprints,
+and syntax-aware expression cost while leaving algebraic canonicalization to
+Chapter 4.
 
 Affected surfaces:
 
@@ -76,6 +80,7 @@ Compatibility checks are divided deliberately:
 - `mathjs-api-boundary.md`: direct MathJS dependencies permitted for the new core.
 - `chapter-1.md`: Chapter 1 impact map and focused verification scope.
 - `chapter-2.md`: Chapter 2 semantic contracts, risks, and focused gate.
+- `chapter-3.md`: Chapter 3 structural identity, ordering, cost, and test scope.
 
 Regenerate measurements after a build with:
 

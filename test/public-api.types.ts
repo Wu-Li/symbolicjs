@@ -60,6 +60,9 @@ const symbolicJudgment = math.symbolic.ask(symbolicPredicate);
 const symbolicRequirement = math.symbolic.require(symbolicPredicate, {
   mode: 'conditional'
 });
+const structuralAnalysis = math.symbolic.structure.analyze(symbolicNode, {
+  target: 'x'
+});
 
 function resultKind(value: SolveResult): string {
   switch (value.kind) {
@@ -117,6 +120,7 @@ void symbolicNode;
 void symbolicLimit;
 void symbolicJudgment;
 void symbolicRequirement;
+void structuralAnalysis;
 void resultKind(result);
 void parametric;
 void cubicCertificate;

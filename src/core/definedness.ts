@@ -27,14 +27,15 @@ function numericValue(node: MathNode): number | null {
     if (typeof value === 'number') {
       return Number.isFinite(value) ? value : null;
     }
-    if (
-      value &&
-      typeof value === 'object' &&
-      'toNumber' in value &&
-      typeof value.toNumber === 'function'
-    ) {
-      const converted = value.toNumber();
-      return Number.isFinite(converted) ? converted : null;
+    if (value && typeof value === 'object') {
+      if ('toNumber' in value && typeof value.toNumber === 'function') {
+        const converted = value.toNumber();
+        return Number.isFinite(converted) ? converted : null;
+      }
+      if ('valueOf' in value && typeof value.valueOf === 'function') {
+        const converted = Number(value.valueOf());
+        return Number.isFinite(converted) ? converted : null;
+      }
     }
   } catch {
     return null;

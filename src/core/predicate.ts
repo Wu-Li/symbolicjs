@@ -1,6 +1,7 @@
 import type {MathNode} from 'mathjs';
 import type {SymbolicDomain} from './domains.js';
 import {MathAdapter} from './math-adapter.js';
+import {structuralKey} from './structural-key.js';
 
 export type TruthValue = 'proven' | 'disproven' | 'unknown';
 
@@ -64,33 +65,8 @@ export type RequirementResult =
     readonly judgment: Judgment;
   };
 
-function canonicalJson(value: unknown): unknown {
-  if (typeof value === 'bigint') {
-    return {$bigint: value.toString()};
-  }
-  if (Array.isArray(value)) {
-    return value.map(canonicalJson);
-  }
-  if (value && typeof value === 'object') {
-    return Object.fromEntries(
-      Object.entries(value as Record<string, unknown>)
-        .sort(([left], [right]) => left.localeCompare(right))
-        .map(([key, entry]) => [key, canonicalJson(entry)])
-    );
-  }
-  return value;
-}
-
-/** Provisional structural identity; Chapter 3 replaces this implementation. */
 export function predicateExpressionKey(expression: MathNode): string {
-  try {
-    const serialized = JSON.stringify(expression, (_key, value) =>
-      typeof value === 'bigint' ? {$bigint: value.toString()} : value
-    );
-    return JSON.stringify(canonicalJson(JSON.parse(serialized)));
-  } catch {
-    return `${expression.type}:${expression.toString({parenthesis: 'all'})}`;
-  }
+  return structuralKey(expression, {parentheses: 'preserve'});
 }
 
 export function predicateKey(predicate: SymbolicPredicate): string {

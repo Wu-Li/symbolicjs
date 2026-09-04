@@ -109,6 +109,20 @@
       "action": "new"
     },
     {
+      "path": "src/core/structural-key.ts",
+      "currentRole": "stable lossless MathJS structural identity and fingerprints",
+      "targetLayer": "core.structure",
+      "migrationChapter": 3,
+      "action": "new"
+    },
+    {
+      "path": "src/core/structure.ts",
+      "currentRole": "deterministic structural ordering and expression cost analysis",
+      "targetLayer": "core.structure",
+      "migrationChapter": 3,
+      "action": "new"
+    },
+    {
       "path": "src/core/symbolic-context.ts",
       "currentRole": "experimental MathJS-native symbolic service and semantic query facade",
       "targetLayer": "core.context",

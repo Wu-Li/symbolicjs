@@ -30,6 +30,7 @@ try {
     'docs/architecture-migration/baseline-metrics.json',
     'docs/architecture-migration/chapter-1.md',
     'docs/architecture-migration/chapter-2.md',
+    'docs/architecture-migration/chapter-3.md',
     'docs/architecture-migration/mathjs-api-boundary.md',
     'docs/architecture-migration/module-map.json',
     'docs/architecture-migration/public-api.json',
@@ -86,6 +87,12 @@ try {
     math.symbolic.require(predicate, {mode: 'conditional'}).kind,
     'conditional'
   );
+  const structure = math.symbolic.structure.analyze(
+    math.parse('x + 1'),
+    {target: 'x'}
+  );
+  assert.equal(structure.cost.metrics.targetOccurrences, 1);
+  assert.match(structure.fingerprint, /^s1-[0-9a-f]{16}$/);
   const solved = math.solveEquation('x*x - 1 =:= 0', 'x');
   assert.equal(solved.kind, 'finite');
   assert.equal(solved.solutions.length, 2);
