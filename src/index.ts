@@ -65,6 +65,17 @@ export type {
   MatchResult
 } from './core/pattern.js';
 export type {PatternMatchResult, MatchLimit} from './core/matcher.js';
+export {rewriteRule, strategy} from './core/rewrite.js';
+export type {
+  RewriteBuildContext,
+  RewriteCostDirection,
+  RewriteLimit,
+  RewriteOptions,
+  RewriteRule,
+  RewriteStep,
+  RewriteStrategy,
+  TransformResult
+} from './core/rewrite.js';
 export type {
   symbolicjsInstance,
   EqualityNode,
