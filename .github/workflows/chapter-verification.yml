@@ -38,6 +38,9 @@ jobs:
             feat/mathjs-symbolic-layer-chapter-7)
               npx vitest run test/rewrite-engine.spec.ts test/migration-baseline.spec.ts
               ;;
+            feat/mathjs-symbolic-layer-chapter-8)
+              npx vitest run test/equivalence.spec.ts test/verification.spec.ts test/kernel.spec.ts test/migration-baseline.spec.ts
+              ;;
             *)
               npx vitest run test/migration-baseline.spec.ts
               ;;
@@ -48,3 +51,8 @@ jobs:
         run: npm run test:pack
       - name: Workflow and release metadata verification
         run: npm run test:release
+
+  full-chapter-8:
+    name: Full Chapter 8 integration gate
+    if: github.ref_name == 'feat/mathjs-symbolic-layer-chapter-8'
+    uses: ./.github/workflows/ci.yml
