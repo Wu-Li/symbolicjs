@@ -1,5 +1,7 @@
+import {isSymbolNode} from 'mathjs';
 import type {MathJsInstance, MathNode} from 'mathjs';
 import {conditionToPredicate, predicateToCondition} from './core/legacy-condition.js';
+import type {Assumption} from './core/assumptions.js';
 import type {SymbolicContext} from './core/symbolic-context.js';
 import {customFactory} from './custom-factory.js';
 import {DEFAULT_SOLVE_TOLERANCE} from './solve-types.js';
@@ -11,6 +13,7 @@ import type {
 import type {EqualityNode} from './types.js';
 
 interface KernelDependencies {
+  OperatorNode?: MathJsInstance['OperatorNode'];
   simplifyCore: MathJsInstance['simplifyCore'];
   symbolic: SymbolicContext;
 }
@@ -36,7 +39,6 @@ export class SymbolicKernel {
     this.#symbolic = dependencies.symbolic;
   }
 
-  /** Shared MathJS-native symbolic services behind this compatibility facade. */
   get symbolic(): SymbolicContext {
     return this.#symbolic;
   }
@@ -46,7 +48,7 @@ export class SymbolicKernel {
       throw new TypeError('MathJS nodes expected for substitution');
     }
     return node.transform<MathNode>((candidate) =>
-      candidate.isSymbolNode && 'name' in candidate && candidate.name === target
+      isSymbolNode(candidate) && candidate.name === target
         ? replacement
         : candidate
     );
@@ -149,9 +151,10 @@ export class SymbolicKernel {
       return frozenVerification('rejected', 'contradictory-conditions');
     }
 
-    const assumptions = normalized.conditions.map((condition) =>
-      conditionToPredicate(this.#symbolic.predicates, condition)
-    );
+    const assumptions: Assumption[] = normalized.conditions.map((condition) => ({
+      predicate: conditionToPredicate(this.#symbolic.predicates, condition),
+      truth: 'proven'
+    }));
     const verification = this.#symbolic.verifySubstitution(
       equation.lhs,
       equation.rhs,
