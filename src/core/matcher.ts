@@ -1,7 +1,8 @@
 import {
   isFunctionNode,
   isOperatorNode,
-  isParenthesisNode
+  isParenthesisNode,
+  isSymbolNode
 } from 'mathjs';
 import type {MathNode} from 'mathjs';
 import {AlgebraEngine} from '../algebra/engine.js';
@@ -27,10 +28,16 @@ export interface MatchLimit {
 
 export type PatternMatchResult = MatchResult | MatchLimit | null;
 
+type InternalMatchResult = MutableBindings | MatchLimit | null;
+
 interface MutableBindings {
   captures: Record<string, MathNode>;
   rest: Record<string, readonly MathNode[]>;
   requirements: Map<string, SymbolicPredicate>;
+}
+
+function isLimit(value: InternalMatchResult): value is MatchLimit {
+  return value !== null && 'kind' in value && value.kind === 'limit';
 }
 
 function cloneBindings(source: MutableBindings): MutableBindings {
@@ -43,6 +50,7 @@ function cloneBindings(source: MutableBindings): MutableBindings {
 
 function freezeResult(bindings: MutableBindings): MatchResult {
   return Object.freeze({
+    kind: 'match',
     bindings: Object.freeze({
       captures: Object.freeze({...bindings.captures}),
       rest: Object.freeze(Object.fromEntries(
@@ -81,9 +89,7 @@ export class PatternMatcher {
       requirements: new Map()
     };
     const matched = this.#matchNode(node, pattern, context, initial);
-    if (!matched || matched.kind === 'limit') {
-      return matched;
-    }
+    if (!matched || isLimit(matched)) return matched;
     return freezeResult(matched);
   }
 
@@ -92,7 +98,7 @@ export class PatternMatcher {
     pattern: Pattern,
     context: OperationContext,
     bindings: MutableBindings
-  ): MutableBindings | MatchLimit | null {
+  ): InternalMatchResult {
     const node = isParenthesisNode(rawNode) ? rawNode.content : rawNode;
     switch (pattern.kind) {
       case 'literal':
@@ -119,7 +125,11 @@ export class PatternMatcher {
         bindings.rest[pattern.name] = Object.freeze([node]);
         return bindings;
       case 'function':
-        if (!isFunctionNode(node) || node.name !== pattern.name) return null;
+        if (
+          !isFunctionNode(node) ||
+          !isSymbolNode(node.fn) ||
+          node.fn.name !== pattern.name
+        ) return null;
         return this.#matchOrdered(node.args, pattern.args, context, bindings);
       case 'operator': {
         if (!isOperatorNode(node) || node.op !== pattern.op) return null;
@@ -140,16 +150,14 @@ export class PatternMatcher {
     pattern: CapturePattern,
     context: OperationContext,
     bindings: MutableBindings
-  ): MutableBindings | MatchLimit | null {
+  ): InternalMatchResult {
     const existing = bindings.captures[pattern.name];
     if (existing) {
       return this.#structure.equals(existing, node, {parentheses: 'transparent'})
         ? bindings
         : null;
     }
-    if (pattern.guard && !this.#guard(node, pattern.guard, context, bindings)) {
-      return null;
-    }
+    if (pattern.guard && !this.#guard(node, pattern.guard, context, bindings)) return null;
     bindings.captures[pattern.name] = node;
     return bindings;
   }
@@ -160,12 +168,8 @@ export class PatternMatcher {
     context: OperationContext,
     bindings: MutableBindings
   ): boolean {
-    if (guard.kind === 'free-of') {
-      return !this.#algebra.dependsOn(node, guard.symbols);
-    }
-    if (guard.kind === 'depends-on') {
-      return this.#algebra.dependsOn(node, guard.symbols);
-    }
+    if (guard.kind === 'free-of') return !this.#algebra.dependsOn(node, guard.symbols);
+    if (guard.kind === 'depends-on') return this.#algebra.dependsOn(node, guard.symbols);
     if (guard.kind === 'affine-in') {
       return this.#algebra.affine(node, {
         generator: guard.generator,
@@ -207,15 +211,14 @@ export class PatternMatcher {
     patterns: readonly Pattern[],
     context: OperationContext,
     bindings: MutableBindings
-  ): MutableBindings | MatchLimit | null {
+  ): InternalMatchResult {
     const restIndex = patterns.findIndex((value) => value.kind === 'rest');
     const optionalCount = patterns.filter((value) => value.kind === 'optional').length;
     const required = patterns.length - optionalCount - (restIndex >= 0 ? 1 : 0);
     if (nodes.length < required || (restIndex < 0 && nodes.length > patterns.length)) return null;
     let current = bindings;
     let nodeIndex = 0;
-    for (let patternIndex = 0; patternIndex < patterns.length; patternIndex += 1) {
-      const currentPattern = patterns[patternIndex]!;
+    for (const currentPattern of patterns) {
       if (currentPattern.kind === 'rest') {
         current.rest[currentPattern.name] = Object.freeze(nodes.slice(nodeIndex));
         nodeIndex = nodes.length;
@@ -224,17 +227,16 @@ export class PatternMatcher {
       if (currentPattern.kind === 'optional') {
         if (nodeIndex >= nodes.length) continue;
         const trial = this.#matchNode(nodes[nodeIndex]!, currentPattern.pattern, context, cloneBindings(current));
-        if (trial && trial.kind !== 'limit') {
+        if (isLimit(trial)) return trial;
+        if (trial) {
           current = trial;
           nodeIndex += 1;
-        } else if (trial?.kind === 'limit') {
-          return trial;
         }
         continue;
       }
       if (nodeIndex >= nodes.length) return null;
       const matched = this.#matchNode(nodes[nodeIndex]!, currentPattern, context, current);
-      if (!matched || matched.kind === 'limit') return matched;
+      if (!matched || isLimit(matched)) return matched;
       current = matched;
       nodeIndex += 1;
     }
@@ -246,7 +248,7 @@ export class PatternMatcher {
     patterns: readonly Pattern[],
     context: OperationContext,
     bindings: MutableBindings
-  ): MutableBindings | MatchLimit | null {
+  ): InternalMatchResult {
     const rest = patterns.find((value) => value.kind === 'rest');
     const requiredPatterns = patterns.filter((value) => value.kind !== 'rest' && value.kind !== 'optional');
     const optionalPatterns = patterns.filter((value) => value.kind === 'optional');
@@ -254,25 +256,22 @@ export class PatternMatcher {
       patternIndex: number,
       remaining: readonly MathNode[],
       current: MutableBindings
-    ): MutableBindings | MatchLimit | null => {
+    ): InternalMatchResult => {
       if (patternIndex >= requiredPatterns.length) {
         let result = current;
-        let leftovers = [...remaining];
+        const leftovers = [...remaining];
         for (const optionalPattern of optionalPatterns) {
-          let consumed = false;
           for (let index = 0; index < leftovers.length; index += 1) {
             const limit = context.consume('matchBranches');
             if (limit) return Object.freeze({kind: 'limit', limit: 'matchBranches', used: limit.used, maximum: limit.maximum});
             const matched = this.#matchNode(leftovers[index]!, optionalPattern.pattern, context, cloneBindings(result));
-            if (matched?.kind === 'limit') return matched;
+            if (isLimit(matched)) return matched;
             if (matched) {
               result = matched;
               leftovers.splice(index, 1);
-              consumed = true;
               break;
             }
           }
-          if (!consumed) continue;
         }
         if (rest) result.rest[rest.name] = Object.freeze(leftovers);
         return rest || leftovers.length === 0 ? result : null;
@@ -282,7 +281,7 @@ export class PatternMatcher {
         const limit = context.consume('matchBranches');
         if (limit) return Object.freeze({kind: 'limit', limit: 'matchBranches', used: limit.used, maximum: limit.maximum});
         const matched = this.#matchNode(remaining[index]!, currentPattern, context, cloneBindings(current));
-        if (matched?.kind === 'limit') return matched;
+        if (isLimit(matched)) return matched;
         if (!matched) continue;
         const next = remaining.filter((_, candidate) => candidate !== index);
         const completed = attempt(patternIndex + 1, next, matched);
