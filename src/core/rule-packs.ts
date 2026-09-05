@@ -1,6 +1,7 @@
 import type {MathNode} from 'mathjs';
 import {NodeBuilder} from './node-builder.js';
 import {pattern} from './pattern.js';
+import type {Pattern} from './pattern.js';
 import {rewriteRule} from './rewrite.js';
 import type {RewriteRule} from './rewrite.js';
 
@@ -62,7 +63,7 @@ export function createFoundationalRewriteRules(nodes: NodeBuilder): readonly Rew
 export function createCompoundTrigRewriteRules(nodes: NodeBuilder): readonly RewriteRule[] {
   const captureArgument = () => pattern.capture('argument');
   const negativeArgument = () => pattern.operator('-', [captureArgument()]);
-  const squared = (name: string, argument = captureArgument()) => pattern.operator('^', [
+  const squared = (name: string, argument: Pattern = captureArgument()) => pattern.operator('^', [
     pattern.function(name, [argument]),
     pattern.literal(nodes.constant(2))
   ]);
