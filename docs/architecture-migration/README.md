@@ -15,7 +15,8 @@ shared symbolic layer is built underneath it.
 | 3 — structural identity, ordering, fingerprints, and cost | Complete |
 | 4 — canonicalization engine | Complete |
 | 5 — structural algebra analysis and transient views | Complete |
-| 6–14 | Not started |
+| 6 — typed pattern matching with semantic predicates | Complete |
+| 7–14 | Not started |
 
 ## Scope freeze
 
@@ -37,7 +38,10 @@ assumption-aware canonicalization profiles over MathJS nodes and routes the lega
 canonical-key facade through the shared canonical structural identity. Chapter 5
 adds shared dependency analysis and deterministic sum, product, power, affine,
 linear, sparse-polynomial, and rational-function views, then adapts existing
-polynomial and compound-trigonometric recognizers to consume those services.
+polynomial and compound-trigonometric recognizers to consume those services. Chapter 6
+adds typed structural patterns, semantic guards, immutable bindings, deterministic
+ordered matching, and bounded associative/commutative matching through
+`math.symbolic.match()`.
 
 Affected surfaces:
 
@@ -47,7 +51,7 @@ Affected surfaces:
 - benchmark and package-size measurement tooling;
 - future chapters, which will maintain the machine-readable module map;
 - the configured MathJS instance, which now exposes experimental semantic,
-  structural, canonicalization, and algebra-analysis services through
+  structural, canonicalization, algebra-analysis, and matcher services through
   `math.symbolic`.
 
 Primary risks and regression coverage:
@@ -61,6 +65,7 @@ Primary risks and regression coverage:
 | Baseline tooling changes package contents unexpectedly | The packed-consumer test remains part of the full gate. |
 | Benchmarks become anecdotal | Named measurements and node-count metrics are committed in `baseline-metrics.json`. |
 | New symbolic state leaks between MathJS instances | Chapter 1 creates and tests an independent adapter, registry, and operation context per instance. |
+| Pattern matching backtracking becomes nondeterministic or unbounded | Chapter 6 canonical ordering and `matchBranches` limits constrain AC matching. |
 
 ## Compatibility policy
 
@@ -91,6 +96,7 @@ Compatibility checks are divided deliberately:
 - `chapter-3.md`: Chapter 3 structural identity, ordering, cost, and test scope.
 - `chapter-4.md`: Chapter 4 canonicalization contracts, safety boundaries, and test scope.
 - `chapter-5.md`: Chapter 5 algebra analysis, transient-view contracts, adapters, and test scope.
+- `chapter-6.md`: Chapter 6 typed matcher contracts, branch limits, and focused verification scope.
 
 Regenerate measurements after a build with:
 
