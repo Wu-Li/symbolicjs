@@ -81,7 +81,7 @@ describe('typed pattern matcher', () => {
     expect(conditional && conditional.kind !== 'limit').toBe(true);
     if (conditional && conditional.kind !== 'limit') {
       expect(conditional.requirements).toHaveLength(1);
-      expect(conditional.bindings.captures.x.toString()).toBe('x');
+      expect(conditional.bindings.captures.x!.toString()).toBe('x');
       expect(Object.isFrozen(conditional)).toBe(true);
       expect(Object.isFrozen(conditional.bindings.captures)).toBe(true);
     }
@@ -99,8 +99,8 @@ describe('typed pattern matcher', () => {
     expect(first && first.kind !== 'limit').toBe(true);
     expect(second && second.kind !== 'limit').toBe(true);
     if (first && first.kind !== 'limit' && second && second.kind !== 'limit') {
-      expect(first.bindings.captures.left.toString()).toBe(second.bindings.captures.left.toString());
-      expect(first.bindings.captures.right.toString()).toBe(second.bindings.captures.right.toString());
+      expect(first.bindings.captures.left!.toString()).toBe(second.bindings.captures.left!.toString());
+      expect(first.bindings.captures.right!.toString()).toBe(second.bindings.captures.right!.toString());
     }
   });
 
