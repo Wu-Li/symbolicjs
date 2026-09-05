@@ -1,0 +1,50 @@
+name: Chapter verification
+
+on:
+  push:
+    branches:
+      - 'feat/mathjs-symbolic-layer-chapter-*'
+  pull_request:
+    branches:
+      - 'feat/mathjs-symbolic-layer'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: chapter-verification-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  targeted:
+    name: Targeted verification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Chapter-focused tests
+        shell: bash
+        run: |
+          case "${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}" in
+            feat/mathjs-symbolic-layer-chapter-6)
+              npx vitest run test/pattern-matcher.spec.ts test/migration-baseline.spec.ts
+              ;;
+            feat/mathjs-symbolic-layer-chapter-7)
+              npx vitest run test/rewrite-engine.spec.ts test/migration-baseline.spec.ts
+              ;;
+            *)
+              npx vitest run test/migration-baseline.spec.ts
+              ;;
+          esac
+      - name: Build
+        run: npm run build
+      - name: Packed consumer verification
+        run: npm run test:pack
+      - name: Workflow and release metadata verification
+        run: npm run test:release
