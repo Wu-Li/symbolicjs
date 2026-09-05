@@ -1,5 +1,5 @@
 import {isSymbolNode} from 'mathjs';
-import type {MathNode} from 'mathjs';
+import type {MathNode, SymbolNode} from 'mathjs';
 import type {OperationContext, OperationContextOptions} from './operation-context.js';
 import type {SymbolicPredicate} from './predicate.js';
 import {predicateKey} from './predicate.js';
@@ -49,6 +49,10 @@ function substitute(node: MathNode, target: string, replacement: MathNode): Math
   return node.transform<MathNode>((candidate) =>
     isSymbolNode(candidate) && candidate.name === target ? replacement : candidate
   );
+}
+
+function symbolNames(node: MathNode): string[] {
+  return node.filter(isSymbolNode).map((candidate) => (candidate as SymbolNode).name);
 }
 
 function finiteScalar(value: unknown): {re: number; im: number} | null {
@@ -121,8 +125,8 @@ export class VerificationEngine {
     }
 
     const symbols = [...new Set([
-      ...lhs.filter(isSymbolNode).map((node) => node.name),
-      ...rhs.filter(isSymbolNode).map((node) => node.name)
+      ...symbolNames(lhs),
+      ...symbolNames(rhs)
     ])].filter((name) => name !== target).sort();
 
     if (symbols.length === 0) {
