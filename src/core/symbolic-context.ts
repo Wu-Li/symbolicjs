@@ -50,6 +50,8 @@ import {RewriteEngine} from './rewrite-engine.js';
 import type {RewriteOptions, RewriteStrategy, TransformResult} from './rewrite.js';
 import {PredicateEngine} from './semantic-engine.js';
 import {StructuralEngine} from './structure.js';
+import {VerificationEngine} from './verify.js';
+import type {ExpressionVerificationResult, VerifyExpressionOptions} from './verify.js';
 
 export interface SymbolicContextOptions {
   readonly registry?: SymbolicRegistry;
@@ -143,6 +145,7 @@ export class SymbolicContext {
   readonly matcher: PatternMatcher;
   readonly rewrite: RewriteEngine;
   readonly equivalence: EquivalenceEngine;
+  readonly verification: VerificationEngine;
   readonly #definedness: DefinednessAnalyzer;
   readonly #semantics: PredicateEngine;
   readonly #operationDefaults: NormalizedOperationContextOptions;
@@ -203,6 +206,7 @@ export class SymbolicContext {
       this.canonicalization,
       this.algebra
     );
+    this.verification = new VerificationEngine(this.equivalence, this.#definedness);
     Object.freeze(this);
   }
 
@@ -262,6 +266,23 @@ export class SymbolicContext {
         ...(profile === undefined ? {} : {profile}),
         ...(generators === undefined ? {} : {generators})
       }
+    );
+  }
+
+  verifySubstitution(
+    left: MathNode,
+    right: MathNode,
+    target: string,
+    candidate: MathNode,
+    options: VerifyExpressionOptions = {}
+  ): ExpressionVerificationResult {
+    return this.verification.verifySubstitution(
+      left,
+      right,
+      target,
+      candidate,
+      this.operation(options),
+      options
     );
   }
 
