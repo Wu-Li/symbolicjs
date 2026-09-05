@@ -18,6 +18,8 @@ import type {OperationDomain} from './domains.js';
 import {validateOperationDomain} from './domains.js';
 import {MathAdapter} from './math-adapter.js';
 import type {MathAdapterDependencies} from './math-adapter.js';
+import {PatternMatcher} from './matcher.js';
+import type {PatternMatchResult} from './matcher.js';
 import {NodeBuilder} from './node-builder.js';
 import {
   normalizeAssumptions,
@@ -27,6 +29,7 @@ import type {
   OperationContextOptions,
   OperationMode
 } from './operation-context.js';
+import type {Pattern} from './pattern.js';
 import {
   createJudgment,
   PredicateFactory
@@ -133,6 +136,7 @@ export class SymbolicContext {
   readonly structure: StructuralEngine;
   readonly canonicalization: CanonicalizationEngine;
   readonly algebra: AlgebraEngine;
+  readonly matcher: PatternMatcher;
   readonly #definedness: DefinednessAnalyzer;
   readonly #semantics: PredicateEngine;
   readonly #operationDefaults: NormalizedOperationContextOptions;
@@ -182,6 +186,11 @@ export class SymbolicContext {
         mergeOperationOptions(this.#operationDefaults, options)
       )
     );
+    this.matcher = new PatternMatcher(
+      this.structure,
+      this.#semantics,
+      this.algebra
+    );
     Object.freeze(this);
   }
 
@@ -209,6 +218,14 @@ export class SymbolicContext {
     options: OperationContextOptions = {}
   ): RequirementResult {
     return this.#semantics.require(predicate, this.operation(options));
+  }
+
+  match(
+    node: MathNode,
+    pattern: Pattern,
+    options: OperationContextOptions = {}
+  ): PatternMatchResult {
+    return this.matcher.match(node, pattern, this.operation(options));
   }
 
   canonicalize(
