@@ -71,6 +71,7 @@ export interface MatchBindings {
 }
 
 export interface MatchResult {
+  readonly kind: 'match';
   readonly bindings: MatchBindings;
   readonly requirements: readonly SymbolicPredicate[];
 }
