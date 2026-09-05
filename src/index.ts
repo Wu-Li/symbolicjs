@@ -57,6 +57,14 @@ export {
   symbolicjsFactories,
   importsymbolicjs
 } from './install.js';
+export {pattern} from './core/pattern.js';
+export type {
+  Pattern,
+  PatternGuard,
+  MatchBindings,
+  MatchResult
+} from './core/pattern.js';
+export type {PatternMatchResult, MatchLimit} from './core/matcher.js';
 export type {
   symbolicjsInstance,
   EqualityNode,
