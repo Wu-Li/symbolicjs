@@ -44,6 +44,8 @@ import {
   createDefaultSymbolicRegistry,
   SymbolicRegistry
 } from './registry.js';
+import {RewriteEngine} from './rewrite-engine.js';
+import type {RewriteOptions, RewriteStrategy, TransformResult} from './rewrite.js';
 import {PredicateEngine} from './semantic-engine.js';
 import {StructuralEngine} from './structure.js';
 
@@ -137,6 +139,7 @@ export class SymbolicContext {
   readonly canonicalization: CanonicalizationEngine;
   readonly algebra: AlgebraEngine;
   readonly matcher: PatternMatcher;
+  readonly rewrite: RewriteEngine;
   readonly #definedness: DefinednessAnalyzer;
   readonly #semantics: PredicateEngine;
   readonly #operationDefaults: NormalizedOperationContextOptions;
@@ -191,6 +194,7 @@ export class SymbolicContext {
       this.#semantics,
       this.algebra
     );
+    this.rewrite = new RewriteEngine(this.matcher, this.structure);
     Object.freeze(this);
   }
 
@@ -226,6 +230,14 @@ export class SymbolicContext {
     options: OperationContextOptions = {}
   ): PatternMatchResult {
     return this.matcher.match(node, pattern, this.operation(options));
+  }
+
+  transform(
+    node: MathNode,
+    strategy: RewriteStrategy,
+    options: RewriteOptions = {}
+  ): TransformResult {
+    return this.rewrite.transform(node, strategy, this.operation(options), options);
   }
 
   canonicalize(
