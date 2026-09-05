@@ -121,8 +121,8 @@ export class VerificationEngine {
     }
 
     const symbols = [...new Set([
-      ...lhs.filter((node) => isSymbolNode(node)).map((node) => (node as {name: string}).name),
-      ...rhs.filter((node) => isSymbolNode(node)).map((node) => (node as {name: string}).name)
+      ...lhs.filter(isSymbolNode).map((node) => node.name),
+      ...rhs.filter(isSymbolNode).map((node) => node.name)
     ])].filter((name) => name !== target).sort();
 
     if (symbols.length === 0) {
