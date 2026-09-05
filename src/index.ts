@@ -66,6 +66,10 @@ export type {
 } from './core/pattern.js';
 export type {PatternMatchResult, MatchLimit} from './core/matcher.js';
 export {rewriteRule, strategy} from './core/rewrite.js';
+export {
+  createCompoundTrigRewriteRules,
+  createFoundationalRewriteRules
+} from './core/rule-packs.js';
 export type {
   RewriteBuildContext,
   RewriteCostDirection,
