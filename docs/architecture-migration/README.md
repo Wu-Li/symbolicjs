@@ -16,7 +16,8 @@ shared symbolic layer is built underneath it.
 | 4 — canonicalization engine | Complete |
 | 5 — structural algebra analysis and transient views | Complete |
 | 6 — typed pattern matching with semantic predicates | Complete |
-| 7–14 | Not started |
+| 7 — transformation rules and bounded strategies | Implementation complete; verification pending |
+| 8–14 | Not started |
 
 ## Scope freeze
 
@@ -41,7 +42,10 @@ linear, sparse-polynomial, and rational-function views, then adapts existing
 polynomial and compound-trigonometric recognizers to consume those services. Chapter 6
 adds typed structural patterns, semantic guards, immutable bindings, deterministic
 ordered matching, and bounded associative/commutative matching through
-`math.symbolic.match()`.
+`math.symbolic.match()`. Chapter 7 adds typed rewrite rules, bounded traversal and
+search strategies, requirement-preserving traces, deterministic cost selection,
+reusable foundational and compound-trigonometric rule packs, and
+`math.symbolic.transform()`.
 
 Affected surfaces:
 
@@ -51,8 +55,8 @@ Affected surfaces:
 - benchmark and package-size measurement tooling;
 - future chapters, which will maintain the machine-readable module map;
 - the configured MathJS instance, which now exposes experimental semantic,
-  structural, canonicalization, algebra-analysis, and matcher services through
-  `math.symbolic`.
+  structural, canonicalization, algebra-analysis, matcher, and rewrite services
+  through `math.symbolic`.
 
 Primary risks and regression coverage:
 
@@ -66,6 +70,7 @@ Primary risks and regression coverage:
 | Benchmarks become anecdotal | Named measurements and node-count metrics are committed in `baseline-metrics.json`. |
 | New symbolic state leaks between MathJS instances | Chapter 1 creates and tests an independent adapter, registry, and operation context per instance. |
 | Pattern matching backtracking becomes nondeterministic or unbounded | Chapter 6 canonical ordering and `matchBranches` limits constrain AC matching. |
+| Rewrite strategies oscillate or grow without bound | Chapter 7 visited fingerprints and explicit step, branch, state, frontier, matcher, and node-growth limits constrain execution. |
 
 ## Compatibility policy
 
@@ -97,6 +102,7 @@ Compatibility checks are divided deliberately:
 - `chapter-4.md`: Chapter 4 canonicalization contracts, safety boundaries, and test scope.
 - `chapter-5.md`: Chapter 5 algebra analysis, transient-view contracts, adapters, and test scope.
 - `chapter-6.md`: Chapter 6 typed matcher contracts, branch limits, and focused verification scope.
+- `chapter-7.md`: Chapter 7 rewrite contracts, strategy limits, rule packs, and focused verification scope.
 
 Regenerate measurements after a build with:
 
