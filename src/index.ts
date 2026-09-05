@@ -81,6 +81,19 @@ export type {
   TransformResult
 } from './core/rewrite.js';
 export type {
+  EquivalenceEvidence,
+  EquivalenceEvidenceKind,
+  EquivalenceOptions,
+  EquivalenceResult,
+  EquivalenceTruth
+} from './core/equivalence.js';
+export type {
+  ExpressionVerificationResult,
+  VerificationEvidence as SymbolicVerificationEvidence,
+  VerificationTruth as SymbolicVerificationTruth,
+  VerifyExpressionOptions
+} from './core/verify.js';
+export type {
   symbolicjsInstance,
   EqualityNode,
   EqualityNodeConstructor,
