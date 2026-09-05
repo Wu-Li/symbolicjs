@@ -38,14 +38,6 @@ export function createFoundationalRewriteRules(nodes: NodeBuilder): readonly Rew
       provenance: {family: 'denominator-normalization'}
     }),
     rewriteRule({
-      id: 'arithmetic.subtract-self',
-      description: 'Subtract structurally identical scalar expressions',
-      pattern: pattern.operator('-', [pattern.capture('value'), pattern.same('value')]),
-      replace: () => nodes.constant(0),
-      costDirection: 'decrease',
-      provenance: {family: 'arithmetic-identity'}
-    }),
-    rewriteRule({
       id: 'arithmetic.double-negative',
       description: 'Remove double unary negation',
       pattern: pattern.operator('-', [
