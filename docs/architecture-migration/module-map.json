@@ -10,299 +10,49 @@
     "public-api"
   ],
   "modules": [
-    {
-      "path": "src/algebra/analysis.ts",
-      "currentRole": "shared free-symbol, dependency, inventory, definedness, and safe-evaluation analysis",
-      "targetLayer": "algebra.analysis",
-      "migrationChapter": 5,
-      "action": "new"
-    },
-    {
-      "path": "src/algebra/engine.ts",
-      "currentRole": "MathJS-native transient algebra view construction and deterministic rebuilding",
-      "targetLayer": "algebra.views",
-      "migrationChapter": 5,
-      "action": "new"
-    },
-    {
-      "path": "src/algebra/index.ts",
-      "currentRole": "internal algebra-layer exports",
-      "targetLayer": "algebra.public-surface",
-      "migrationChapter": 5,
-      "action": "new"
-    },
-    {
-      "path": "src/algebra/internal.ts",
-      "currentRole": "algebra limits, failure contracts, requirement normalization, and monomial ordering",
-      "targetLayer": "algebra.infrastructure",
-      "migrationChapter": 5,
-      "action": "new"
-    },
-    {
-      "path": "src/algebra/types.ts",
-      "currentRole": "typed transient algebra views and analysis contracts",
-      "targetLayer": "algebra.contracts",
-      "migrationChapter": 5,
-      "action": "new"
-    },
-    {
-      "path": "src/analysis.ts",
-      "currentRole": "legacy equation-symbol facade over shared configured free-symbol discovery",
-      "targetLayer": "core.analysis",
-      "migrationChapter": 5,
-      "action": "adapt"
-    },
-    {
-      "path": "src/budget.ts",
-      "currentRole": "legacy solver adapter over operation-neutral budgets",
-      "targetLayer": "core.operation-context",
-      "migrationChapter": 1,
-      "action": "adapted"
-    },
-    {
-      "path": "src/compound-trigonometric.ts",
-      "currentRole": "compound trigonometric solver using shared arbitrary-basis linear analysis",
-      "targetLayer": "solver.trigonometric",
-      "migrationChapter": 5,
-      "action": "adapt"
-    },
-    {
-      "path": "src/constants.ts",
-      "currentRole": "equation syntax constants",
-      "targetLayer": "integration.equality",
-      "migrationChapter": 1,
-      "action": "preserve"
-    },
-    {
-      "path": "src/core/assumptions.ts",
-      "currentRole": "immutable assumptions and implication closure",
-      "targetLayer": "core.assumptions",
-      "migrationChapter": 2,
-      "action": "new"
-    },
-    {
-      "path": "src/core/canonicalize/engine.ts",
-      "currentRole": "assumption-aware deterministic MathJS canonicalization",
-      "targetLayer": "core.canonicalization",
-      "migrationChapter": 4,
-      "action": "new"
-    },
-    {
-      "path": "src/core/canonicalize/index.ts",
-      "currentRole": "canonicalization module boundary",
-      "targetLayer": "core.canonicalization",
-      "migrationChapter": 4,
-      "action": "new"
-    },
-    {
-      "path": "src/core/canonicalize/types.ts",
-      "currentRole": "canonicalization profiles, options, trace, and result contracts",
-      "targetLayer": "core.canonicalization",
-      "migrationChapter": 4,
-      "action": "new"
-    },
-    {
-      "path": "src/core/definedness.ts",
-      "currentRole": "domain-aware definedness obligations",
-      "targetLayer": "core.definedness",
-      "migrationChapter": 2,
-      "action": "new"
-    },
-    {
-      "path": "src/core/domains.ts",
-      "currentRole": "symbolic scalar domain lattice",
-      "targetLayer": "core.domains",
-      "migrationChapter": 2,
-      "action": "new"
-    },
-    {
-      "path": "src/core/free-symbols.ts",
-      "currentRole": "configured-instance-aware free-symbol discovery",
-      "targetLayer": "core.analysis",
-      "migrationChapter": 5,
-      "action": "new"
-    },
-    {
-      "path": "src/core/legacy-condition.ts",
-      "currentRole": "legacy solver-condition compatibility adapter",
-      "targetLayer": "core.compatibility-facade",
-      "migrationChapter": 2,
-      "action": "new"
-    },
-    {
-      "path": "src/core/math-adapter.ts",
-      "currentRole": "instance-local supported MathJS API boundary",
-      "targetLayer": "integration.mathjs",
-      "migrationChapter": 1,
-      "action": "new"
-    },
-    {
-      "path": "src/core/node-builder.ts",
-      "currentRole": "configured-instance MathNode construction",
-      "targetLayer": "integration.mathjs",
-      "migrationChapter": 1,
-      "action": "new"
-    },
-    {
-      "path": "src/core/operation-context.ts",
-      "currentRole": "operation-neutral limits, assumptions, scope, memoization, and diagnostics",
-      "targetLayer": "core.operation-context",
-      "migrationChapter": 1,
-      "action": "new"
-    },
-    {
-      "path": "src/core/predicate.ts",
-      "currentRole": "typed symbolic predicates and three-valued judgments",
-      "targetLayer": "core.predicates",
-      "migrationChapter": 2,
-      "action": "new"
-    },
-    {
-      "path": "src/core/registry.ts",
-      "currentRole": "instance-local symbolic operator and function semantics",
-      "targetLayer": "core.registry",
-      "migrationChapter": 1,
-      "action": "new"
-    },
-    {
-      "path": "src/core/semantic-engine.ts",
-      "currentRole": "three-valued semantic inference over MathJS nodes",
-      "targetLayer": "core.semantics",
-      "migrationChapter": 2,
-      "action": "new"
-    },
-    {
-      "path": "src/core/structural-key.ts",
-      "currentRole": "stable lossless MathJS structural identity and fingerprints",
-      "targetLayer": "core.structure",
-      "migrationChapter": 3,
-      "action": "new"
-    },
-    {
-      "path": "src/core/structure.ts",
-      "currentRole": "deterministic structural ordering and expression cost analysis",
-      "targetLayer": "core.structure",
-      "migrationChapter": 3,
-      "action": "new"
-    },
-    {
-      "path": "src/core/symbolic-context.ts",
-      "currentRole": "experimental MathJS-native symbolic service with canonicalization and algebra-analysis facades",
-      "targetLayer": "core.context",
-      "migrationChapter": 1,
-      "action": "new"
-    },
-    {
-      "path": "src/custom-factory.ts",
-      "currentRole": "MathJS factory typing boundary",
-      "targetLayer": "integration.factory",
-      "migrationChapter": 1,
-      "action": "preserve"
-    },
-    {
-      "path": "src/equality-node.ts",
-      "currentRole": "MathJS-native equality node",
-      "targetLayer": "integration.equality",
-      "migrationChapter": 1,
-      "action": "preserve"
-    },
-    {
-      "path": "src/index.ts",
-      "currentRole": "public package exports",
-      "targetLayer": "public-api",
-      "migrationChapter": 14,
-      "action": "consolidate"
-    },
-    {
-      "path": "src/install.ts",
-      "currentRole": "all-in-one MathJS installation including symbolic context",
-      "targetLayer": "integration.install",
-      "migrationChapter": 14,
-      "action": "split-and-preserve"
-    },
-    {
-      "path": "src/isolate.ts",
-      "currentRole": "single-occurrence equation isolation",
-      "targetLayer": "solver.isolation",
-      "migrationChapter": 11,
-      "action": "rebuild"
-    },
-    {
-      "path": "src/kernel.ts",
-      "currentRole": "legacy symbolic utility and verification facade exposing shared symbolic and algebra services",
-      "targetLayer": "core.compatibility-facade",
-      "migrationChapter": 9,
-      "action": "redesign"
-    },
-    {
-      "path": "src/numeric-polynomial.ts",
-      "currentRole": "numeric polynomial root backend",
-      "targetLayer": "numeric.polynomial",
-      "migrationChapter": 10,
-      "action": "preserve-and-adapt"
-    },
-    {
-      "path": "src/numeric-solve.ts",
-      "currentRole": "bounded numeric equation fallback",
-      "targetLayer": "numeric.equation",
-      "migrationChapter": 9,
-      "action": "preserve-and-adapt"
-    },
-    {
-      "path": "src/parametric.ts",
-      "currentRole": "parametric family operations",
-      "targetLayer": "algebra.parametric",
-      "migrationChapter": 9,
-      "action": "redesign-over-core"
-    },
-    {
-      "path": "src/parse-equation.ts",
-      "currentRole": "equation parser boundary",
-      "targetLayer": "integration.equality",
-      "migrationChapter": 1,
-      "action": "preserve"
-    },
-    {
-      "path": "src/polynomial.ts",
-      "currentRole": "polynomial solver using shared rational and sparse-polynomial extraction",
-      "targetLayer": "algebra.polynomial-and-solver.polynomial",
-      "migrationChapter": 5,
-      "action": "adapt"
-    },
-    {
-      "path": "src/solve-all.ts",
-      "currentRole": "solve-for-every-symbol orchestration",
-      "targetLayer": "solver.orchestration",
-      "migrationChapter": 13,
-      "action": "adapt"
-    },
-    {
-      "path": "src/solve-types.ts",
-      "currentRole": "public solving contracts",
-      "targetLayer": "public-api.solve-contracts",
-      "migrationChapter": 14,
-      "action": "preserve"
-    },
-    {
-      "path": "src/solve.ts",
-      "currentRole": "hard-coded solver dispatch",
-      "targetLayer": "solver.orchestration",
-      "migrationChapter": 13,
-      "action": "rebuild"
-    },
-    {
-      "path": "src/trigonometric.ts",
-      "currentRole": "isolated trigonometric solving",
-      "targetLayer": "solver.trigonometric",
-      "migrationChapter": 12,
-      "action": "rebuild"
-    },
-    {
-      "path": "src/types.ts",
-      "currentRole": "MathJS extension, equality, and symbolic-context types",
-      "targetLayer": "integration.types",
-      "migrationChapter": 14,
-      "action": "extended"
-    }
+    {"path":"src/algebra/analysis.ts","currentRole":"shared free-symbol, dependency, inventory, definedness, and safe-evaluation analysis","targetLayer":"algebra.analysis","migrationChapter":5,"action":"new"},
+    {"path":"src/algebra/engine.ts","currentRole":"MathJS-native transient algebra view construction and deterministic rebuilding","targetLayer":"algebra.views","migrationChapter":5,"action":"new"},
+    {"path":"src/algebra/index.ts","currentRole":"internal algebra-layer exports","targetLayer":"algebra.public-surface","migrationChapter":5,"action":"new"},
+    {"path":"src/algebra/internal.ts","currentRole":"algebra limits, failure contracts, requirement normalization, and monomial ordering","targetLayer":"algebra.infrastructure","migrationChapter":5,"action":"new"},
+    {"path":"src/algebra/types.ts","currentRole":"typed transient algebra views and analysis contracts","targetLayer":"algebra.contracts","migrationChapter":5,"action":"new"},
+    {"path":"src/analysis.ts","currentRole":"legacy equation-symbol facade over shared configured free-symbol discovery","targetLayer":"core.analysis","migrationChapter":5,"action":"adapt"},
+    {"path":"src/budget.ts","currentRole":"legacy solver adapter over operation-neutral budgets","targetLayer":"core.operation-context","migrationChapter":1,"action":"adapted"},
+    {"path":"src/compound-trigonometric.ts","currentRole":"compound trigonometric solver using shared arbitrary-basis linear analysis","targetLayer":"solver.trigonometric","migrationChapter":5,"action":"adapt"},
+    {"path":"src/constants.ts","currentRole":"equation syntax constants","targetLayer":"integration.equality","migrationChapter":1,"action":"preserve"},
+    {"path":"src/core/assumptions.ts","currentRole":"immutable assumptions and implication closure","targetLayer":"core.assumptions","migrationChapter":2,"action":"new"},
+    {"path":"src/core/canonicalize/engine.ts","currentRole":"assumption-aware deterministic MathJS canonicalization","targetLayer":"core.canonicalization","migrationChapter":4,"action":"new"},
+    {"path":"src/core/canonicalize/index.ts","currentRole":"canonicalization module boundary","targetLayer":"core.canonicalization","migrationChapter":4,"action":"new"},
+    {"path":"src/core/canonicalize/types.ts","currentRole":"canonicalization profiles, options, trace, and result contracts","targetLayer":"core.canonicalization","migrationChapter":4,"action":"new"},
+    {"path":"src/core/definedness.ts","currentRole":"domain-aware definedness obligations","targetLayer":"core.definedness","migrationChapter":2,"action":"new"},
+    {"path":"src/core/domains.ts","currentRole":"symbolic scalar domain lattice","targetLayer":"core.domains","migrationChapter":2,"action":"new"},
+    {"path":"src/core/free-symbols.ts","currentRole":"configured-instance-aware free-symbol discovery","targetLayer":"core.analysis","migrationChapter":5,"action":"new"},
+    {"path":"src/core/legacy-condition.ts","currentRole":"legacy solver-condition compatibility adapter","targetLayer":"core.compatibility-facade","migrationChapter":2,"action":"new"},
+    {"path":"src/core/matcher.ts","currentRole":"typed deterministic structural and semantic matcher with bounded associative/commutative backtracking","targetLayer":"core.matcher","migrationChapter":6,"action":"new"},
+    {"path":"src/core/math-adapter.ts","currentRole":"instance-local supported MathJS API boundary","targetLayer":"integration.mathjs","migrationChapter":1,"action":"new"},
+    {"path":"src/core/node-builder.ts","currentRole":"configured-instance MathNode construction","targetLayer":"integration.mathjs","migrationChapter":1,"action":"new"},
+    {"path":"src/core/operation-context.ts","currentRole":"operation-neutral limits, assumptions, scope, memoization, and diagnostics","targetLayer":"core.operation-context","migrationChapter":1,"action":"new"},
+    {"path":"src/core/pattern.ts","currentRole":"typed pattern combinators and immutable matcher contracts","targetLayer":"core.matcher","migrationChapter":6,"action":"new"},
+    {"path":"src/core/predicate.ts","currentRole":"typed symbolic predicates and three-valued judgments","targetLayer":"core.predicates","migrationChapter":2,"action":"new"},
+    {"path":"src/core/registry.ts","currentRole":"instance-local symbolic operator and function semantics","targetLayer":"core.registry","migrationChapter":1,"action":"new"},
+    {"path":"src/core/semantic-engine.ts","currentRole":"three-valued semantic inference over MathJS nodes","targetLayer":"core.semantics","migrationChapter":2,"action":"new"},
+    {"path":"src/core/structural-key.ts","currentRole":"stable lossless MathJS structural identity and fingerprints","targetLayer":"core.structure","migrationChapter":3,"action":"new"},
+    {"path":"src/core/structure.ts","currentRole":"deterministic structural ordering and expression cost analysis","targetLayer":"core.structure","migrationChapter":3,"action":"new"},
+    {"path":"src/core/symbolic-context.ts","currentRole":"experimental MathJS-native symbolic service with canonicalization, algebra-analysis, and matcher facades","targetLayer":"core.context","migrationChapter":1,"action":"new"},
+    {"path":"src/custom-factory.ts","currentRole":"MathJS factory typing boundary","targetLayer":"integration.factory","migrationChapter":1,"action":"preserve"},
+    {"path":"src/equality-node.ts","currentRole":"MathJS-native equality node","targetLayer":"integration.equality","migrationChapter":1,"action":"preserve"},
+    {"path":"src/index.ts","currentRole":"public package exports including pattern matcher contracts","targetLayer":"public-api","migrationChapter":14,"action":"consolidate"},
+    {"path":"src/install.ts","currentRole":"all-in-one MathJS installation including symbolic context","targetLayer":"integration.install","migrationChapter":14,"action":"split-and-preserve"},
+    {"path":"src/isolate.ts","currentRole":"single-occurrence equation isolation","targetLayer":"solver.isolation","migrationChapter":11,"action":"rebuild"},
+    {"path":"src/kernel.ts","currentRole":"legacy symbolic utility and verification facade exposing shared symbolic and algebra services","targetLayer":"core.compatibility-facade","migrationChapter":9,"action":"redesign"},
+    {"path":"src/numeric-polynomial.ts","currentRole":"numeric polynomial root backend","targetLayer":"numeric.polynomial","migrationChapter":10,"action":"preserve-and-adapt"},
+    {"path":"src/numeric-solve.ts","currentRole":"bounded numeric equation fallback","targetLayer":"numeric.equation","migrationChapter":9,"action":"preserve-and-adapt"},
+    {"path":"src/parametric.ts","currentRole":"parametric family operations","targetLayer":"algebra.parametric","migrationChapter":9,"action":"redesign-over-core"},
+    {"path":"src/parse-equation.ts","currentRole":"equation parser boundary","targetLayer":"integration.equality","migrationChapter":1,"action":"preserve"},
+    {"path":"src/polynomial.ts","currentRole":"polynomial solver using shared rational and sparse-polynomial extraction","targetLayer":"algebra.polynomial-and-solver.polynomial","migrationChapter":5,"action":"adapt"},
+    {"path":"src/solve-all.ts","currentRole":"solve-for-every-symbol orchestration","targetLayer":"solver.orchestration","migrationChapter":13,"action":"adapt"},
+    {"path":"src/solve-types.ts","currentRole":"public solving contracts","targetLayer":"public-api.solve-contracts","migrationChapter":14,"action":"preserve"},
+    {"path":"src/solve.ts","currentRole":"hard-coded solver dispatch","targetLayer":"solver.orchestration","migrationChapter":13,"action":"rebuild"},
+    {"path":"src/trigonometric.ts","currentRole":"isolated trigonometric solving","targetLayer":"solver.trigonometric","migrationChapter":12,"action":"rebuild"},
+    {"path":"src/types.ts","currentRole":"MathJS extension, equality, and symbolic-context types","targetLayer":"integration.types","migrationChapter":14,"action":"extended"}
   ]
 }
