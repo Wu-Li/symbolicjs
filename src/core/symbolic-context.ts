@@ -232,7 +232,12 @@ export class SymbolicContext {
     return this.matcher.match(node, pattern, this.operation(options));
   }
 
-  transform(
+  /**
+   * Apply a bounded rewrite strategy. MathJS reserves a factory result's
+   * `transform` property for parser transforms, so the instance-local symbolic
+   * service deliberately uses a non-reserved method name.
+   */
+  rewriteExpression(
     node: MathNode,
     strategy: RewriteStrategy,
     options: RewriteOptions = {}
