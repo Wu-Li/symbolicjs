@@ -16,7 +16,7 @@ shared symbolic layer is built underneath it.
 | 4 — canonicalization engine | Complete |
 | 5 — structural algebra analysis and transient views | Complete |
 | 6 — typed pattern matching with semantic predicates | Complete |
-| 7 — transformation rules and bounded strategies | Implementation complete; verification pending |
+| 7 — transformation rules and bounded strategies | Complete |
 | 8–14 | Not started |
 
 ## Scope freeze
@@ -44,8 +44,9 @@ adds typed structural patterns, semantic guards, immutable bindings, determinist
 ordered matching, and bounded associative/commutative matching through
 `math.symbolic.match()`. Chapter 7 adds typed rewrite rules, bounded traversal and
 search strategies, requirement-preserving traces, deterministic cost selection,
-reusable foundational and compound-trigonometric rule packs, and
-`math.symbolic.transform()`.
+reusable foundational and compound-trigonometric rule packs, and the supported
+`math.symbolic.rewriteExpression()` convenience entry point over
+`math.symbolic.rewrite`.
 
 Affected surfaces:
 
@@ -71,6 +72,7 @@ Primary risks and regression coverage:
 | New symbolic state leaks between MathJS instances | Chapter 1 creates and tests an independent adapter, registry, and operation context per instance. |
 | Pattern matching backtracking becomes nondeterministic or unbounded | Chapter 6 canonical ordering and `matchBranches` limits constrain AC matching. |
 | Rewrite strategies oscillate or grow without bound | Chapter 7 visited fingerprints and explicit step, branch, state, frontier, matcher, and node-growth limits constrain execution. |
+| Symbolic rewrite API conflicts with MathJS parser transform semantics | Chapter 7 uses `rewriteExpression()` because MathJS reserves a factory result's `transform` function property. |
 
 ## Compatibility policy
 
@@ -102,7 +104,7 @@ Compatibility checks are divided deliberately:
 - `chapter-4.md`: Chapter 4 canonicalization contracts, safety boundaries, and test scope.
 - `chapter-5.md`: Chapter 5 algebra analysis, transient-view contracts, adapters, and test scope.
 - `chapter-6.md`: Chapter 6 typed matcher contracts, branch limits, and focused verification scope.
-- `chapter-7.md`: Chapter 7 rewrite contracts, strategy limits, rule packs, and focused verification scope.
+- `chapter-7.md`: Chapter 7 rewrite contracts, strategy limits, rule packs, and successful verification record.
 
 Regenerate measurements after a build with:
 
