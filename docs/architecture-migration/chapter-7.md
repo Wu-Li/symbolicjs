@@ -2,10 +2,7 @@
 
 ## Status
 
-Implementation and focused regression tests are committed on
-`feat/mathjs-symbolic-layer-chapter-7`. Runtime verification is still pending because
-the current execution environment cannot reach GitHub/npm to check out dependencies;
-do not treat the commands below as having passed until they are actually run.
+Complete and verified on `feat/mathjs-symbolic-layer-chapter-7`.
 
 ## Impact map
 
@@ -22,11 +19,18 @@ Chapter 7 introduces:
   expression-node growth;
 - mandatory propagation of matcher requirements into transformation results and
   trace steps;
-- `math.symbolic.rewrite` and `math.symbolic.transform()` entry points;
+- `math.symbolic.rewrite` plus the convenience entry point
+  `math.symbolic.rewriteExpression()`;
 - reusable foundational arithmetic/sign/denominator/power rules that are safe
   without unstated scalar assumptions;
 - the compound-trigonometric parity, Pythagorean, and product-to-angle facts from the
   existing solver expressed as typed rule data without migrating the solver itself.
+
+MathJS reserves a factory result's `transform` function property for expression
+parser transforms and rejects factory-produced objects that expose one. Therefore the
+provisional `math.symbolic.transform()` name from the architecture sketch is not a
+supported MathJS factory boundary; `rewriteExpression()` preserves the planned
+capability while remaining MathJS-native and instance-local.
 
 Existing solver dispatch and solver implementations remain authoritative in this
 chapter.
@@ -41,24 +45,31 @@ chapter.
 | Search/branching becomes unbounded | Typed limits cover steps, rewrite branches, matcher AC branches, states, frontier size, and node growth. |
 | Cost-guided selection becomes nondeterministic | `bestOf` test presents candidates in reverse preference order and requires the lower-cost result. |
 | Traversal misses nested expressions | Top-down fixed-point test normalizes nested additive identities under a function. |
-| Generic rule packs diverge from existing compound-trig normalization | Focused tests exercise cosine parity, the Pythagorean identity, and the sin/cos product rule through the generic strategy engine. |
-| Public exports or module inventory drift | Migration inventory tests cover `src/index.ts`, `public-api.json`, and `module-map.json`. |
+| Generic rule packs diverge from existing compound-trig normalization | Focused rewrite tests exercise cosine parity, the Pythagorean identity, and the sin/cos product rule through the generic strategy engine. |
+| Public exports or module inventory drift | Migration baseline tests cover `src/index.ts`, `public-api.json`, and `module-map.json`. |
+| A symbolic convenience method collides with MathJS parser-transform semantics | Runtime construction through `importsymbolicjs()` is exercised before every rewrite and migration-baseline assertion. |
 
-## Focused verification to run
+## Verification
+
+GitHub Actions Chapter verification run `33991959770` completed successfully on the
+Chapter 7 implementation. It ran:
 
 ```text
-npx vitest run test/rewrite-engine.spec.ts test/pattern-matcher.spec.ts
-npx vitest run test/compound-trigonometric.spec.ts test/migration-baseline.spec.ts
 npm run typecheck
+npx vitest run test/rewrite-engine.spec.ts test/migration-baseline.spec.ts
 npm run build
 npm run test:pack
+npm run test:release
 ```
 
-Chapter 7 is not an integration-gate chapter in the implementation plan, so
-`npm run check` is not required unless focused verification exposes broader impact.
+Chapter 6 was independently verified by Chapter verification run `33991826140`,
+including its matcher-focused test and migration-baseline suites.
+
+Chapter 7 is not an integration-gate chapter in the implementation plan, so the full
+`npm run check` matrix is intentionally deferred to Chapter 8.
 
 ## Exit gate
 
-Chapter 7 is complete only after the focused commands above pass. At that point the
-package can orchestrate reusable, requirement-preserving algebraic transformations
-independently of equation solving, and Chapter 8 may begin.
+The targeted verification gate is green. SymbolicJS can orchestrate reusable,
+requirement-preserving algebraic transformations independently of equation solving,
+and Chapter 8 may begin.
