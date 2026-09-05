@@ -1,6 +1,8 @@
 import {all, create} from 'mathjs';
 import {describe, expect, it} from 'vitest';
 import {
+  createCompoundTrigRewriteRules,
+  createFoundationalRewriteRules,
   importsymbolicjs,
   pattern,
   rewriteRule,
@@ -175,5 +177,19 @@ describe('bounded rewrite strategies', () => {
 
     expect(result.changed).toBe(true);
     expect(result.limit).toMatchObject({kind: 'limit', limit: 'rewriteNodeGrowth'});
+  });
+
+  it('reproduces the existing compound-trig normalization identities through generic rules', () => {
+    const math = createMath();
+    const foundational = createFoundationalRewriteRules(math.symbolic.nodes);
+    const trig = createCompoundTrigRewriteRules(math.symbolic.nodes);
+    const normalize = strategy.repeat(strategy.topDown(strategy.choice(
+      ...[...foundational, ...trig].map((rule) => strategy.rule(rule))
+    )));
+
+    expect(math.symbolic.transform(math.parse('cos(-x)'), normalize).node.toString()).toBe('cos(x)');
+    expect(math.symbolic.transform(math.parse('sin(x)^2 + cos(x)^2'), normalize).node.toString()).toBe('1');
+    expect(math.symbolic.transform(math.parse('sin(x) * cos(x)'), normalize).node.toString())
+      .toContain('sin(2 * x)');
   });
 });
