@@ -170,7 +170,12 @@ export class RewriteEngine {
   #rule(node: MathNode, rule: RewriteRule, state: WorkState): InternalResult {
     const stepLimit = this.#chargeStep(state);
     if (stepLimit) return result(node, false, [], [], stepLimit);
-    const matched = this.#matcher.match(node, rule.pattern, state.context);
+    const matchMaximum = Math.min(
+      state.context.limits.matchBranches ?? state.limits.branches,
+      state.limits.branches
+    );
+    const matchContext = state.context.with({limits: {matchBranches: matchMaximum}});
+    const matched = this.#matcher.match(node, rule.pattern, matchContext);
     if (!matched) return result(node);
     if ('kind' in matched && matched.kind === 'limit') {
       return result(node, false, [], [], Object.freeze({
