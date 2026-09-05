@@ -32,6 +32,7 @@ try {
     'docs/architecture-migration/chapter-2.md',
     'docs/architecture-migration/chapter-3.md',
     'docs/architecture-migration/chapter-4.md',
+    'docs/architecture-migration/chapter-5.md',
     'docs/architecture-migration/mathjs-api-boundary.md',
     'docs/architecture-migration/module-map.json',
     'docs/architecture-migration/public-api.json',
@@ -105,6 +106,36 @@ try {
     ),
     ['scalar', 'scalar']
   );
+  const algebraAnalysis = math.symbolic.algebra.analyze(
+    math.parse('x*y + 1'),
+    {symbols: ['x'], domain: 'real'}
+  );
+  assert.equal(algebraAnalysis.kind, 'analysis');
+  assert.equal(algebraAnalysis.dependsOnSelection, true);
+  const polynomialView = math.symbolic.algebra.polynomial(
+    math.parse('(x + 1)^2'),
+    {generators: ['x'], domain: 'real', mode: 'conditional'}
+  );
+  assert.equal(polynomialView.kind, 'view');
+  assert.equal(polynomialView.view.totalDegree, 2);
+  assert.equal(polynomialView.view.rebuild().compile().evaluate({x: 3}), 16);
+  const rationalView = math.symbolic.algebra.rational(
+    math.parse('(x + 1)/(x - 1)'),
+    {generators: ['x'], domain: 'real', mode: 'conditional'}
+  );
+  assert.equal(rationalView.kind, 'view');
+  assert.equal(rationalView.view.numerator.totalDegree, 1);
+  const polynomialCanonical = math.symbolic.canonicalize(
+    math.parse('(x + 1)^2'),
+    {
+      profile: 'polynomial',
+      generators: ['x'],
+      domain: 'real',
+      mode: 'conditional'
+    }
+  );
+  assert.equal(polynomialCanonical.complete, true);
+  assert.equal(polynomialCanonical.expression.compile().evaluate({x: 3}), 16);
   const solved = math.solveEquation('x*x - 1 =:= 0', 'x');
   assert.equal(solved.kind, 'finite');
   assert.equal(solved.solutions.length, 2);

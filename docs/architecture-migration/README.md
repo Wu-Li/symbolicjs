@@ -14,7 +14,8 @@ shared symbolic layer is built underneath it.
 | 2 — assumptions, domains, predicates, and definedness | Complete |
 | 3 — structural identity, ordering, fingerprints, and cost | Complete |
 | 4 — canonicalization engine | Complete |
-| 5–14 | Not started |
+| 5 — structural algebra analysis and transient views | Complete |
+| 6–14 | Not started |
 
 ## Scope freeze
 
@@ -33,7 +34,10 @@ the existing solver contracts through compatibility adapters. Chapter 3
 centralizes lossless structural identity, deterministic ordering, fingerprints,
 and syntax-aware expression cost. Chapter 4 adds bounded, idempotent,
 assumption-aware canonicalization profiles over MathJS nodes and routes the legacy
-canonical-key facade through the shared canonical structural identity.
+canonical-key facade through the shared canonical structural identity. Chapter 5
+adds shared dependency analysis and deterministic sum, product, power, affine,
+linear, sparse-polynomial, and rational-function views, then adapts existing
+polynomial and compound-trigonometric recognizers to consume those services.
 
 Affected surfaces:
 
@@ -43,7 +47,8 @@ Affected surfaces:
 - benchmark and package-size measurement tooling;
 - future chapters, which will maintain the machine-readable module map;
 - the configured MathJS instance, which now exposes experimental semantic,
-  structural, and canonicalization services through `math.symbolic`.
+  structural, canonicalization, and algebra-analysis services through
+  `math.symbolic`.
 
 Primary risks and regression coverage:
 
@@ -85,6 +90,7 @@ Compatibility checks are divided deliberately:
 - `chapter-2.md`: Chapter 2 semantic contracts, risks, and focused gate.
 - `chapter-3.md`: Chapter 3 structural identity, ordering, cost, and test scope.
 - `chapter-4.md`: Chapter 4 canonicalization contracts, safety boundaries, and test scope.
+- `chapter-5.md`: Chapter 5 algebra analysis, transient-view contracts, adapters, and test scope.
 
 Regenerate measurements after a build with:
 

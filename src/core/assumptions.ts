@@ -108,7 +108,10 @@ export function predicateImplies(
   if (source.property === 'finite' && target.property === 'defined') {
     return true;
   }
-  if (source.property === 'scalar' && target.property === 'commutative') {
+  if (
+    source.property === 'scalar' &&
+    (target.property === 'defined' || target.property === 'commutative')
+  ) {
     return true;
   }
   if (

@@ -11,11 +11,46 @@
   ],
   "modules": [
     {
+      "path": "src/algebra/analysis.ts",
+      "currentRole": "shared free-symbol, dependency, inventory, definedness, and safe-evaluation analysis",
+      "targetLayer": "algebra.analysis",
+      "migrationChapter": 5,
+      "action": "new"
+    },
+    {
+      "path": "src/algebra/engine.ts",
+      "currentRole": "MathJS-native transient algebra view construction and deterministic rebuilding",
+      "targetLayer": "algebra.views",
+      "migrationChapter": 5,
+      "action": "new"
+    },
+    {
+      "path": "src/algebra/index.ts",
+      "currentRole": "internal algebra-layer exports",
+      "targetLayer": "algebra.public-surface",
+      "migrationChapter": 5,
+      "action": "new"
+    },
+    {
+      "path": "src/algebra/internal.ts",
+      "currentRole": "algebra limits, failure contracts, requirement normalization, and monomial ordering",
+      "targetLayer": "algebra.infrastructure",
+      "migrationChapter": 5,
+      "action": "new"
+    },
+    {
+      "path": "src/algebra/types.ts",
+      "currentRole": "typed transient algebra views and analysis contracts",
+      "targetLayer": "algebra.contracts",
+      "migrationChapter": 5,
+      "action": "new"
+    },
+    {
       "path": "src/analysis.ts",
-      "currentRole": "free-symbol discovery",
+      "currentRole": "legacy equation-symbol facade over shared configured free-symbol discovery",
       "targetLayer": "core.analysis",
       "migrationChapter": 5,
-      "action": "redesign"
+      "action": "adapt"
     },
     {
       "path": "src/budget.ts",
@@ -26,10 +61,10 @@
     },
     {
       "path": "src/compound-trigonometric.ts",
-      "currentRole": "compound trigonometric rewrites and solving",
+      "currentRole": "compound trigonometric solver using shared arbitrary-basis linear analysis",
       "targetLayer": "solver.trigonometric",
-      "migrationChapter": 12,
-      "action": "rebuild"
+      "migrationChapter": 5,
+      "action": "adapt"
     },
     {
       "path": "src/constants.ts",
@@ -78,6 +113,13 @@
       "currentRole": "symbolic scalar domain lattice",
       "targetLayer": "core.domains",
       "migrationChapter": 2,
+      "action": "new"
+    },
+    {
+      "path": "src/core/free-symbols.ts",
+      "currentRole": "configured-instance-aware free-symbol discovery",
+      "targetLayer": "core.analysis",
+      "migrationChapter": 5,
       "action": "new"
     },
     {
@@ -145,7 +187,7 @@
     },
     {
       "path": "src/core/symbolic-context.ts",
-      "currentRole": "experimental MathJS-native semantic, structural, and canonicalization facade",
+      "currentRole": "experimental MathJS-native symbolic service with canonicalization and algebra-analysis facades",
       "targetLayer": "core.context",
       "migrationChapter": 1,
       "action": "new"
@@ -187,7 +229,7 @@
     },
     {
       "path": "src/kernel.ts",
-      "currentRole": "legacy symbolic utility and verification facade over semantic services",
+      "currentRole": "legacy symbolic utility and verification facade exposing shared symbolic and algebra services",
       "targetLayer": "core.compatibility-facade",
       "migrationChapter": 9,
       "action": "redesign"
@@ -222,10 +264,10 @@
     },
     {
       "path": "src/polynomial.ts",
-      "currentRole": "private polynomial analysis and solving",
+      "currentRole": "polynomial solver using shared rational and sparse-polynomial extraction",
       "targetLayer": "algebra.polynomial-and-solver.polynomial",
-      "migrationChapter": 10,
-      "action": "split-and-rebuild"
+      "migrationChapter": 5,
+      "action": "adapt"
     },
     {
       "path": "src/solve-all.ts",

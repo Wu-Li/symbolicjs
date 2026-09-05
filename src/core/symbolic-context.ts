@@ -1,4 +1,5 @@
 import type {MathNode} from 'mathjs';
+import {AlgebraEngine} from '../algebra/engine.js';
 import {customFactory} from '../custom-factory.js';
 import {
   CanonicalizationEngine,
@@ -131,6 +132,7 @@ export class SymbolicContext {
   readonly predicates: PredicateFactory;
   readonly structure: StructuralEngine;
   readonly canonicalization: CanonicalizationEngine;
+  readonly algebra: AlgebraEngine;
   readonly #definedness: DefinednessAnalyzer;
   readonly #semantics: PredicateEngine;
   readonly #operationDefaults: NormalizedOperationContextOptions;
@@ -145,6 +147,7 @@ export class SymbolicContext {
     this.registry = registry;
     this.predicates = new PredicateFactory(math);
     this.structure = new StructuralEngine(math);
+    this.#operationDefaults = normalizedOperationOptions(operationDefaults);
     this.#definedness = new DefinednessAnalyzer(
       math,
       this.nodes,
@@ -165,7 +168,20 @@ export class SymbolicContext {
       this.#definedness,
       this.structure
     );
-    this.#operationDefaults = normalizedOperationOptions(operationDefaults);
+    this.algebra = new AlgebraEngine(
+      math,
+      this.nodes,
+      this.predicates,
+      this.#semantics,
+      this.#definedness,
+      this.structure,
+      this.canonicalization,
+      (options = {}) => new OperationContext(
+        this.math,
+        this.registry,
+        mergeOperationOptions(this.#operationDefaults, options)
+      )
+    );
     Object.freeze(this);
   }
 
@@ -218,7 +234,14 @@ export class SymbolicContext {
         ? {}
         : {diagnostics: options.diagnostics})
     });
-    return this.canonicalization.canonicalize(node, operation, normalized);
+    return normalized.profile === 'polynomial' || normalized.profile === 'rational'
+      ? this.algebra.canonicalizeProfile(
+        node,
+        operation,
+        normalized,
+        options.generators
+      )
+      : this.canonicalization.canonicalize(node, operation, normalized);
   }
 
   definedness(

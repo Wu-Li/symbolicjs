@@ -7,6 +7,7 @@ import {
 } from 'mathjs';
 import type {MathNode} from 'mathjs';
 import {DefinednessAnalyzer} from './definedness.js';
+import {discoverFreeSymbols} from './free-symbols.js';
 import {domainImplies} from './domains.js';
 import type {SymbolicDomain} from './domains.js';
 import {MathAdapter} from './math-adapter.js';
@@ -121,6 +122,30 @@ export class PredicateEngine {
   }
 
   #evaluate(expression: MathNode, context: OperationContext): Evaluation {
+    if (isConstantNode(expression)) {
+      return Object.freeze({succeeded: true, value: expression.value});
+    }
+    if (isSymbolNode(expression)) {
+      if (Object.prototype.hasOwnProperty.call(context.scope, expression.name)) {
+        return Object.freeze({
+          succeeded: true,
+          value: context.scope[expression.name]
+        });
+      }
+      if (this.#math.has(expression.name)) {
+        return Object.freeze({
+          succeeded: true,
+          value: this.#math.lookup(expression.name)
+        });
+      }
+    }
+    const unresolved = discoverFreeSymbols(
+      expression,
+      (name) => this.#math.has(name)
+    ).some((name) => !Object.prototype.hasOwnProperty.call(context.scope, name));
+    if (unresolved) {
+      return Object.freeze({succeeded: false});
+    }
     try {
       return Object.freeze({
         succeeded: true,

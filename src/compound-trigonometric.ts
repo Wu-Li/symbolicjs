@@ -2,7 +2,6 @@ import {
   isConstantNode,
   isFunctionNode,
   isOperatorNode,
-  isParenthesisNode,
   isSymbolNode
 } from 'mathjs';
 import type {MathJsInstance, MathNode} from 'mathjs';
@@ -10,7 +9,7 @@ import {nodeSymbols} from './analysis.js';
 import {SolverContext} from './budget.js';
 import {customFactory} from './custom-factory.js';
 import type {SymbolicKernel} from './kernel.js';
-import {parametricResult, unsupportedResult} from './solve-types.js';
+import {limitResult, parametricResult, unsupportedResult} from './solve-types.js';
 import type {
   Condition,
   LimitResult,
@@ -51,12 +50,6 @@ interface CompoundDependencies {
 interface NormalizedEquation {
   readonly equation: EqualityNode;
   readonly changed: boolean;
-}
-
-interface LinearForm {
-  readonly constant: MathNode;
-  readonly sine: MathNode;
-  readonly cosine: MathNode;
 }
 
 function isSolutions(value: readonly Solution[] | LimitResult | null): value is readonly Solution[] {
@@ -394,89 +387,15 @@ export class CompoundTrigonometricEngine {
     );
   }
 
-  #zero(): LinearForm {
-    return {constant: this.#constant(0), sine: this.#constant(0), cosine: this.#constant(0)};
-  }
-
   #isZero(node: MathNode): boolean {
     return this.#dependencies.symbolicKernel.canonicalKey(node) === 'number:0';
-  }
-
-  #scale(form: LinearForm, factor: MathNode): LinearForm {
-    return {
-      constant: this.#multiply(form.constant, factor),
-      sine: this.#multiply(form.sine, factor),
-      cosine: this.#multiply(form.cosine, factor)
-    };
-  }
-
-  #combine(left: LinearForm, right: LinearForm, subtract: boolean): LinearForm {
-    const combine = subtract
-      ? (a: MathNode, b: MathNode) => this.#subtract(a, b)
-      : (a: MathNode, b: MathNode) => this.#add(a, b);
-    return {
-      constant: combine(left.constant, right.constant),
-      sine: combine(left.sine, right.sine),
-      cosine: combine(left.cosine, right.cosine)
-    };
-  }
-
-  #linearize(
-    node: MathNode,
-    sine: MathNode,
-    cosine: MathNode,
-    target: string
-  ): LinearForm | null {
-    if (node.equals(sine)) {
-      return {...this.#zero(), sine: this.#constant(1)};
-    }
-    if (node.equals(cosine)) {
-      return {...this.#zero(), cosine: this.#constant(1)};
-    }
-    if (!nodeSymbols(node).includes(target)) {
-      return {...this.#zero(), constant: node};
-    }
-    if (isParenthesisNode(node)) {
-      return this.#linearize(node.content, sine, cosine, target);
-    }
-    if (!isOperatorNode(node)) {
-      return null;
-    }
-    if (node.args.length === 1 && (node.op === '+' || node.op === '-')) {
-      const child = this.#linearize(node.args[0]!, sine, cosine, target);
-      return child && node.op === '-' ? this.#scale(child, this.#constant(-1)) : child;
-    }
-    if (node.args.length !== 2) {
-      return null;
-    }
-    const left = this.#linearize(node.args[0]!, sine, cosine, target);
-    const right = this.#linearize(node.args[1]!, sine, cosine, target);
-    if (!left || !right) {
-      return null;
-    }
-    if (node.op === '+' || node.op === '-') {
-      return this.#combine(left, right, node.op === '-');
-    }
-    const leftConstant = this.#isZero(left.sine) && this.#isZero(left.cosine);
-    const rightConstant = this.#isZero(right.sine) && this.#isZero(right.cosine);
-    if (node.op === '*') {
-      if (leftConstant) {
-        return this.#scale(right, left.constant);
-      }
-      if (rightConstant) {
-        return this.#scale(left, right.constant);
-      }
-    }
-    if (node.op === '/' && rightConstant) {
-      return this.#scale(left, this.#divide(this.#constant(1), right.constant));
-    }
-    return null;
   }
 
   #amplitudePhase(
     equation: EqualityNode,
     target: string,
     nodes: readonly MathNode[],
+    context: SolverContext,
     options?: SolveOptions
   ): SolveResult | null {
     const sine = nodes.find((node) => this.#functionParts(node, 'sin'));
@@ -489,15 +408,47 @@ export class CompoundTrigonometricEngine {
     if (!sineArgument.equals(cosineArgument)) {
       return null;
     }
-    const lhs = this.#linearize(equation.lhs, sine, cosine, target);
-    const rhs = this.#linearize(equation.rhs, sine, cosine, target);
-    if (!lhs || !rhs) {
+    const residual = this.#subtract(equation.lhs, equation.rhs);
+    const linear = this.#dependencies.symbolicKernel.symbolic.algebra.linear(
+      residual,
+      {
+        basis: [sine, cosine],
+        domain: 'real',
+        mode: 'conditional',
+        algebraLimits: {
+          maximumNodes: context.limits.inputNodes,
+          maximumDepth: context.limits.recursionDepth,
+          maximumConvolutions: context.limits.totalWork,
+          maximumRebuildNodes: Math.max(
+            1,
+            context.limits.symbolicExpressionNodes
+          )
+        }
+      }
+    );
+    if (linear.kind === 'limit') {
+      const mapped: LimitResult['limit'] = linear.limit === 'algebraDepth'
+        ? 'recursion-depth'
+        : linear.limit === 'algebraNodes'
+          ? 'input-nodes'
+          : linear.limit === 'algebraRebuildNodes' ||
+              linear.limit === 'canonicalNodes'
+            ? 'symbolic-expression-nodes'
+            : 'total-work';
+      return limitResult(target, mapped);
+    }
+    if (linear.kind === 'not-representable') {
       return null;
     }
-    const residual = this.#combine(lhs, rhs, true);
-    const a = this.#dependencies.symbolicKernel.simplify(residual.sine);
-    const b = this.#dependencies.symbolicKernel.simplify(residual.cosine);
-    const c = this.#dependencies.symbolicKernel.simplify(this.#negate(residual.constant));
+    const a = this.#dependencies.symbolicKernel.simplify(
+      linear.view.coefficients[0]!
+    );
+    const b = this.#dependencies.symbolicKernel.simplify(
+      linear.view.coefficients[1]!
+    );
+    const c = this.#dependencies.symbolicKernel.simplify(
+      this.#negate(linear.view.constant)
+    );
     if (this.#isZero(a) && this.#isZero(b)) {
       return null;
     }
@@ -568,7 +519,13 @@ export class CompoundTrigonometricEngine {
     if (polynomial) {
       return polynomial;
     }
-    const amplitude = this.#amplitudePhase(normalized.equation, target, nodes, options);
+    const amplitude = this.#amplitudePhase(
+      normalized.equation,
+      target,
+      nodes,
+      context,
+      options
+    );
     return amplitude ?? unsupportedResult(target, 'unsupported-trig-form');
   }
 }

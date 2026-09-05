@@ -89,6 +89,8 @@ function validateProfile(profile: CanonicalizationProfile): CanonicalizationProf
     case 'real-algebraic':
     case 'complex-safe':
     case 'presentation':
+    case 'polynomial':
+    case 'rational':
       return profile;
   }
   throw new TypeError('Unknown canonicalization profile');

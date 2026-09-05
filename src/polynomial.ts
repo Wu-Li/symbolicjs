@@ -1,8 +1,4 @@
-import {
-  isOperatorNode,
-  isParenthesisNode,
-  isSymbolNode
-} from 'mathjs';
+import {isOperatorNode} from 'mathjs';
 import type {MathJsInstance, MathNode} from 'mathjs';
 import {nodeSymbols} from './analysis.js';
 import {SolverContext} from './budget.js';
@@ -12,6 +8,7 @@ import {NumericPolynomialEngine} from './numeric-polynomial.js';
 import {
   createSearchScope,
   DEFAULT_SOLVE_TOLERANCE,
+  limitResult,
   unsupportedResult
 } from './solve-types.js';
 import type {
@@ -70,16 +67,6 @@ export function approximateConditionViolated(
     case 'nonpositive': return value > tolerance;
     case 'defined': return false;
   }
-}
-
-function occurrences(node: MathNode, target: string): number {
-  let count = 0;
-  node.traverse((candidate) => {
-    if (isSymbolNode(candidate) && candidate.name === target) {
-      count += 1;
-    }
-  });
-  return count;
 }
 
 function identity(target: string, conditions: readonly Condition[]): IdentityResult {
@@ -204,14 +191,6 @@ export class PolynomialEngine {
     return result;
   }
 
-  #constantPolynomial(node: MathNode): Polynomial {
-    return new Map([[0, node]]);
-  }
-
-  #targetPolynomial(): Polynomial {
-    return new Map([[1, this.#constant(1)]]);
-  }
-
   #add(left: Polynomial, right: Polynomial, subtract = false): Polynomial | null {
     if (!this.#charge()) {
       return null;
@@ -253,95 +232,69 @@ export class PolynomialEngine {
     return result;
   }
 
-  #power(polynomial: Polynomial, exponent: number): Polynomial | null {
-    let result = this.#constantPolynomial(this.#constant(1));
-    for (let index = 0; index < exponent; index += 1) {
-      const product = this.#multiply(result, polynomial);
-      if (!product) {
+  #rational(
+    node: MathNode,
+    target: string,
+    domain: 'real' | 'complex' = 'real'
+  ): RationalPolynomial | null {
+    const algebra = this.#dependencies.symbolicKernel.symbolic.algebra;
+    if (algebra.dependsOn(node, [target])) {
+      let containsOperator = false;
+      node.traverse((candidate) => {
+        if (isOperatorNode(candidate)) {
+          containsOperator = true;
+        }
+      });
+      if (containsOperator && !this.#charge()) {
         return null;
       }
-      result = product;
     }
-    return result;
-  }
 
-  #rational(node: MathNode, target: string): RationalPolynomial | null {
-    if (occurrences(node, target) === 0) {
-      return {
-        numerator: this.#constantPolynomial(node),
-        denominator: this.#constantPolynomial(this.#constant(1))
-      };
-    }
-    if (isSymbolNode(node) && node.name === target) {
-      return {
-        numerator: this.#targetPolynomial(),
-        denominator: this.#constantPolynomial(this.#constant(1))
-      };
-    }
-    if (isParenthesisNode(node)) {
-      return this.#rational(node.content, target);
-    }
-    if (!isOperatorNode(node)) {
-      return null;
-    }
-    const args = node.args;
-    if (args.length === 1 && (node.op === '+' || node.op === '-')) {
-      const operand = this.#rational(args[0]!, target);
-      if (!operand || node.op === '+') {
-        return operand;
+    const result = algebra.rational(node, {
+      generators: [target],
+      domain,
+      mode: 'conditional',
+      algebraLimits: {
+        maximumNodes: this.#context.limits.inputNodes,
+        maximumDepth: this.#context.limits.recursionDepth,
+        maximumDegree: 1_000_000,
+        maximumMonomials: Math.max(
+          1,
+          this.#context.limits.symbolicExpressionNodes
+        ),
+        maximumConvolutions: this.#context.limits.totalWork,
+        maximumRebuildNodes: Math.max(
+          1,
+          this.#context.limits.symbolicExpressionNodes
+        )
       }
-      return {
-        numerator: this.#multiply(
-          this.#constantPolynomial(this.#constant(-1)),
-          operand.numerator
-        ) ?? new Map(),
-        denominator: operand.denominator
-      };
-    }
-    if (args.length !== 2) {
+    });
+    if (result.kind === 'limit') {
+      const mapped = result.limit === 'algebraDepth'
+        ? 'recursion-depth'
+        : result.limit === 'algebraNodes'
+          ? 'input-nodes'
+          : result.limit === 'algebraRebuildNodes' ||
+              result.limit === 'canonicalNodes'
+            ? 'symbolic-expression-nodes'
+            : 'total-work';
+      this.#limit ??= limitResult(target, mapped);
       return null;
     }
-    const left = this.#rational(args[0]!, target);
-    const right = this.#rational(args[1]!, target);
-    if (!left || !right) {
+    if (result.kind === 'not-representable') {
       return null;
     }
-    if (node.op === '+' || node.op === '-') {
-      const leftNumerator = this.#multiply(left.numerator, right.denominator);
-      const rightNumerator = this.#multiply(right.numerator, left.denominator);
-      const numerator = leftNumerator && rightNumerator
-        ? this.#add(leftNumerator, rightNumerator, node.op === '-')
-        : null;
-      const denominator = this.#multiply(left.denominator, right.denominator);
-      return numerator && denominator ? {numerator, denominator} : null;
-    }
-    if (node.op === '*') {
-      const numerator = this.#multiply(left.numerator, right.numerator);
-      const denominator = this.#multiply(left.denominator, right.denominator);
-      return numerator && denominator ? {numerator, denominator} : null;
-    }
-    if (node.op === '/') {
-      const numerator = this.#multiply(left.numerator, right.denominator);
-      const denominator = this.#multiply(left.denominator, right.numerator);
-      return numerator && denominator ? {numerator, denominator} : null;
-    }
-    if (node.op === '^') {
-      const exponent = this.#numericValue(args[1]!);
-      if (exponent === null || !Number.isSafeInteger(exponent)) {
-        return null;
-      }
-      const power = Math.abs(exponent);
-      const numerator = this.#power(
-        exponent < 0 ? left.denominator : left.numerator,
-        power
-      );
-      const denominator = this.#power(
-        exponent < 0 ? left.numerator : left.denominator,
-        power
-      );
-      return numerator && denominator ? {numerator, denominator} : null;
-    }
-    return null;
+
+    const convert = (
+      view: typeof result.view.numerator
+    ): Polynomial => new Map(view.terms.map((term) => [
+      term.exponents[0] ?? 0,
+      term.coefficient
+    ]));
+    return Object.freeze({
+      numerator: convert(result.view.numerator),
+      denominator: convert(result.view.denominator)
+    });
   }
 
   #polynomialNode(polynomial: Polynomial, target: string): MathNode {
@@ -1731,8 +1684,9 @@ export class PolynomialEngine {
     if (this.#limit) {
       return this.#limit;
     }
-    const left = this.#rational(equation.lhs, target);
-    const right = this.#rational(equation.rhs, target);
+    const algebraDomain = complexDomain ? 'complex' : 'real';
+    const left = this.#rational(equation.lhs, target, algebraDomain);
+    const right = this.#rational(equation.rhs, target, algebraDomain);
     if (this.#limit) {
       return this.#limit;
     }

@@ -10,7 +10,9 @@ export type CanonicalizationProfile =
   | 'scalar'
   | 'real-algebraic'
   | 'complex-safe'
-  | 'presentation';
+  | 'presentation'
+  | 'polynomial'
+  | 'rational';
 
 export type CanonicalizationRule =
   | 'remove-parentheses'
@@ -38,10 +40,13 @@ export type CanonicalizationRule =
   | 'rebuild-equality'
   | 'rebuild-function'
   | 'rebuild-operator'
-  | 'rebuild-node';
+  | 'rebuild-node'
+  | 'rebuild-polynomial'
+  | 'rebuild-rational';
 
 export interface CanonicalizationOptions extends OperationContextOptions {
   readonly profile?: CanonicalizationProfile;
+  readonly generators?: readonly (string | MathNode)[];
   readonly maximumPasses?: number;
   readonly maximumNodes?: number;
   readonly maximumSteps?: number;

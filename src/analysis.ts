@@ -1,52 +1,12 @@
-import {isFunctionNode, isSymbolNode} from 'mathjs';
 import type {MathNode} from 'mathjs';
+import {discoverFreeSymbols} from './core/free-symbols.js';
 import {customFactory} from './custom-factory.js';
 import type {EqualityNode} from './types.js';
 
 type MathNamespace = Readonly<Record<string, unknown>>;
 
-const BUILTIN_CONSTANTS = new Set([
-  'e',
-  'false',
-  'i',
-  'Infinity',
-  'NaN',
-  'null',
-  'phi',
-  'pi',
-  'SQRT1_2',
-  'SQRT2',
-  'tau',
-  'true',
-  'undefined',
-  'version'
-]);
-
-function collectNodeSymbols(
-  node: MathNode,
-  mathNamespace?: MathNamespace
-): readonly string[] {
-  const symbols = new Set<string>();
-  node.traverse((candidate, path, parent) => {
-    if (!isSymbolNode(candidate)) {
-      return;
-    }
-    if (parent && isFunctionNode(parent) && path === 'fn') {
-      return;
-    }
-    const configuredValue = mathNamespace && Object.prototype.hasOwnProperty.call(
-      mathNamespace,
-      candidate.name
-    );
-    if (!BUILTIN_CONSTANTS.has(candidate.name) && !configuredValue) {
-      symbols.add(candidate.name);
-    }
-  });
-  return Object.freeze([...symbols].sort());
-}
-
 export function nodeSymbols(node: MathNode): readonly string[] {
-  return collectNodeSymbols(node);
+  return discoverFreeSymbols(node);
 }
 
 export function equationSymbols(equation: EqualityNode): readonly string[] {
@@ -65,10 +25,14 @@ function configuredEquationSymbols(
   if (!equation?.isEqualityNode) {
     throw new TypeError('EqualityNode expected');
   }
+  const configured = (name: string) => Object.prototype.hasOwnProperty.call(
+    mathNamespace,
+    name
+  );
   return Object.freeze([
     ...new Set([
-      ...collectNodeSymbols(equation.lhs, mathNamespace),
-      ...collectNodeSymbols(equation.rhs, mathNamespace)
+      ...discoverFreeSymbols(equation.lhs, configured),
+      ...discoverFreeSymbols(equation.rhs, configured)
     ])
   ].sort());
 }

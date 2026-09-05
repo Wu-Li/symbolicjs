@@ -118,6 +118,11 @@ export class SymbolicKernel {
     this.#symbolic = dependencies.symbolic;
   }
 
+  /** Shared MathJS-native symbolic services behind this compatibility facade. */
+  get symbolic(): SymbolicContext {
+    return this.#symbolic;
+  }
+
   substitute(node: MathNode, target: string, replacement: MathNode): MathNode {
     if (!node?.isNode || !replacement?.isNode) {
       throw new TypeError('MathJS nodes expected for substitution');

@@ -63,6 +63,21 @@ const symbolicRequirement = math.symbolic.require(symbolicPredicate, {
 const structuralAnalysis = math.symbolic.structure.analyze(symbolicNode, {
   target: 'x'
 });
+const algebraAnalysis = math.symbolic.algebra.analyze(math.parse('x + y'), {
+  symbols: ['x'], domain: 'real'
+});
+const affineView = math.symbolic.algebra.affine(math.parse('a*x + b'), {
+  generator: 'x', domain: 'real', mode: 'conditional'
+});
+const polynomialView = math.symbolic.algebra.polynomial(math.parse('(x + y)^2'), {
+  generators: ['x', 'y'], domain: 'real', mode: 'conditional'
+});
+const rationalView = math.symbolic.algebra.rational(math.parse('1/x'), {
+  generators: ['x'], domain: 'real', mode: 'conditional'
+});
+const polynomialCanonical = math.symbolic.canonicalize(math.parse('x*x + 1'), {
+  profile: 'polynomial', generators: ['x'], domain: 'real', mode: 'conditional'
+});
 const canonicalized = math.symbolic.canonicalize(symbolicNode, {
   profile: 'scalar',
   mode: 'conditional'
@@ -125,6 +140,11 @@ void symbolicLimit;
 void symbolicJudgment;
 void symbolicRequirement;
 void structuralAnalysis;
+void algebraAnalysis;
+void affineView;
+void polynomialView;
+void rationalView;
+void polynomialCanonical;
 void canonicalized;
 void resultKind(result);
 void parametric;
