@@ -16,6 +16,8 @@ import {DefinednessAnalyzer} from './definedness.js';
 import type {DefinednessAnalysisOptions} from './definedness.js';
 import type {OperationDomain} from './domains.js';
 import {validateOperationDomain} from './domains.js';
+import {EquivalenceEngine} from './equivalence.js';
+import type {EquivalenceOptions, EquivalenceResult} from './equivalence.js';
 import {MathAdapter} from './math-adapter.js';
 import type {MathAdapterDependencies} from './math-adapter.js';
 import {PatternMatcher} from './matcher.js';
@@ -140,6 +142,7 @@ export class SymbolicContext {
   readonly algebra: AlgebraEngine;
   readonly matcher: PatternMatcher;
   readonly rewrite: RewriteEngine;
+  readonly equivalence: EquivalenceEngine;
   readonly #definedness: DefinednessAnalyzer;
   readonly #semantics: PredicateEngine;
   readonly #operationDefaults: NormalizedOperationContextOptions;
@@ -195,6 +198,11 @@ export class SymbolicContext {
       this.algebra
     );
     this.rewrite = new RewriteEngine(this.matcher, this.structure);
+    this.equivalence = new EquivalenceEngine(
+      this.structure,
+      this.canonicalization,
+      this.algebra
+    );
     Object.freeze(this);
   }
 
@@ -232,17 +240,29 @@ export class SymbolicContext {
     return this.matcher.match(node, pattern, this.operation(options));
   }
 
-  /**
-   * Apply a bounded rewrite strategy. MathJS reserves a factory result's
-   * `transform` property for parser transforms, so the instance-local symbolic
-   * service deliberately uses a non-reserved method name.
-   */
   rewriteExpression(
     node: MathNode,
     strategy: RewriteStrategy,
     options: RewriteOptions = {}
   ): TransformResult {
     return this.rewrite.transform(node, strategy, this.operation(options), options);
+  }
+
+  equivalent(
+    left: MathNode,
+    right: MathNode,
+    options: EquivalenceOptions & OperationContextOptions = {}
+  ): EquivalenceResult {
+    const {profile, generators, ...operationOptions} = options;
+    return this.equivalence.equivalent(
+      left,
+      right,
+      this.operation(operationOptions),
+      {
+        ...(profile === undefined ? {} : {profile}),
+        ...(generators === undefined ? {} : {generators})
+      }
+    );
   }
 
   canonicalize(
@@ -334,7 +354,6 @@ export class SymbolicContext {
   }
 }
 
-/** Exact supported MathJS factory boundary for the Chapter 1 symbolic substrate. */
 export const SYMBOLIC_MATHJS_DEPENDENCIES = Object.freeze([
   'ConstantNode',
   'EqualityNode',
