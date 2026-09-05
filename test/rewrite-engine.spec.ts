@@ -29,7 +29,7 @@ describe('bounded rewrite strategies', () => {
       costDirection: 'decrease'
     });
 
-    const result = math.symbolic.transform(input, strategy.rule(addZero));
+    const result = math.symbolic.rewriteExpression(input, strategy.rule(addZero));
 
     expect(result.changed).toBe(true);
     expect(result.node.toString()).toBe('x');
@@ -50,7 +50,7 @@ describe('bounded rewrite strategies', () => {
       costDirection: 'decrease'
     });
 
-    const result = math.symbolic.transform(
+    const result = math.symbolic.rewriteExpression(
       math.parse('sin((x + 0) + 0)'),
       strategy.repeat(strategy.topDown(strategy.rule(addZero)))
     );
@@ -76,13 +76,13 @@ describe('bounded rewrite strategies', () => {
       replace: ({nodes}) => nodes.constant(1)
     });
 
-    expect(math.symbolic.transform(
+    expect(math.symbolic.rewriteExpression(
       math.parse('x / x'),
       strategy.rule(cancelSelf),
       {mode: 'strict'}
     ).changed).toBe(false);
 
-    const conditional = math.symbolic.transform(
+    const conditional = math.symbolic.rewriteExpression(
       math.parse('x / x'),
       strategy.rule(cancelSelf),
       {mode: 'conditional'}
@@ -108,7 +108,7 @@ describe('bounded rewrite strategies', () => {
       replace: ({nodes}) => nodes.parse('y + 0')
     });
 
-    const result = math.symbolic.transform(
+    const result = math.symbolic.rewriteExpression(
       math.parse('x'),
       strategy.bestOf(strategy.rule(toLarger), strategy.rule(toSimple))
     );
@@ -132,7 +132,7 @@ describe('bounded rewrite strategies', () => {
       replace: ({nodes}) => nodes.symbol('x')
     });
 
-    const result = math.symbolic.transform(
+    const result = math.symbolic.rewriteExpression(
       math.parse('x'),
       strategy.repeat(strategy.choice(strategy.rule(xToY), strategy.rule(yToX)))
     );
@@ -150,7 +150,7 @@ describe('bounded rewrite strategies', () => {
       replace: ({nodes}) => nodes.symbol('y')
     });
 
-    const result = math.symbolic.transform(
+    const result = math.symbolic.rewriteExpression(
       math.parse('x'),
       strategy.repeat(strategy.rule(xToY)),
       {maximumSteps: 1}
@@ -169,7 +169,7 @@ describe('bounded rewrite strategies', () => {
       replace: ({nodes}) => nodes.parse('x + x + x')
     });
 
-    const result = math.symbolic.transform(
+    const result = math.symbolic.rewriteExpression(
       math.parse('x'),
       strategy.rule(expand),
       {maximumNodeGrowth: 1}
@@ -187,9 +187,9 @@ describe('bounded rewrite strategies', () => {
       ...[...foundational, ...trig].map((rule) => strategy.rule(rule))
     )));
 
-    expect(math.symbolic.transform(math.parse('cos(-x)'), normalize).node.toString()).toBe('cos(x)');
-    expect(math.symbolic.transform(math.parse('sin(x)^2 + cos(x)^2'), normalize).node.toString()).toBe('1');
-    expect(math.symbolic.transform(math.parse('sin(x) * cos(x)'), normalize).node.toString())
+    expect(math.symbolic.rewriteExpression(math.parse('cos(-x)'), normalize).node.toString()).toBe('cos(x)');
+    expect(math.symbolic.rewriteExpression(math.parse('sin(x)^2 + cos(x)^2'), normalize).node.toString()).toBe('1');
+    expect(math.symbolic.rewriteExpression(math.parse('sin(x) * cos(x)'), normalize).node.toString())
       .toContain('sin(2 * x)');
   });
 });
