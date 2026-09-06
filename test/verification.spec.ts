@@ -47,6 +47,19 @@ describe('shared substitution verification', () => {
     expect(result).toMatchObject({status: 'inconclusive', reason: 'numeric-evidence-only'});
   });
 
+  it('uses caller-supplied samples for numeric evidence', () => {
+    const math = createMath();
+    const result = math.symbolic.verifySubstitution(
+      math.parse('x'),
+      math.parse('abs(a)'),
+      'x',
+      math.parse('sqrt(a^2)'),
+      {domain: 'real', mode: 'conditional', samples: [-2, 4]}
+    );
+
+    expect(result).toMatchObject({status: 'inconclusive', reason: 'numeric-evidence-only'});
+  });
+
   it('uses samples only to disprove parameterized false candidates', () => {
     const math = createMath();
     const result = math.symbolic.verifySubstitution(
@@ -127,6 +140,32 @@ describe('shared substitution verification', () => {
     );
 
     expect(result.status).toBe('proven');
+  });
+
+  it('rejects mixed boolean and numeric constants', () => {
+    const math = createMath();
+    const result = math.symbolic.verifySubstitution(
+      math.parse('x'),
+      math.parse('1'),
+      'x',
+      math.parse('true'),
+      {mode: 'conditional'}
+    );
+
+    expect(result.status).toBe('rejected');
+  });
+
+  it('compares finite complex scalar values', () => {
+    const math = createMath();
+    const result = math.symbolic.verifySubstitution(
+      math.parse('x'),
+      math.parse('2 + 3i'),
+      'x',
+      math.parse('2 + 4i'),
+      {domain: 'complex', mode: 'conditional'}
+    );
+
+    expect(result.status).toBe('rejected');
   });
 
   it('rejects invalid tolerance', () => {
