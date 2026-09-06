@@ -381,6 +381,7 @@ export const SYMBOLIC_MATHJS_DEPENDENCIES = Object.freeze([
   'FunctionNode',
   'OperatorNode',
   'SymbolNode',
+  'evaluate',
   'mathWithTransform',
   'parse',
   'reviver'
