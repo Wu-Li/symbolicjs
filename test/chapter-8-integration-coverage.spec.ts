@@ -228,12 +228,14 @@ describe('Chapter 8 integration coverage', () => {
     const same = literalRule(math, 'same', 'x', 'x');
     const increase = literalRule(math, 'increase', 'x', 'x + 0', 'decrease');
     const equalCostDecrease = literalRule(math, 'equal-decrease', 'x', 'y', 'decrease');
-    const equalCostNonincrease = literalRule(math, 'equal-nonincrease', 'x', 'y', 'nonincrease');
+    const lowerCostNonincrease = literalRule(math, 'lower-nonincrease', 'x + 0', 'x', 'nonincrease');
 
     expect(math.symbolic.rewriteExpression(math.parse('x'), strategy.rule(same)).changed).toBe(false);
     expect(math.symbolic.rewriteExpression(math.parse('x'), strategy.rule(increase)).changed).toBe(false);
     expect(math.symbolic.rewriteExpression(math.parse('x'), strategy.rule(equalCostDecrease)).changed).toBe(false);
-    expect(math.symbolic.rewriteExpression(math.parse('x'), strategy.rule(equalCostNonincrease)).node.toString()).toBe('y');
+    expect(math.symbolic.rewriteExpression(
+      math.parse('x + 0'), strategy.rule(lowerCostNonincrease)
+    ).node.toString()).toBe('x');
 
     const bad = rewriteRule({
       id: 'bad-result',
