@@ -13,6 +13,7 @@ export interface MathAdapterDependencies {
   readonly FunctionNode: MathJsInstance['FunctionNode'];
   readonly OperatorNode: MathJsInstance['OperatorNode'];
   readonly SymbolNode: MathJsInstance['SymbolNode'];
+  readonly evaluate: MathJsInstance['evaluate'];
   readonly mathWithTransform: Readonly<Record<string, unknown>>;
   readonly parse: MathJsInstance['parse'];
   readonly reviver: MathJsonReviver;
@@ -36,6 +37,7 @@ export class MathAdapter {
   readonly OperatorNode: MathAdapterDependencies['OperatorNode'];
   readonly SymbolNode: MathAdapterDependencies['SymbolNode'];
 
+  readonly #evaluate: MathAdapterDependencies['evaluate'];
   readonly #mathNamespace: MathAdapterDependencies['mathWithTransform'];
   readonly #parse: MathAdapterDependencies['parse'];
   readonly #reviver: MathAdapterDependencies['reviver'];
@@ -46,6 +48,7 @@ export class MathAdapter {
     requireFunction(dependencies.FunctionNode, 'FunctionNode');
     requireFunction(dependencies.OperatorNode, 'OperatorNode');
     requireFunction(dependencies.SymbolNode, 'SymbolNode');
+    requireFunction(dependencies.evaluate, 'evaluate');
     requireFunction(dependencies.parse, 'parse');
     requireFunction(dependencies.reviver, 'reviver');
     if (
@@ -60,10 +63,18 @@ export class MathAdapter {
     this.FunctionNode = dependencies.FunctionNode;
     this.OperatorNode = dependencies.OperatorNode;
     this.SymbolNode = dependencies.SymbolNode;
+    this.#evaluate = dependencies.evaluate;
     this.#mathNamespace = dependencies.mathWithTransform;
     this.#parse = dependencies.parse;
     this.#reviver = dependencies.reviver;
     Object.freeze(this);
+  }
+
+  evaluate(
+    expression: MathNode,
+    scope: Readonly<Record<string, unknown>> = {}
+  ): unknown {
+    return this.#evaluate(expression, scope as Record<string, unknown>);
   }
 
   parse(source: string): MathNode {
