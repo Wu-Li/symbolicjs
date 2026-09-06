@@ -7,13 +7,18 @@ export type MathJsonReviver = (
   value: unknown
 ) => unknown;
 
+export type MathNodeEvaluator = (
+  expression: MathNode,
+  scope?: Record<string, unknown>
+) => unknown;
+
 export interface MathAdapterDependencies {
   readonly ConstantNode: MathJsInstance['ConstantNode'];
   readonly EqualityNode: EqualityNodeConstructor;
   readonly FunctionNode: MathJsInstance['FunctionNode'];
   readonly OperatorNode: MathJsInstance['OperatorNode'];
   readonly SymbolNode: MathJsInstance['SymbolNode'];
-  readonly evaluate: MathJsInstance['evaluate'];
+  readonly evaluate: MathNodeEvaluator;
   readonly mathWithTransform: Readonly<Record<string, unknown>>;
   readonly parse: MathJsInstance['parse'];
   readonly reviver: MathJsonReviver;
@@ -74,7 +79,7 @@ export class MathAdapter {
     expression: MathNode,
     scope: Readonly<Record<string, unknown>> = {}
   ): unknown {
-    return this.#evaluate(expression, scope as Record<string, unknown>);
+    return this.#evaluate(expression, {...scope});
   }
 
   parse(source: string): MathNode {
