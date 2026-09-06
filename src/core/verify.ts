@@ -84,15 +84,12 @@ function close(left: unknown, right: unknown, tolerance: number): boolean | null
   return distance <= tolerance * Math.max(1, Math.hypot(lhs.re, lhs.im), Math.hypot(rhs.re, rhs.im));
 }
 
-function evaluate(node: MathNode, context: OperationContext, scope: Readonly<Record<string, unknown>> = {}): unknown {
-  const evaluateFn = context.math.lookup('evaluate');
-  if (typeof evaluateFn !== 'function') {
-    return node.compile().evaluate({...context.scope, ...scope});
-  }
-  return (evaluateFn as (expression: MathNode, scope?: Record<string, unknown>) => unknown)(
-    node,
-    {...context.scope, ...scope}
-  );
+function evaluate(
+  node: MathNode,
+  context: OperationContext,
+  scope: Readonly<Record<string, unknown>> = {}
+): unknown {
+  return node.compile().evaluate({...context.scope, ...scope});
 }
 
 /** Reusable candidate/substitution verification built on shared semantic services. */
