@@ -108,20 +108,15 @@ export class EquivalenceEngine {
     ])).sort();
 
     if (generators.length > 0) {
-      const leftPolynomial = this.#algebra.polynomial(left, {
+      const algebraOptions = {
         generators,
         domain: context.domain,
         assumptions: context.assumptions,
         scope: context.scope,
         mode: context.mode
-      });
-      const rightPolynomial = this.#algebra.polynomial(right, {
-        generators,
-        domain: context.domain,
-        assumptions: context.assumptions,
-        scope: context.scope,
-        mode: context.mode
-      });
+      } as const;
+      const leftPolynomial = this.#algebra.polynomial(left, algebraOptions);
+      const rightPolynomial = this.#algebra.polynomial(right, algebraOptions);
       if (leftPolynomial.kind === 'view' && rightPolynomial.kind === 'view') {
         const rebuiltLeft = leftPolynomial.view.rebuild();
         const rebuiltRight = rightPolynomial.view.rebuild();
@@ -135,20 +130,8 @@ export class EquivalenceEngine {
         }
       }
 
-      const leftRational = this.#algebra.rational(left, {
-        generators,
-        domain: context.domain,
-        assumptions: context.assumptions,
-        scope: context.scope,
-        mode: context.mode
-      });
-      const rightRational = this.#algebra.rational(right, {
-        generators,
-        domain: context.domain,
-        assumptions: context.assumptions,
-        scope: context.scope,
-        mode: context.mode
-      });
+      const leftRational = this.#algebra.rational(left, algebraOptions);
+      const rightRational = this.#algebra.rational(right, algebraOptions);
       if (leftRational.kind === 'view' && rightRational.kind === 'view') {
         const leftCross = context.nodes.operator('*', 'multiply', [
           leftRational.view.numerator.rebuild(),
@@ -158,12 +141,12 @@ export class EquivalenceEngine {
           rightRational.view.numerator.rebuild(),
           leftRational.view.denominator.rebuild()
         ]);
-        const leftNormalized = this.#canonicalization.canonicalize(leftCross, context, {profile: 'scalar'});
-        const rightNormalized = this.#canonicalization.canonicalize(rightCross, context, {profile: 'scalar'});
-        if (!leftNormalized.limit && !rightNormalized.limit &&
+        const leftCrossPolynomial = this.#algebra.polynomial(leftCross, algebraOptions);
+        const rightCrossPolynomial = this.#algebra.polynomial(rightCross, algebraOptions);
+        if (leftCrossPolynomial.kind === 'view' && rightCrossPolynomial.kind === 'view' &&
           this.#structure.equals(
-            leftNormalized.expression,
-            rightNormalized.expression,
+            leftCrossPolynomial.view.rebuild(),
+            rightCrossPolynomial.view.rebuild(),
             {parentheses: 'preserve'}
           )) {
           return result(
@@ -172,8 +155,8 @@ export class EquivalenceEngine {
             [
               ...leftRational.view.requirements,
               ...rightRational.view.requirements,
-              ...leftNormalized.requirements,
-              ...rightNormalized.requirements
+              ...leftCrossPolynomial.view.requirements,
+              ...rightCrossPolynomial.view.requirements
             ],
             [{kind: 'rational-cross-product'}]
           );
