@@ -8,7 +8,7 @@ export type MathJsonReviver = (
 ) => unknown;
 
 export type MathNodeEvaluator = (
-  expression: MathNode,
+  expression: string,
   scope?: Record<string, unknown>
 ) => unknown;
 
@@ -84,7 +84,10 @@ export class MathAdapter {
     if (!this.#evaluate) {
       throw new TypeError('MathJS dependency "evaluate" must be a function');
     }
-    return this.#evaluate(expression, {...scope});
+    return this.#evaluate(
+      expression.toString({parenthesis: 'all'}),
+      {...scope}
+    );
   }
 
   parse(source: string): MathNode {
