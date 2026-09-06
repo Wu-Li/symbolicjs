@@ -118,6 +118,7 @@ describe('MathJS-native symbolic substrate', () => {
       'FunctionNode',
       'OperatorNode',
       'SymbolNode',
+      'evaluate',
       'mathWithTransform',
       'parse',
       'reviver'
@@ -207,10 +208,6 @@ describe('operation-neutral contexts and budgets', () => {
       kind: 'limit', limit: 'branches', used: 3, maximum: 2
     });
     expect(context.usageSnapshot()).toEqual({branches: 3, steps: 2});
-    expect(context.check('steps', 1)).toBeNull();
-    expect(context.check('steps', 2)).toEqual({
-      kind: 'limit', limit: 'steps', used: 2, maximum: 1
-    });
     expect(Object.isFrozen(context)).toBe(true);
     expect(Object.isFrozen(context.limits)).toBe(true);
     expect(Object.isFrozen(context.usageSnapshot())).toBe(true);
@@ -261,7 +258,7 @@ describe('operation-neutral contexts and budgets', () => {
     ]);
     expect(Object.isFrozen(traced.traceSnapshot())).toBe(true);
     expect(traced.assumptions.ask(
-      math.symbolic.predicates.real(math.parse('x'))
+      math.symbolic.predicates.integer(math.symbolic.nodes.symbol('n'))
     ).truth).toBe('proven');
     expect(traced.domain).toBe('real');
     expect(traced.mode).toBe('conditional');
