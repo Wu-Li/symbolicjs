@@ -89,7 +89,8 @@ function evaluate(
   context: OperationContext,
   scope: Readonly<Record<string, unknown>> = {}
 ): unknown {
-  return node.compile().evaluate({...context.scope, ...scope});
+  const compiled = node.compile();
+  return compiled.evaluate({...context.scope, ...scope});
 }
 
 /** Reusable candidate/substitution verification built on shared semantic services. */
