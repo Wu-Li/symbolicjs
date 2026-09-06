@@ -18,7 +18,7 @@ export interface MathAdapterDependencies {
   readonly FunctionNode: MathJsInstance['FunctionNode'];
   readonly OperatorNode: MathJsInstance['OperatorNode'];
   readonly SymbolNode: MathJsInstance['SymbolNode'];
-  readonly evaluate: MathNodeEvaluator;
+  readonly evaluate?: MathNodeEvaluator;
   readonly mathWithTransform: Readonly<Record<string, unknown>>;
   readonly parse: MathJsInstance['parse'];
   readonly reviver: MathJsonReviver;
@@ -42,7 +42,7 @@ export class MathAdapter {
   readonly OperatorNode: MathAdapterDependencies['OperatorNode'];
   readonly SymbolNode: MathAdapterDependencies['SymbolNode'];
 
-  readonly #evaluate: MathAdapterDependencies['evaluate'];
+  readonly #evaluate: MathNodeEvaluator | undefined;
   readonly #mathNamespace: MathAdapterDependencies['mathWithTransform'];
   readonly #parse: MathAdapterDependencies['parse'];
   readonly #reviver: MathAdapterDependencies['reviver'];
@@ -53,7 +53,9 @@ export class MathAdapter {
     requireFunction(dependencies.FunctionNode, 'FunctionNode');
     requireFunction(dependencies.OperatorNode, 'OperatorNode');
     requireFunction(dependencies.SymbolNode, 'SymbolNode');
-    requireFunction(dependencies.evaluate, 'evaluate');
+    if (dependencies.evaluate !== undefined) {
+      requireFunction(dependencies.evaluate, 'evaluate');
+    }
     requireFunction(dependencies.parse, 'parse');
     requireFunction(dependencies.reviver, 'reviver');
     if (
@@ -79,6 +81,9 @@ export class MathAdapter {
     expression: MathNode,
     scope: Readonly<Record<string, unknown>> = {}
   ): unknown {
+    if (!this.#evaluate) {
+      throw new TypeError('MathJS dependency "evaluate" must be a function');
+    }
     return this.#evaluate(expression, {...scope});
   }
 
