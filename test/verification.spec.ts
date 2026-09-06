@@ -75,6 +75,60 @@ describe('shared substitution verification', () => {
     )).toBe(true);
   });
 
+  it('reports undefined constant candidates without treating them as mismatches', () => {
+    const math = createMath();
+    const result = math.symbolic.verifySubstitution(
+      math.parse('x'),
+      math.parse('missingFunction(1)'),
+      'x',
+      math.parse('1'),
+      {domain: 'real', mode: 'conditional'}
+    );
+
+    expect(result).toMatchObject({status: 'rejected', reason: 'undefined-candidate'});
+    expect(result.evidence).toEqual([]);
+  });
+
+  it('reports no valid samples when every parameterized evaluation is undefined', () => {
+    const math = createMath();
+    const result = math.symbolic.verifySubstitution(
+      math.parse('x'),
+      math.parse('missingFunction(a)'),
+      'x',
+      math.parse('a'),
+      {domain: 'real', mode: 'conditional'}
+    );
+
+    expect(result).toMatchObject({status: 'inconclusive', reason: 'no-valid-samples'});
+    expect(result.evidence).toEqual([]);
+  });
+
+  it('accepts configured BigNumber scalar evaluations', () => {
+    const math = importsymbolicjs(create(all!, {number: 'BigNumber'}));
+    const result = math.symbolic.verifySubstitution(
+      math.parse('x'),
+      math.parse('1 / 3'),
+      'x',
+      math.parse('1 / 3'),
+      {domain: 'real', mode: 'conditional'}
+    );
+
+    expect(result.status).toBe('proven');
+  });
+
+  it('handles boolean-valued constant verification', () => {
+    const math = createMath();
+    const result = math.symbolic.verifySubstitution(
+      math.parse('x'),
+      math.parse('2 < 3'),
+      'x',
+      math.parse('true'),
+      {mode: 'conditional'}
+    );
+
+    expect(result.status).toBe('proven');
+  });
+
   it('rejects invalid tolerance', () => {
     const math = createMath();
     expect(() => math.symbolic.verifySubstitution(
