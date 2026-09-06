@@ -89,8 +89,14 @@ function evaluate(
   context: OperationContext,
   scope: Readonly<Record<string, unknown>> = {}
 ): unknown {
-  const compiled = node.compile();
-  return compiled.evaluate({...context.scope, ...scope});
+  const evaluateFn = context.math.lookup('evaluate');
+  if (typeof evaluateFn === 'function') {
+    return (evaluateFn as (expression: MathNode, scope?: Record<string, unknown>) => unknown)(
+      node,
+      {...context.scope, ...scope}
+    );
+  }
+  return node.compile().evaluate({...context.scope, ...scope});
 }
 
 /** Reusable candidate/substitution verification built on shared semantic services. */
