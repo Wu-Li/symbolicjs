@@ -13,25 +13,24 @@ assert.match(packageJson.version, /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/);
 assert.equal(packageLock.version, packageJson.version);
 assert.equal(packageLock.packages[''].version, packageJson.version);
 
-for (const version of ['22', '24', '26']) {
-  assert.ok(ci.includes(version), `Full verification omits supported Node ${version}`);
-}
-assert.match(ci, /mathjs-version:[\s\S]*15\.2\.0/);
+assert.match(ci, /node-version:\s*26/);
+assert.doesNotMatch(ci, /node-version:\s*(?:22|24)/);
+assert.match(ci, /mathjs@\^15\.2\.0/);
+assert.match(ci, /^\s{2}push:\s*$/m);
 assert.match(ci, /^\s{2}workflow_call:\s*$/m);
 assert.match(ci, /^\s{2}workflow_dispatch:\s*$/m);
-assert.doesNotMatch(ci, /^\s{2}push:/m);
-assert.doesNotMatch(ci, /^\s{2}pull_request:/m);
 assert.match(ci, /npm run check/);
 
-assert.match(publish, /push:[\s\S]*branches:\s*\[main\]/);
+assert.match(publish, /release:[\s\S]*types:\s*\[published\]/);
 assert.match(publish, /workflow_dispatch:/);
-assert.doesNotMatch(publish, /^\s+tags:/m);
-assert.doesNotMatch(publish, /workflow_run:/);
-assert.match(publish, /github\.ref == 'refs\/heads\/main'/);
+assert.doesNotMatch(publish, /^\s{2}push:/m);
+assert.match(publish, /github\.event\.release\.tag_name/);
+assert.match(publish, /Validate release tag matches package version/);
 assert.match(publish, /contents:\s*read/);
 assert.match(publish, /id-token:\s*write/);
-assert.match(publish, /group:\s*npm-publish-main/);
-assert.match(publish, /cancel-in-progress:\s*true/);
+assert.match(publish, /group:\s*npm-publish-release/);
+assert.match(publish, /cancel-in-progress:\s*false/);
+assert.match(publish, /node-version:\s*26/);
 assert.match(publish, /npm run test:release/);
 assert.match(
   publish,
@@ -46,5 +45,4 @@ assert.match(publish, /needs\.verify\.result == 'success'/);
 assert.doesNotMatch(publish, /npm run check/);
 assert.match(publish, /npm run build/);
 assert.match(publish, /npm publish --provenance --access public/);
-assert.doesNotMatch(publish, /Ensure release tag/);
 assert.doesNotMatch(publish, /git (?:tag|push)/);
