@@ -74,11 +74,25 @@ function finiteScalar(value: unknown): {re: number; im: number} | null {
 }
 
 function close(left: unknown, right: unknown, tolerance: number): boolean | null {
+  if (typeof left === 'boolean' || typeof right === 'boolean') {
+    return typeof left === 'boolean' && typeof right === 'boolean' ? left === right : false;
+  }
   const lhs = finiteScalar(left);
   const rhs = finiteScalar(right);
   if (!lhs || !rhs) return null;
   const distance = Math.hypot(lhs.re - rhs.re, lhs.im - rhs.im);
   return distance <= tolerance * Math.max(1, Math.hypot(lhs.re, lhs.im), Math.hypot(rhs.re, rhs.im));
+}
+
+function evaluate(node: MathNode, context: OperationContext, scope: Readonly<Record<string, unknown>> = {}): unknown {
+  const evaluateFn = context.math.lookup('evaluate');
+  if (typeof evaluateFn !== 'function') {
+    return node.compile().evaluate({...context.scope, ...scope});
+  }
+  return (evaluateFn as (expression: MathNode, scope?: Record<string, unknown>) => unknown)(
+    node,
+    {...context.scope, ...scope}
+  );
 }
 
 /** Reusable candidate/substitution verification built on shared semantic services. */
@@ -131,7 +145,7 @@ export class VerificationEngine {
 
     if (symbols.length === 0) {
       try {
-        const comparison = close(lhs.compile().evaluate(), rhs.compile().evaluate(), tolerance);
+        const comparison = close(evaluate(lhs, context), evaluate(rhs, context), tolerance);
         if (comparison === true) {
           return result('proven', undefined, requirements, [{kind: 'numeric-residual'}]);
         }
@@ -152,8 +166,8 @@ export class VerificationEngine {
       ]));
       try {
         const comparison = close(
-          lhs.compile().evaluate(scope),
-          rhs.compile().evaluate(scope),
+          evaluate(lhs, context, scope),
+          evaluate(rhs, context, scope),
           tolerance
         );
         if (comparison === false) {
