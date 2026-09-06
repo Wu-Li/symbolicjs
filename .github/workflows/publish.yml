@@ -1,8 +1,8 @@
 name: Publish
 
 on:
-  push:
-    branches: [main]
+  release:
+    types: [published]
   workflow_dispatch:
 
 permissions:
@@ -10,21 +10,22 @@ permissions:
   id-token: write
 
 concurrency:
-  group: npm-publish-main
-  cancel-in-progress: true
+  group: npm-publish-release
+  cancel-in-progress: false
 
 jobs:
   release:
-    name: Detect unpublished version
-    if: github.ref == 'refs/heads/main'
+    name: Validate release
     runs-on: ubuntu-latest
     outputs:
       published: ${{ steps.registry.outputs.published }}
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.release.tag_name || github.ref }}
       - uses: actions/setup-node@v6
         with:
-          node-version: 24
+          node-version: 26
           package-manager-cache: false
       - name: Read package identity
         id: package
@@ -37,6 +38,17 @@ jobs:
           console.log(`name=${name}`);
           console.log(`version=${version}`);
           NODE
+      - name: Validate release tag matches package version
+        if: github.event_name == 'release'
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          PACKAGE_VERSION: ${{ steps.package.outputs.version }}
+        run: |
+          if [[ "$RELEASE_TAG" != "$PACKAGE_VERSION" && "$RELEASE_TAG" != "v$PACKAGE_VERSION" ]]; then
+            echo "::error::Release tag '$RELEASE_TAG' does not match package.json version '$PACKAGE_VERSION'."
+            exit 1
+          fi
       - name: Validate release metadata
         run: npm run test:release
       - name: Check npm registry
@@ -85,9 +97,11 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.release.tag_name || github.ref }}
       - uses: actions/setup-node@v6
         with:
-          node-version: 24
+          node-version: 26
           registry-url: https://registry.npmjs.org
           package-manager-cache: false
       - name: Install dependencies
