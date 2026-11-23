@@ -72,6 +72,21 @@ The Chapter 8 equivalence and verification layer is integrated without replacing
 existing solver verification contract. The full repository verification gate is green,
 including coverage, packaging, and release checks. Chapter 8 is complete.
 
+## Deferred deliverables
+
+The following plan deliverables were not completed in Chapter 8 and must be carried
+into a later chapter explicitly:
+
+- **Candidate verification rebuild.** `SymbolicKernel.verify()` was briefly delegated
+  to the shared service (`355551e`) and then restored to its legacy implementation
+  (`d532b7b`) to preserve existing solver semantics. No solver calls
+  `verifySubstitution()` yet. The legacy and shared verifiers must be compared under
+  dual-run parity before the solvers switch.
+- **Equivalence stages.** The engine implements structural, canonical, polynomial,
+  rational, and numeric-counterexample stages. The normalized difference/ratio
+  stage, registered construction/proof certificates, and proof/trace hooks are not
+  implemented.
+
 ## Post-release note
 
 Chapter 8 shipped in `symbolicjs@0.6.0`. After the release, the automatic `push`

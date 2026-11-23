@@ -194,3 +194,33 @@ transcendental families and interval searches return `unsupported-domain`.
 Mixed-frequency trigonometric identities, simultaneous systems, inequalities,
 matrices, units, complex transcendental families, and general symbolic complex
 branch analysis above degree two are unsupported.
+
+## Experimental: `math.symbolic`
+
+`importsymbolicjs` also attaches an instance-local symbolic service as
+`math.symbolic`. It is the shared layer that the solvers are being migrated onto
+(see `docs/architecture-migration/`). **Its API is experimental and may change in
+any 0.x release.** Use the solving APIs above for stable behavior.
+
+The service never mutates the input nodes, and its results are deterministic and
+bounded by operation limits:
+
+- `ask(predicate, options?)` and `require(predicate, options?)` return three-valued
+  judgments (`proven`, `disproven`, `unknown`) under assumptions and domains built
+  with `math.symbolic.predicates` and `math.symbolic.assumptions(...)`.
+- `definedness(node, options?)` reports domain obligations.
+- `canonicalize(node, options?)` applies a bounded, assumption-aware canonical
+  profile.
+- `match(node, pattern, options?)` runs typed structural and semantic matching with
+  patterns built from the exported `pattern` combinators.
+- `rewriteExpression(node, strategy, options?)` runs bounded rewrite strategies
+  built from `rewriteRule` and `strategy` and the exported rule packs. It returns
+  the result, any preserved requirements, and an optional trace.
+- `equivalent(left, right, options?)` performs conservative staged equivalence.
+  `proven` comes only from symbolic proof; numeric sampling can only produce
+  `disproven`.
+- `verifySubstitution(lhs, rhs, target, candidate, options?)` verifies a candidate
+  substitution. Sampled agreement is reported as inconclusive, never as proof.
+
+`with(options)` returns a context with different defaults, such as assumptions,
+domain, limits, mode, or diagnostics.

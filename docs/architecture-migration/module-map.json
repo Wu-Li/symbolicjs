@@ -41,7 +41,7 @@
     {"path":"src/index.ts","currentRole":"public package exports including pattern, rewrite, equivalence, verification, and rule-pack contracts","targetLayer":"public-api","migrationChapter":14,"action":"consolidate"},
     {"path":"src/install.ts","currentRole":"all-in-one MathJS installation including symbolic context","targetLayer":"integration.install","migrationChapter":14,"action":"split-and-preserve"},
     {"path":"src/isolate.ts","currentRole":"single-occurrence equation isolation","targetLayer":"solver.isolation","migrationChapter":11,"action":"rebuild"},
-    {"path":"src/kernel.ts","currentRole":"legacy symbolic utility and verification facade delegating verification to shared symbolic services","targetLayer":"core.compatibility-facade","migrationChapter":9,"action":"adapted"},
+    {"path":"src/kernel.ts","currentRole":"legacy symbolic utility facade; candidate verification remains the legacy implementation pending Chapter 9","targetLayer":"core.compatibility-facade","migrationChapter":9,"action":"adapted"},
     {"path":"src/numeric-polynomial.ts","currentRole":"numeric polynomial root backend","targetLayer":"numeric.polynomial","migrationChapter":10,"action":"preserve-and-adapt"},
     {"path":"src/numeric-solve.ts","currentRole":"bounded numeric equation fallback","targetLayer":"numeric.equation","migrationChapter":9,"action":"preserve-and-adapt"},
     {"path":"src/parametric.ts","currentRole":"parametric family operations","targetLayer":"algebra.parametric","migrationChapter":9,"action":"redesign-over-core"},

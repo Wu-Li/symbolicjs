@@ -1,6 +1,8 @@
 # Advanced equation-solving implementation plan
 
-Status: implemented; release validation pending
+Status: completed historical milestone (released as 0.5.x); superseded by
+`symbolicjs-mathjs-native-symbolic-layer-plan.md`. Its chapter numbers are
+unrelated to the architecture-migration chapters.  
 Baseline: `symbolicjs@0.1.0`, repository commit `cfa54e196e070a80060ab0821c87a04400e3d9ba`  
 Target runtime: MathJS `>=15.2.0 <16`, Node.js `>=22`  
 

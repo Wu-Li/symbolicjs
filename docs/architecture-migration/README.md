@@ -49,8 +49,9 @@ reusable foundational and compound-trigonometric rule packs, and the supported
 `math.symbolic.rewriteExpression()` convenience entry point over
 `math.symbolic.rewrite`. Chapter 8 adds conservative staged equivalence through
 `math.symbolic.equivalent()` and shared substitution verification through
-`math.symbolic.verifySubstitution()`, delegating `SymbolicKernel.verify()` to the
-shared service while preserving its solver contract.
+`math.symbolic.verifySubstitution()`. Solver candidate verification
+(`SymbolicKernel.verify()`) still uses its legacy implementation; rebuilding it on
+the shared service is deferred (see `chapter-8.md`).
 
 Affected surfaces:
 

@@ -29,9 +29,9 @@
     sampling can reject but never prove.
 - Export the pattern, rewrite, equivalence, and verification contracts together with
   the `pattern`, `rewriteRule`, `strategy`, and rule-pack factories.
-- Route existing polynomial and compound-trigonometric recognizers, the legacy
-  canonical key, and `SymbolicKernel.verify()` through the shared services. Solver
-  result contracts and dispatch are unchanged.
+- Route existing polynomial and compound-trigonometric recognizers and the legacy
+  canonical key through the shared services. Solver candidate verification keeps
+  its legacy implementation. Solver result contracts and dispatch are unchanged.
 - Publish from a published GitHub Release after verifying that the tag matches the
   package version and the version is unpublished. Full verification now runs on
   Node 26 with the latest compatible MathJS 15 release.
