@@ -22,9 +22,13 @@ shared symbolic layer is built underneath it.
 
 ## Scope freeze
 
-Chapters 0 through 14 restructure existing capabilities. They must not add new
+Chapters 0 through 13 restructure existing capabilities. They must not add new
 equation families merely to demonstrate the infrastructure. New equation classes
-resume only after the Chapter 14 integration gate passes.
+resume, as registered solver strategies, after the Chapter 13 integration gate
+passes. Chapter 14 (public stabilization) may proceed in parallel with them.
+
+Remaining execution order: 9, 11, 10a, 10b, 12, 13, 14. Chapter numbers are kept
+stable for the module map and branch names, so Chapter 11 runs before Chapter 10.
 
 ## Impact map
 

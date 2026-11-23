@@ -5,6 +5,7 @@
 **Baseline branch:** `ci/release-gated-verification`  
 **Baseline commit:** `f37f1636689c382cc514d29cc168d0aa010baee7`  
 **Baseline package:** `symbolicjs@0.5.3`  
+**Revised:** 2026-11-23, after the 0.6.0 release. Chapter 9 now opens with the Chapter 8 verification deferrals; Chapter 10 is split into 10a and 10b; Chapter 11 executes before Chapter 10; the new-equation-family freeze ends after Chapter 13; and two Chapter 14 design items are optional. Chapter numbers are unchanged. The execution order is in §7.  
 **Primary architectural decision:** MathJS `MathNode` objects remain the canonical public, persistence, compilation, and interchange representation. SymbolicJS adds the semantic machinery required for symbolic algebra around those nodes. Equation solving becomes one consumer of that machinery rather than the organizing center of the package.
 
 ---
@@ -107,7 +108,7 @@ None of those limitations justifies replacing MathJS nodes now. The architecture
 10. **Sampling can disprove, not prove.** Numeric counterexamples may reject a proposed identity. Numeric agreement alone cannot establish a symbolic identity.
 11. **Specialized algorithms consume shared analysis.** Polynomial, trigonometric, radical, and solver modules do not independently rediscover free symbols, coefficients, definedness, or node construction.
 12. **Migration is incremental.** New infrastructure is introduced beside the current implementation, then existing consumers move one at a time under compatibility tests.
-13. **No new equation families during the infrastructure migration.** New capabilities resume after the current solver is rebuilt over the shared symbolic layer.
+13. **No new equation families during the infrastructure migration.** New capabilities resume once the current solvers are rebuilt over the shared symbolic layer and registered through the Chapter 13 solver registry.
 14. **Package growth is measured.** Bundle deltas, packed size, and performance are tracked per milestone; repository source size alone is not the optimization target.
 
 ---
@@ -267,7 +268,7 @@ The complete local `npm run check` gate is required after:
 
 - Chapter 0, to freeze the baseline;
 - Chapter 8, when equivalence and verification become usable as a coherent core;
-- Chapter 10, after the largest existing solver subsystem is migrated;
+- Chapters 10a and 10b, after each half of the largest existing solver subsystem is migrated;
 - Chapter 13, after solver dispatch is replaced;
 - Chapter 14, before the infrastructure milestone is considered complete.
 
@@ -826,9 +827,17 @@ Canonicalization, assumptions, analysis, matching, rewriting, equivalence, and v
 
 ### Goal
 
-Make the new symbolic core authoritative for shared operations while preserving current public APIs and solver behavior.
+Make the new symbolic core authoritative for shared operations, including solver candidate verification, while preserving current public APIs and solver behavior.
 
 ### Deliverables
+
+Carried over from Chapter 8 (see `docs/architecture-migration/chapter-8.md`), done first:
+
+- Before changing any solver, run legacy `SymbolicKernel.verify()` and the shared `verifySubstitution()` side by side with `test/support/dual-run.ts` across the kernel, isolation, polynomial, trigonometric, parametric, and conformance suites. Record every disagreement and decide, case by case, whether it is a legacy defect or a required compatibility behavior.
+- Rebuild candidate verification on the shared verification service, adapting it so that current public verification statuses and evidence shapes are preserved. Legacy-only behaviors that are kept must be explicit adapter rules, not a second implementation.
+- Complete the deferred equivalence stages: normalized difference/ratio checks where semantically valid, registered construction/proof certificates, and proof/trace hooks that explain each judgment.
+
+Kernel and parametric migration:
 
 - Reimplement `SymbolicKernel` as a compatibility facade over `math.symbolic` services.
 - Move immutable symbol substitution into shared core utilities.
@@ -842,6 +851,7 @@ Make the new symbolic core authoritative for shared operations while preserving 
 ### Existing code affected
 
 - `src/kernel.ts`
+- `src/core/verify.ts` and `src/core/equivalence.ts`
 - `src/parametric.ts`
 - `src/analysis.ts`
 - `src/types.ts`
@@ -851,6 +861,8 @@ Make the new symbolic core authoritative for shared operations while preserving 
 
 | Risk | Mitigation |
 |---|---|
+| The shared verifier accepts or rejects candidates differently from the legacy verifier (the reason the Chapter 8 delegation was reverted) | Dual-run divergence inventory before any switch; each accepted difference is documented and covered by a regression test. |
+| Construction certificates or approximate-residual evidence are lost when verification moves | Certificate and evidence-shape fixtures for every solver that emits them. |
 | Family ordering or deduplication changes unexpectedly | Compare semantic family sets and preserve documented deterministic ordering. |
 | Alpha-renaming captures user symbols | Shared hygienic binder tests include names already present in equations and assumptions. |
 | Number conversion changes BigNumber/Fraction behavior | Configured-instance tests and explicit approximate-operation boundaries. |
@@ -858,6 +870,8 @@ Make the new symbolic core authoritative for shared operations while preserving 
 
 ### Tests
 
+- Dual-run verifier parity across the solver suites, with the divergence inventory checked in.
+- Equivalence-stage tests for difference/ratio, certificates, and trace output.
 - Entire kernel and parametric suites.
 - Solve-for-all and trigonometric family tests that indirectly consume parametric behavior.
 - Public API type fixture.
@@ -867,7 +881,7 @@ Make the new symbolic core authoritative for shared operations while preserving 
 
 ### Exit gate
 
-All shared symbolic operations used by existing code flow through the new core; the old kernel contains no independent reasoning implementation.
+All shared symbolic operations used by existing code, including candidate verification, flow through the new core; the old kernel contains no independent reasoning implementation; and the Chapter 8 equivalence deliverables are complete.
 
 ---
 
@@ -877,9 +891,26 @@ All shared symbolic operations used by existing code flow through the new core; 
 
 Split the current monolithic polynomial solver so recognition and algebraic representation are reusable outside equation solving.
 
-### Deliverables
+The chapter runs as two independently gated halves, so that changing the representation and restructuring the modules are never reviewed together. It executes after Chapter 11 (see §7).
+
+### Deliverables — 10a: shared representation at parity
+
+Change what the solver consumes without changing its module layout or behavior.
 
 - Replace private `Polynomial = Map<number, MathNode>` and recursive `#rational()` extraction with Chapter 5 views.
+- Make solver formulas consume a normalized polynomial object instead of inspecting arbitrary ASTs.
+- Move all node construction through the shared NodeBuilder.
+- Move all assumptions, leading-coefficient conditions, discriminant conditions, and definedness through the predicate system.
+- Remove duplicated occurrence counting, numeric probing, condition normalization, and canonical-key logic from the polynomial subsystem.
+- Preserve the numeric polynomial engine, replacing only `SolverContext` coupling with an operation-budget adapter.
+- Preserve construction certificates and multiplicities.
+
+**10a exit gate:** `src/polynomial.ts` contains no private algebra extraction, and dual-run parity holds for every permanent polynomial fixture.
+
+### Deliverables — 10b: module separation
+
+Restructure into focused modules, with the 10a representation unchanged.
+
 - Separate modules for:
   - polynomial/rational extraction;
   - coefficient and degeneration analysis;
@@ -888,13 +919,9 @@ Split the current monolithic polynomial solver so recognition and algebraic repr
   - quartic construction;
   - numeric-polynomial adaptation;
   - solution verification and result classification.
-- Make solver formulas consume a normalized polynomial object instead of inspecting arbitrary ASTs.
-- Move all node construction through the shared NodeBuilder.
-- Move all assumptions, leading-coefficient conditions, discriminant conditions, and definedness through the predicate system.
-- Preserve construction certificates and multiplicities.
-- Preserve the numeric polynomial engine, replacing only `SolverContext` coupling with an operation-budget adapter.
+- Migrate one degree at a time.
 - Keep `createPolynomialSolve` and `PolynomialEngine` as compatibility entry points.
-- Remove duplicated occurrence counting, numeric probing, condition normalization, and canonical-key logic from the polynomial subsystem.
+- Preserve construction certificates and multiplicities.
 
 ### Existing code affected
 
@@ -920,11 +947,11 @@ Split the current monolithic polynomial solver so recognition and algebraic repr
 - Denominator and parameter-degeneration adversarial cases.
 - Construction certificate integrity and frozen output tests.
 - Numeric polynomial degree/multiplicity property tests.
-- Full `npm run check` integration gate.
+- Full `npm run check` integration gate after 10a and again after 10b.
 
 ### Exit gate
 
-The polynomial solver is a consumer of reusable algebra analysis, and no general algebra extraction remains private inside solver code.
+After 10b, the polynomial solver is a consumer of reusable algebra analysis, and no general algebra extraction remains private inside solver code.
 
 ---
 
@@ -933,6 +960,8 @@ The polynomial solver is a consumer of reusable algebra analysis, and no general
 ### Goal
 
 Replace bespoke queue-based operation reversal with typed inverse rules and generic strategy orchestration.
+
+This chapter executes **before Chapter 10**. `src/isolate.ts` depends only on the kernel, analysis, and budget modules, not on the polynomial solver. That makes it the smallest real solver workload on which to prove the Chapter 6–8 matcher, rewrite, and verification services before the polynomial migration. It relies on the shared candidate verification rebuilt in Chapter 9.
 
 ### Deliverables
 
@@ -1105,6 +1134,8 @@ Make equation solving an extensible consumer of the symbolic layer rather than a
 
 Equation solving is one registered application built over the general symbolic layer; adding a future solver no longer requires editing a monolithic dispatcher.
 
+Passing this gate ends the new-equation-family freeze (principle 13). The first new family should be chosen from a real equation corpus and added as a registered strategy without editing the dispatcher. That serves as the practical acceptance test of the registry. New families may then proceed in parallel with Chapter 14, but must not depend on unfrozen Chapter 14 packaging.
+
 ---
 
 ## Chapter 14 — Public API consolidation, modular packaging, documentation, and infrastructure completion
@@ -1138,8 +1169,8 @@ Stabilize the new symbolic layer as a coherent package surface and close the mig
   - isolated private-hook usage;
   - custom function/node registration expectations.
 - Add bundle-size reports for core-only and full solver imports.
-- Review generic improvements that should be proposed upstream to MathJS, especially factory typings, public matcher hooks, operator metadata, or stable node utilities. Do not block SymbolicJS on upstream acceptance.
-- Add an optional backend interface design document, without shipping a backend, for future unsupported operations.
+- Optional (does not block the exit gate): review generic improvements that should be proposed upstream to MathJS, especially factory typings, public matcher hooks, operator metadata, or stable node utilities. Do not block SymbolicJS on upstream acceptance.
+- Optional (does not block the exit gate): add a backend interface design document, without shipping a backend, for future unsupported operations.
 
 ### Existing code affected
 
@@ -1191,11 +1222,11 @@ Chapters 6–8 add matching, transformation strategies, and equivalence. This is
 
 ### Milestone C — Existing solver migration
 
-Chapters 9–13 rebuild current behavior over the new layer. No new equation families are required; parity and removal of duplicated logic are the goals.
+Chapters 9–13 rebuild current behavior over the new layer, in the order 9, 11, 10a, 10b, 12, 13. No new equation families are added; parity and removal of duplicated logic are the goals. The freeze ends when Chapter 13's gate passes.
 
 ### Milestone D — Stable consumption
 
-Chapter 14 freezes the public core, packaging, compatibility, and documentation. Only after this milestone should feature planning return to new expression and equation classes.
+Chapter 14 freezes the public core, packaging, compatibility, and documentation. New equation families selected after Chapter 13 may proceed alongside it as registered strategies.
 
 ```text
 0 baseline
@@ -1216,15 +1247,17 @@ Chapter 14 freezes the public core, packaging, compatibility, and documentation.
   ↓
 8 equivalence/verification
   ↓
-9 kernel + parametric migration
+9 kernel + parametric migration, including shared candidate verification
   ↓
-10 polynomial/rational migration
+11 isolation migration (before 10; first real rewrite-engine consumer)
   ↓
-11 isolation migration
+10a polynomial/rational over shared views, at parity
   ↓
-12 trigonometric migration
+10b polynomial module separation
   ↓
-13 solver registry
+12 trigonometric migration (depends on 10)
+  ↓
+13 solver registry  ── freeze ends; new families as registered strategies
   ↓
 14 public stabilization
 ```
@@ -1329,7 +1362,7 @@ The decisive design is:
 
 > MathJS nodes remain the expression objects. SymbolicJS supplies immutable semantic contexts, assumptions, canonicalization, algebraic views, matching, transformation strategies, equivalence, and verification around them.
 
-This path is not separate from adding equation classes. It establishes the machinery that makes later equation-class work cumulative instead of repetitive. After Chapter 14, new capabilities should be selected from real equation/expression corpora, but each capability should extend reusable rules, analyses, domains, or strategies wherever possible.
+This path is not separate from adding equation classes. It establishes the machinery that makes later equation-class work cumulative instead of repetitive. After Chapter 13, new capabilities should be selected from real equation/expression corpora, but each capability should extend reusable rules, analyses, domains, or strategies wherever possible.
 
 The project should retain three escape hatches without using them prematurely:
 
