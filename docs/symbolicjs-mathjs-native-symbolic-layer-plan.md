@@ -1,6 +1,6 @@
 # SymbolicJS: MathJS-Native Symbolic Algebra Layer Implementation Plan
 
-**Status:** proposed; planning artifact only  
+**Status:** in progress; Chapters 0–8 complete and released in `symbolicjs@0.6.0`; Chapter 9 next (see `docs/architecture-migration/README.md`)  
 **Repository:** `Wu-Li/symbolicjs`  
 **Baseline branch:** `ci/release-gated-verification`  
 **Baseline commit:** `f37f1636689c382cc514d29cc168d0aa010baee7`  

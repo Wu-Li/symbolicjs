@@ -2,6 +2,44 @@
 
 ## Unreleased
 
+- Restore the policy that full verification runs only on manual dispatch, chapter
+  integration gates, and release publishing, not on every push.
+- Add the missing 0.5.3 and 0.6.0 changelog entries and remove README links to
+  deleted documents.
+
+## 0.6.0 - 2026-09-06
+
+- Add the experimental instance-local `math.symbolic` service, built around MathJS
+  nodes without mutating them (architecture-migration Chapters 1–8):
+  - operation contexts with limits, scopes, and diagnostics;
+  - immutable assumptions, a scalar domain lattice, three-valued predicates, and
+    definedness obligations;
+  - lossless structural identity, fingerprints, deterministic ordering, and
+    expression cost;
+  - bounded, idempotent, assumption-aware canonicalization profiles;
+  - shared dependency analysis and transient sum, product, power, affine, linear,
+    sparse-polynomial, and rational-function views;
+  - typed pattern matching with semantic guards and bounded associative/commutative
+    matching (`math.symbolic.match()`);
+  - typed rewrite rules, bounded strategies, requirement-preserving traces, and
+    foundational and compound-trigonometric rule packs
+    (`math.symbolic.rewriteExpression()`);
+  - conservative staged equivalence (`math.symbolic.equivalent()`) and shared
+    substitution verification (`math.symbolic.verifySubstitution()`), where numeric
+    sampling can reject but never prove.
+- Export the pattern, rewrite, equivalence, and verification contracts together with
+  the `pattern`, `rewriteRule`, `strategy`, and rule-pack factories.
+- Route existing polynomial and compound-trigonometric recognizers, the legacy
+  canonical key, and `SymbolicKernel.verify()` through the shared services. Solver
+  result contracts and dispatch are unchanged.
+- Publish from a published GitHub Release after verifying that the tag matches the
+  package version and the version is unpublished. Full verification now runs on
+  Node 26 with the latest compatible MathJS 15 release.
+
+## 0.5.3 - 2026-09-03
+
+- Repair automatic publishing of the 0.5 line. No library changes.
+
 ## 0.5.2 - 2026-09-03
 
 - Repair automatic publishing so a successful `main` CI run releases the current

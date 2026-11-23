@@ -1,7 +1,6 @@
 name: Full verification
 
 on:
-  push:
   workflow_call:
   workflow_dispatch:
 

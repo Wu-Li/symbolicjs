@@ -122,8 +122,8 @@ result types, supported families, limits, and integration details.
 The default domain is real scalar equations. Simultaneous systems, inequalities,
 matrices, units, mixed-frequency trigonometric identities, unrestricted numeric
 search, complex transcendental families, and a general equivalence prover remain
-unsupported. See the [0.1 migration guide](docs/migration-0.5.md) for the expanded
-result union and domain options.
+unsupported. See the [API guide](docs/api.md) for the full result union and domain
+options.
 
 ## Development
 
@@ -136,9 +136,6 @@ Requires Node 22 or newer.
 The package is tested independently of any consuming application. MathJS is a
 peer dependency and is pinned to 15.2.0 in development so the node contract is
 tested against a known implementation.
-
-The stable-release requirements are tracked in the
-[release checklist](docs/release-checklist.md).
 
 ## License
 

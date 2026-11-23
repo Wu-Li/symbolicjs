@@ -17,7 +17,8 @@ shared symbolic layer is built underneath it.
 | 5 — structural algebra analysis and transient views | Complete |
 | 6 — typed pattern matching with semantic predicates | Complete |
 | 7 — transformation rules and bounded strategies | Complete |
-| 8–14 | Not started |
+| 8 — expression equivalence and general verification | Complete (released in 0.6.0) |
+| 9–14 | Not started |
 
 ## Scope freeze
 
@@ -46,7 +47,10 @@ ordered matching, and bounded associative/commutative matching through
 search strategies, requirement-preserving traces, deterministic cost selection,
 reusable foundational and compound-trigonometric rule packs, and the supported
 `math.symbolic.rewriteExpression()` convenience entry point over
-`math.symbolic.rewrite`.
+`math.symbolic.rewrite`. Chapter 8 adds conservative staged equivalence through
+`math.symbolic.equivalent()` and shared substitution verification through
+`math.symbolic.verifySubstitution()`, delegating `SymbolicKernel.verify()` to the
+shared service while preserving its solver contract.
 
 Affected surfaces:
 
@@ -105,6 +109,7 @@ Compatibility checks are divided deliberately:
 - `chapter-5.md`: Chapter 5 algebra analysis, transient-view contracts, adapters, and test scope.
 - `chapter-6.md`: Chapter 6 typed matcher contracts, branch limits, and focused verification scope.
 - `chapter-7.md`: Chapter 7 rewrite contracts, strategy limits, rule packs, and successful verification record.
+- `chapter-8.md`: Chapter 8 equivalence and verification contracts, risks, and full-gate verification record.
 
 Regenerate measurements after a build with:
 

@@ -24,8 +24,9 @@ Chapter 8 introduces:
   the Chapter 8 full-suite coverage gate;
 - Node 26 plus latest-compatible MathJS as the repository's single verification
   environment;
-- verification on every pushed commit and npm publication gated by a published
-  GitHub Release.
+- npm publication gated by a published GitHub Release (an automatic `push`
+  trigger on full verification was added during this chapter and later removed;
+  see the post-release note below).
 
 Existing solver result contracts and solver dispatch remain unchanged.
 
@@ -41,7 +42,7 @@ Existing solver result contracts and solver dispatch remain unchanged.
 | Numeric verification bypasses the configured MathJS instance | `MathAdapter` receives the configured evaluator and verification exercises normal and BigNumber configurations. |
 | The new verification layer changes established solver behavior | `SymbolicKernel.verify()` retains the Chapter 7 compatibility implementation and the full legacy solver suite passes. |
 | Chapter 6/7 integration paths reduce global coverage below the repository gate | Chapter 8 integration tests cover bounded matcher and rewrite strategy branches without lowering thresholds. |
-| Workflow simplification weakens release safety | Every push runs `npm run check`; publication runs only for a published GitHub Release and re-verifies the released revision before npm publish. |
+| Workflow simplification weakens release safety | Publication runs only for a published GitHub Release and re-verifies the released revision before npm publish. |
 
 ## Verification
 
@@ -70,3 +71,13 @@ packed-consumer, and release-metadata checks.
 The Chapter 8 equivalence and verification layer is integrated without replacing the
 existing solver verification contract. The full repository verification gate is green,
 including coverage, packaging, and release checks. Chapter 8 is complete.
+
+## Post-release note
+
+Chapter 8 shipped in `symbolicjs@0.6.0`. After the release, the automatic `push`
+trigger added to `.github/workflows/ci.yml` during this chapter was removed to restore
+the repository policy in `AGENTS.md`. The trigger caused every chapter-branch push to
+run the full gate twice (directly and through the chapter verification workflow's
+integration-gate job), and it also ran on `main` merges and release tags that
+`publish.yml` already re-verifies. Full verification now runs through manual dispatch,
+chapter integration-gate jobs, and the release workflow.

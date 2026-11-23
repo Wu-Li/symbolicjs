@@ -30,4 +30,4 @@ In the handoff, state the impact mapped, tests run, tests intentionally omitted,
 
 `.github/workflows/ci.yml` is the reusable and manually dispatchable full verification matrix. It must not acquire automatic `push` or `pull_request` triggers.
 
-`.github/workflows/publish.yml` first checks whether the current `main` version is absent from npm. Only an unpublished version calls the full verification matrix, and publishing must remain dependent on that successful verification. Ordinary commits and pull requests should rely on the targeted regression testing described above rather than automatically running the full matrix.
+`.github/workflows/publish.yml` runs when a GitHub Release is published (or on manual dispatch). It validates that the release tag matches the package version and checks whether that version is absent from npm. Only an unpublished version calls the full verification matrix, and publishing must remain dependent on that successful verification. Ordinary commits and pull requests should rely on the targeted regression testing described above rather than automatically running the full matrix.
