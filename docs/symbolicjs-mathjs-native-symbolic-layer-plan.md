@@ -272,7 +272,7 @@ The complete local `npm run check` gate is required after:
 - Chapter 13, after solver dispatch is replaced;
 - Chapter 14, before the infrastructure milestone is considered complete.
 
-The release workflow will still execute the full Node/MathJS matrix before any new package version is published.
+Since 2026-11-23, every commit also passes the full `npm run check` gate through the local pre-commit hook (see `AGENTS.md`). The chapter gates above are where the chapter's complete integration evidence is recorded, and GitHub runs only a packaging safety net before publishing.
 
 ---
 
@@ -1195,7 +1195,7 @@ Stabilize the new symbolic layer as a coherent package surface and close the mig
 - Bundle-size and tree-shaking fixture.
 - Benchmark comparison against Chapter 0 baselines.
 - Coverage thresholds remain at least the current configured levels.
-- Full `npm run check` integration gate, followed by the release workflow’s complete Node/MathJS matrix on the eventual version bump.
+- Full `npm run check` integration gate.
 
 ### Exit gate
 

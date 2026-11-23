@@ -34,7 +34,16 @@ correct behavior. They are reviewed whenever the corresponding solver changes.
   high degree, invalid domains, and discontinuity-heavy search.
 - `scripts/benchmark.mjs` names latency regression groups.
 - `scripts/verify-pack.mjs` installs the packed artifact in a temporary ESM consumer.
-- `scripts/verify-release.mjs` checks version, workflow, and tag invariants.
+- `scripts/verify-release.mjs` checks version metadata, the local hook setup, and
+  the publish workflow's invariants.
+
+## When the suites run
+
+The full `npm run check` gate runs locally before every commit through the tracked
+`.githooks/pre-commit` hook. No GitHub workflow runs the regression suite. The
+publish workflow runs only a packaging safety net (`test:release`, `build`, and
+`test:pack`) before publishing a new version from `main`. See `AGENTS.md` for the
+commit, versioning, and publishing process.
 
 Coverage thresholds are 95% for statements, functions, and lines and 90% for
 branches. Thresholds are a floor; mathematical negative controls remain required

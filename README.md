@@ -133,6 +133,11 @@ Requires Node 22 or newer.
     npm run check
     npm run pack:dry
 
+`npm install` also enables the repository's git hooks. Every commit runs the full
+`npm run check` gate locally, and commits on `main` bump the patch version. Pushing
+a new version to `main` publishes it to npm. See [AGENTS.md](AGENTS.md) for the
+full process.
+
 The package is tested independently of any consuming application. MathJS is a
 peer dependency and is pinned to 15.2.0 in development so the node contract is
 tested against a known implementation.

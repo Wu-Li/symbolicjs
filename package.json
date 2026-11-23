@@ -47,7 +47,8 @@
     "test:release": "node scripts/verify-release.mjs",
     "check": "npm run typecheck && npm run test:coverage && npm run build && npm run test:benchmark && npm run test:pack && npm run test:release",
     "measure:architecture-baseline": "node scripts/measure-architecture-baseline.mjs",
-    "pack:dry": "npm pack --dry-run"
+    "pack:dry": "npm pack --dry-run",
+    "prepare": "node scripts/install-git-hooks.mjs"
   },
   "peerDependencies": {
     "mathjs": ">=15.2.0 <16"

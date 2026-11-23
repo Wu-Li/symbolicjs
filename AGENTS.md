@@ -22,12 +22,27 @@ Run the smallest test set that can credibly detect regressions from the mapped i
 - Run `npm run test:pack` for package contents, exports, peer dependencies, or consumer-install changes.
 - Run `npm run test:release` for versions, release metadata, or GitHub workflow changes.
 
-Run the complete `npm run check` gate for cross-cutting symbolic-core changes, solver-dispatch changes with broad reach, release preparation, explicit user requests, or when the impact cannot be bounded confidently. Documentation-only changes do not require the full gate unless they alter executable examples, package contents, or release metadata.
+Targeted tests are the fast feedback loop while developing. They do not replace the full gate that runs before every commit.
 
 In the handoff, state the impact mapped, tests run, tests intentionally omitted, and the reason the selected regression scope was sufficient. Never imply an unrun test passed.
 
-## Full release verification
+## Full verification before every commit
 
-`.github/workflows/ci.yml` is the reusable and manually dispatchable full verification matrix. It must not acquire automatic `push` or `pull_request` triggers.
+The complete verification and regression suite is local. No GitHub workflow runs it.
 
-`.github/workflows/publish.yml` runs when a GitHub Release is published (or on manual dispatch). It validates that the release tag matches the package version and checks whether that version is absent from npm. Only an unpublished version calls the full verification matrix, and publishing must remain dependent on that successful verification. Ordinary commits and pull requests should rely on the targeted regression testing described above rather than automatically running the full matrix.
+Every commit must pass the full `npm run check` gate. The tracked hooks in `.githooks/` enforce this:
+
+1. Run `npm install` (or `npm ci`) once per clone. Its `prepare` script sets `git config core.hooksPath .githooks`. Confirm with `git config core.hooksPath`.
+2. Stage everything that belongs in the commit. The hook refuses to run while unstaged or untracked changes are present, so the gate tests exactly the committed files. Stash unrelated work first.
+3. Run `git commit` as usual. The `pre-commit` hook (and `pre-merge-commit` for merges) runs `npm run check`, which covers typecheck, coverage, build, benchmarks, packed-consumer verification, and release metadata. It blocks the commit on any failure.
+4. On failure, fix the cause, re-stage, and commit again. Never bypass the gate with `--no-verify`, and never weaken tests or coverage thresholds to get a commit through.
+
+`git cherry-pick` and `git rebase` do not run `pre-commit` for replayed commits. Run `npm run check` manually before pushing their results.
+
+## Versioning and publishing
+
+- Every commit on `main` bumps the patch version automatically. The `pre-commit` hook runs `npm version patch --no-git-tag-version` and stages `package.json` and `package-lock.json`, unless the commit already changes the version (for a deliberate minor or major bump, set it yourself before committing). Commits on other branches do not bump.
+- Land branch work on `main` with a merge commit (`git merge --no-ff <branch>`) or a squash commit (`git merge --squash <branch>`, then `git commit`), so the hook bumps the version. For a merge commit, `pre-merge-commit` stages the bump and stops the merge, because git would otherwise leave the bump out of the merge commit. Run `git commit` to complete it; the full gate runs then. A fast-forward merge creates no commit, so it neither bumps nor publishes.
+- Amending a commit on `main` bumps the version again. That is harmless before pushing; never amend or rewrite commits that are already pushed.
+- `.github/workflows/publish.yml` runs on every push to `main`. If the version at the pushed tip is not yet on npm, it runs a packaging safety net (`test:release`, `build`, `test:pack`), publishes with provenance, and creates the `v<version>` tag and GitHub Release. Only the tip of each push is published, so pushing several commits at once skips the intermediate version numbers.
+- Do not add test, coverage, or benchmark jobs to GitHub workflows. `npm run test:release` enforces this.
