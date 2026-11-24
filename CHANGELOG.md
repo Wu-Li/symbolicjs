@@ -2,15 +2,18 @@
 
 ## Unreleased
 
+## 0.6.1 - 2026-11-24
+
+No library changes.
+
 - Move full verification to a local pre-commit gate: tracked `.githooks/` run
   `npm run check` before every commit and are enabled by `npm install`. The GitHub
   `ci.yml` and chapter-verification workflows are removed.
 - Bump the patch version automatically on every commit to `main`, and publish from
   any push to `main` whose version is not yet on npm, after a packaging safety net.
   Publishing tags the version and creates its GitHub Release.
-
-- Restore the policy that full verification runs only on manual dispatch, chapter
-  integration gates, and release publishing, not on every push.
+- Document the experimental `math.symbolic` service in the API guide, record the
+  deferred Chapter 8 deliverables, and adjust the migration roadmap.
 - Add the missing 0.5.3 and 0.6.0 changelog entries and remove README links to
   deleted documents.
 
